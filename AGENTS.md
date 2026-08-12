@@ -11,8 +11,8 @@ Charts version. Use TanStack Hotkeys for Aperture keyboard shortcuts.
 Run before you report a code change as complete:
 
 ```sh
-npm run typecheck
-npm run build
+pnpm typecheck
+pnpm build
 ```
 
 <!-- PROJECT-AGENTS-MD-START -->

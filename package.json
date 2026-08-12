@@ -5,16 +5,16 @@
   "description": "An opinionated React chart design system built on TanStack Charts.",
   "license": "MIT",
   "type": "module",
-  "workspaces": [
-    "packages/*",
-    "apps/*"
-  ],
+  "packageManager": "pnpm@11.9.0",
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
-    "dev": "npm run storybook --workspace @aperture/catalog",
-    "storybook": "npm run storybook --workspace @aperture/catalog",
-    "typecheck": "npm run typecheck --workspaces --if-present",
-    "build": "npm run build --workspaces --if-present",
-    "test": "npm run test --workspaces --if-present"
+    "dev": "pnpm --filter @aperture/catalog storybook",
+    "storybook": "pnpm --filter @aperture/catalog storybook",
+    "typecheck": "pnpm -r --if-present typecheck",
+    "build": "pnpm -r --if-present build",
+    "test": "pnpm -r --if-present test"
   },
   "devDependencies": {
     "typescript": "^5.9.3"

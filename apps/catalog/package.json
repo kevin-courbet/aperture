@@ -4,14 +4,18 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "prestorybook": "pnpm --filter @kevin-courbet/aperture build",
     "storybook": "storybook dev -p 6006",
+    "prebuild": "pnpm --filter @kevin-courbet/aperture build",
     "build": "storybook build --output-dir storybook-static",
-    "build-storybook": "storybook build",
+    "build-storybook": "pnpm run build",
+    "pretypecheck": "pnpm --filter @kevin-courbet/aperture build",
     "typecheck": "tsc --noEmit",
+    "pretest": "pnpm --filter @kevin-courbet/aperture build",
     "test": "vitest run --project=storybook"
   },
   "dependencies": {
-    "@kevin-courbet/aperture": "*",
+    "@kevin-courbet/aperture": "workspace:*",
     "react": "^19.2.0",
     "react-dom": "^19.2.0"
   },

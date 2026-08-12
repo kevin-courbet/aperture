@@ -21,15 +21,15 @@ Read [VISION.md](VISION.md) for the product direction.
 Use Node.js 22 or later.
 
 ```sh
-npm install
-npm run dev
+pnpm install
+pnpm dev
 ```
 
 Validate changes:
 
 ```sh
-npm run typecheck
-npm run build
+pnpm typecheck
+pnpm build
 ```
 
 The repository contains:

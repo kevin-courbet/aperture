@@ -6,7 +6,7 @@ const preview: Preview = {
   tags: ['autodocs', 'test'],
   decorators: [
     (Story, context) => (
-      <div className={`catalog-canvas catalog-canvas--${String(context.args.theme ?? 'paper')}`} data-reduced-motion={String(context.parameters.reducedMotion ?? 'reduce')}>
+      <div className={context.parameters.pageStyle === 'demo' ? 'catalog-canvas catalog-canvas--demo' : `catalog-canvas catalog-canvas--${String(context.args.theme ?? 'paper')}`} data-reduced-motion={String(context.parameters.reducedMotion ?? 'reduce')}>
         <Story />
       </div>
     ),
@@ -27,7 +27,7 @@ const preview: Preview = {
     },
     options: {
       storySort: {
-        order: ['Foundations', 'Charts', 'Interactions', 'States'],
+        order: ['Demo', 'Foundations', 'Charts', 'Interactions', 'States'],
       },
     },
     viewport: {
