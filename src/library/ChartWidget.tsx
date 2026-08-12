@@ -10,7 +10,7 @@ const WidgetContext = createContext<WidgetContextValue | null>(null)
 
 function useWidgetContext() {
   const context = useContext(WidgetContext)
-  if (!context) throw new Error('ChartWidget parts must be inside ChartWidget.Root.')
+  if (!context) throw new Error('ChartWidget parts must be children of ChartWidget.Root.')
   return context
 }
 

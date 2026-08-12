@@ -10,29 +10,29 @@ const defaultIcons: IconSet = {
   calendar: CalendarDays,
 }
 
-export const frenchMessages: Messages = {
+export const englishMessages: Messages = {
   controls: {
-    fullscreen: 'Plein écran',
-    exitFullscreen: 'Quitter le plein écran',
-    showTable: 'Afficher le tableau',
-    hideTable: 'Masquer le tableau',
-    range: 'Période',
-    series: 'Série',
-    goal: 'Objectif',
+    fullscreen: 'Enter full screen',
+    exitFullscreen: 'Exit full screen',
+    showTable: 'Show table',
+    hideTable: 'Hide table',
+    range: 'Time range',
+    series: 'Series',
+    goal: 'Goal',
   },
-  dataTable: { caption: 'Valeurs exactes du graphique', date: 'Mois', value: 'Valeur', target: 'Objectif' },
+  dataTable: { caption: 'Exact chart values', date: 'Date', value: 'Value', target: 'Goal' },
   states: {
-    loading: 'Chargement des données…',
-    empty: 'Aucune donnée pour cette période.',
-    singleObservation: 'Observation unique',
-    trendRequiresTwo: 'Une tendance nécessite au moins deux observations.',
+    loading: 'Data is loading.',
+    empty: 'There is no data for this time range.',
+    singleObservation: 'One result',
+    trendRequiresTwo: 'A trend needs two or more results.',
   },
-  ranges: { '1M': '1 mois', '3M': '3 mois', '6M': '6 mois', All: 'Tout' },
+  ranges: { '1M': '1 month', '3M': '3 months', '6M': '6 months', All: 'All' },
   errors: {
-    invalidValue: 'La donnée doit être un nombre fini.',
-    invalidDate: 'La date doit être valide.',
-    missingFullscreenTarget: 'Le conteneur du graphique est indisponible.',
-    fullscreenFailed: 'Le plein écran a échoué.',
+    invalidValue: 'The value must be a finite number.',
+    invalidDate: 'The date is not valid.',
+    missingFullscreenTarget: 'The full-screen target is not available.',
+    fullscreenFailed: 'The full-screen request failed.',
   },
 }
 
@@ -64,6 +64,6 @@ export function ChartProvider({ locale, timeZone, messages, icons, children }: C
 
 export function useChartConfig() {
   const context = useContext(ChartContext)
-  if (!context) throw new Error('ChartProvider is required around chart components.')
+  if (!context) throw new Error('Chart components must be children of ChartProvider.')
   return context
 }
