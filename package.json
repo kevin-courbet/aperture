@@ -1,0 +1,29 @@
+{
+  "name": "aperture",
+  "private": true,
+  "version": "0.0.0",
+  "description": "An opinionated React chart design system built on TanStack Charts.",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "typecheck": "tsc --noEmit",
+    "build": "vite build"
+  },
+  "dependencies": {
+    "@tanstack/charts": "0.11.1",
+    "d3-scale": "^4.0.2",
+    "lucide-react": "^0.468.0",
+    "react": "^19.0.0",
+    "react-aria-components": "^1.6.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@types/d3-scale": "^4.0.8",
+    "@vitejs/plugin-react": "^4.3.4",
+    "typescript": "^5.7.2",
+    "vite": "^6.0.5"
+  }
+}
