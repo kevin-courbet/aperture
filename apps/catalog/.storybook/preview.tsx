@@ -14,7 +14,7 @@ const preview: Preview = {
   parameters: {
     a11y: {
       test: 'error',
-      config: {
+      options: {
         runOnly: {
           type: 'tag',
           values: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'],

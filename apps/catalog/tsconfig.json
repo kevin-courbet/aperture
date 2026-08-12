@@ -14,7 +14,13 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
-    "jsx": "react-jsx"
+    "jsx": "react-jsx",
+    "baseUrl": ".",
+    "paths": {
+      "@kevin-courbet/aperture": ["../../packages/charts/src/index.ts"],
+      "@kevin-courbet/aperture/styles.css": ["../../packages/charts/src/styles.css"],
+      "@kevin-courbet/aperture/tanstack": ["../../packages/charts/src/tanstack.tsx"]
+    }
   },
   "include": [".storybook", "src", "stories", "vite.config.ts", "vitest.config.ts"]
 }

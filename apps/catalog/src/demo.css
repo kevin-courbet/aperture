@@ -2,12 +2,12 @@
   min-height: 100vh;
   padding: 0;
   color: #13243a;
-  background: #f8f8f5;
+  background: #fafbfc;
 }
 
 .demo-page {
-  --demo-paper: #f8f8f5;
-  --demo-surface: #fffffc;
+  --demo-paper: #fafbfc;
+  --demo-surface: #fefefe;
   --demo-ink: #13243a;
   --demo-muted: #586879;
   --demo-line: #1769c2;

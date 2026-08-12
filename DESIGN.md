@@ -102,10 +102,9 @@ These first-party sources informed the adapted rules:
 
 ## Aesthetic Direction
 
-Extend the original light adopter page. Use spacious editorial composition,
-IBM Plex Sans, navy text, a clear blue chart accent, a gold reference accent,
-thin rules, and restrained controls. Do not replace this direction with the
-paper, red, and green technical-catalog theme.
+Use spacious editorial composition, IBM Plex Sans, navy text, neutral off-white
+surfaces, a clear blue chart accent, a gold reference accent, thin rules, and
+restrained controls. Do not use cream or beige surfaces.
 
 ## Design Principles
 

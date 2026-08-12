@@ -1,9 +1,9 @@
 :root {
-  --catalog-paper: #f7f2e7;
-  --catalog-paper-deep: #e8e2d4;
-  --catalog-ink: #28261f;
-  --catalog-muted: #645f54;
-  --catalog-rule: #b9af9d;
+  --catalog-paper: #fdfdfc;
+  --catalog-paper-deep: #f4f5f6;
+  --catalog-ink: #20242a;
+  --catalog-muted: #5f6670;
+  --catalog-rule: #cdd2d8;
   --catalog-red: #9d3518;
   --catalog-green: #1d5b55;
   --catalog-focus: #0c6380;
@@ -20,11 +20,11 @@ button { color: inherit; }
 button:focus-visible, [tabindex]:focus-visible { outline: 3px solid var(--catalog-focus); outline-offset: 3px; }
 
 .catalog-canvas { min-height: 100vh; padding: clamp(1rem, 4vw, 3.5rem); background: repeating-linear-gradient(90deg, transparent 0, transparent calc(25% - 1px), color-mix(in srgb, var(--catalog-rule) 26%, transparent) 25%); }
-.catalog-canvas--night { --catalog-paper: #22241f; --catalog-paper-deep: #171914; --catalog-ink: #ede8dc; --catalog-muted: #c3bbab; --catalog-rule: #55584e; --catalog-red: #e58d70; --catalog-green: #78bcb1; }
+.catalog-canvas--night { --catalog-paper: #23262b; --catalog-paper-deep: #181a1e; --catalog-ink: #f2f4f7; --catalog-muted: #c2c7cf; --catalog-rule: #555b64; --catalog-red: #e58d70; --catalog-green: #78bcb1; --catalog-focus: #78bcb1; }
 .catalog-canvas h1, .catalog-canvas h2, .catalog-canvas p { margin-block-start: 0; }
 
 .catalog-sheet { container-type: inline-size; margin-inline: auto; background: var(--catalog-paper); color: var(--catalog-ink); border: 1px solid var(--catalog-rule); box-shadow: 8px 8px 0 color-mix(in srgb, var(--catalog-rule) 45%, transparent); }
-.catalog-sheet--night { --catalog-paper: #22241f; --catalog-ink: #ede8dc; --catalog-muted: #c3bbab; --catalog-rule: #62655a; }
+.catalog-sheet--night { --catalog-paper: #23262b; --catalog-ink: #f2f4f7; --catalog-muted: #c2c7cf; --catalog-rule: #626872; }
 .catalog-sheet__header { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: clamp(1rem, 4vw, 4rem); padding: clamp(1.25rem, 4vw, 2.8rem); border-top: 7px solid var(--catalog-red); border-bottom: 1px solid var(--catalog-rule); }
 .catalog-sheet__header h2 { max-width: 17ch; margin-block: .45rem .7rem; font-size: clamp(1.8rem, 5cqi, 3.6rem); line-height: .95; letter-spacing: -.055em; }
 .catalog-sheet__header p:not(.catalog-index) { max-width: 57ch; color: var(--catalog-muted); line-height: 1.5; }
@@ -42,14 +42,14 @@ button:focus-visible, [tabindex]:focus-visible { outline: 3px solid var(--catalo
 .catalog-guidance ol { margin: 0; padding: 0; counter-reset: protocol; list-style: none; }
 .catalog-guidance li { display: grid; grid-template-columns: 2.2rem 1fr; gap: 1rem; padding: 1rem 0; border-top: 1px solid var(--catalog-rule); line-height: 1.45; }
 .catalog-guidance li::before { counter-increment: protocol; content: '0' counter(protocol); color: var(--catalog-red); font: 500 .8rem 'IBM Plex Sans Variable', 'IBM Plex Sans', sans-serif; }
-.catalog-guidance aside, .catalog-comparison aside { margin-top: 2rem; padding: 1rem; background: var(--catalog-green); color: #f7f2e7; font-weight: 600; }
+.catalog-guidance aside, .catalog-comparison aside { margin-top: 2rem; padding: 1rem; background: var(--catalog-green); color: #f7f9fa; font-weight: 600; }
 
 .catalog-comparison, .catalog-state-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(1rem, 3vw, 2rem); max-width: 1280px; margin-inline: auto; }
 .catalog-comparison > div > p { max-width: 55ch; margin: 1.2rem 0; line-height: 1.5; }
 .catalog-comparison aside { grid-column: 1 / -1; margin: 0; }
 .catalog-linked > .catalog-sheet { border: 0; box-shadow: none; }
 .catalog-linked .catalog-sheet__header > button, .catalog-toolbar button, .catalog-sheet__header > button { align-self: start; min-height: 2.65rem; padding: .55rem .8rem; border: 1px solid currentColor; background: transparent; cursor: pointer; }
-.catalog-selection { display: flex; flex-wrap: wrap; gap: .5rem 1.2rem; align-items: baseline; padding: 1rem clamp(1.25rem, 4vw, 2.8rem); background: var(--catalog-green); color: #f7f2e7; }
+.catalog-selection { display: flex; flex-wrap: wrap; gap: .5rem 1.2rem; align-items: baseline; padding: 1rem clamp(1.25rem, 4vw, 2.8rem); background: var(--catalog-green); color: #f7f9fa; }
 .catalog-selection strong { font-size: 1.4rem; }
 .catalog-table-wrap { overflow-x: auto; padding: clamp(1rem, 4vw, 2.8rem); border-top: 1px solid var(--catalog-rule); }
 .catalog-table-wrap table { width: 100%; border-collapse: collapse; }
