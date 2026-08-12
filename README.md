@@ -4,7 +4,7 @@ Aperture is a React chart design system built on TanStack Charts.
 It gives developers and coding agents one chart API for React applications and
 standalone pages.
 
-The current catalog demonstrates:
+The Storybook catalog demonstrates:
 
 - Composable widgets and controls.
 - Strict TypeScript contracts.
@@ -32,8 +32,14 @@ npm run typecheck
 npm run build
 ```
 
-TanStack Charts is pinned to `0.11.1`. Its API is pre-alpha.
-The current repository is a catalog. It is not a published component package.
+The repository contains:
+
+- `packages/charts`: the `@kevin-courbet/aperture` React package.
+- `apps/catalog`: the Storybook design and behavior catalog.
+
+TanStack Charts is pinned to `0.11.1`. Its API is pre-alpha. Common Aperture
+exports do not expose TanStack types. Use `@kevin-courbet/aperture/tanstack`
+only for advanced TanStack integration.
 
 ## License
 

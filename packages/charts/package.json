@@ -1,0 +1,54 @@
+{
+  "name": "@kevin-courbet/aperture",
+  "version": "0.1.0",
+  "description": "Accurate and accessible React charts built on TanStack Charts.",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "style": "./dist/styles.css",
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "browser": "./dist/browser.js",
+      "import": "./dist/index.js"
+    },
+    "./styles.css": "./dist/styles.css",
+    "./tanstack": {
+      "types": "./dist/tanstack.d.ts",
+      "import": "./dist/tanstack.js"
+    }
+  },
+  "scripts": {
+    "build": "vite build && tsc -p tsconfig.build.json --emitDeclarationOnly",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "dependencies": {
+    "@fontsource-variable/ibm-plex-sans": "^5.2.8",
+    "@tanstack/charts": "0.11.1",
+    "d3-geo": "^3.1.1",
+    "d3-scale": "^4.0.2",
+    "lucide-react": "^0.468.0",
+    "react-aria-components": "^1.20.0"
+  },
+  "devDependencies": {
+    "@types/d3-geo": "^3.1.0",
+    "@types/d3-scale": "^4.0.9",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "typescript": "^5.9.3",
+    "vite": "^6.4.3"
+  }
+}
