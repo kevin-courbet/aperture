@@ -3,7 +3,8 @@
 Use ASD-STE100 Simplified Technical English for all user-facing text and docs.
 Keep text concise. Do not add text that does not explain behavior, limits, or use.
 
-Read `VISION.md` before product, API, or design work.
+Read `VISION.md` before product, API, or design work. Also read `DESIGN.md`
+before design or public communication work.
 
 Use React 19, strict TypeScript, React Aria Components, and the pinned TanStack
 Charts version. Use TanStack Hotkeys for Aperture keyboard shortcuts.
