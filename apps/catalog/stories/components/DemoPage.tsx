@@ -249,10 +249,11 @@ export function DemoPage() {
     <ChartProvider locale="en-GB" timeZone="UTC">
       <main className="demo-page">
         <header className="demo-hero">
-          <div className="demo-kicker"><span>Aperture</span> React chart design system</div>
-          <h1>One chart API.<br /><em>Accurate by default.</em></h1>
-          <p>Typed React charts with accessible exact values, explicit controls, and one visual language for applications and standalone pages.</p>
-          <div className="demo-meta"><span>React 19 and TypeScript</span><span>TanStack Charts 0.11.1</span><span>SVG and Canvas</span></div>
+          <div className="demo-kicker"><span>Aperture</span> React chart component library</div>
+          <h1>React charts.<br /><em>Composable widgets.</em></h1>
+          <p>Typed chart components, widget slots, controls, exact-value tables, semantic CSS tokens, and replaceable icons.</p>
+          <div className="demo-meta"><span>React integration</span><span>Composable controls</span><span>Accessible exact values</span></div>
+          <p className="demo-planned">Planned: standalone HTML generation for coding agents and chatbots.</p>
         </header>
 
         <section className="demo-section" aria-labelledby="demo-widget-heading">
@@ -282,7 +283,7 @@ export function DemoPage() {
           <ThemeIntegration />
         </section>
 
-        <footer className="demo-footer"><span>Aperture chart design system</span><span>Adopter overview · 2026</span></footer>
+        <footer className="demo-footer"><span>Aperture React chart component library</span><span>Adopter overview · 2026</span></footer>
       </main>
     </ChartProvider>
   )

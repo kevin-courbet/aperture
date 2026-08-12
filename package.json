@@ -2,7 +2,7 @@
   "name": "aperture-workspace",
   "private": true,
   "version": "0.0.0",
-  "description": "An opinionated React chart design system built on TanStack Charts.",
+  "description": "A React chart component and widget library built on TanStack Charts.",
   "license": "MIT",
   "type": "module",
   "packageManager": "pnpm@11.9.0",

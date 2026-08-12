@@ -2,9 +2,16 @@
 
 ## Users
 
-The adopter demo is for React developers and coding agents that evaluate a
-chart library. They need to understand the product, inspect a realistic widget,
-compare major chart families, and see how Aperture matches a host design system.
+The adopter demo is for React developers and coding agents that need a reusable
+chart experience across projects. They need to understand
+the two adoption paths, inspect a realistic widget, compare major chart
+families, and see how Aperture matches a host design system.
+
+The two adoption paths are:
+
+- React library integration for larger applications, implemented in this repository.
+- Planned standalone HTML generation for coding agents and chatbots that create
+  one-off reports and analysis output.
 
 ## Brand Personality
 
@@ -21,6 +28,8 @@ paper, red, and green technical-catalog theme.
 ## Design Principles
 
 - Lead with one realistic product widget and the code that creates it.
+- State the complete chart experience as the product, not API breadth alone.
+- Distinguish the available React library from planned standalone generation.
 - Show breadth through a compact chart gallery, not a dashboard grid.
 - Explain host-theme integration with semantic tokens and replaceable icons.
 - Keep exact values, units, sources, and accessible controls near each chart.

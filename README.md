@@ -1,8 +1,16 @@
 # Aperture
 
-Aperture is a React chart design system built on TanStack Charts.
-It gives developers and coding agents one chart API for React applications and
-standalone pages.
+Aperture is a React chart component library built on TanStack Charts. It
+exports typed charts, widget slots, controls, exact-value tables, semantic CSS
+tokens, and replaceable icons.
+
+The React library is implemented in this repository. Its API is not stable and
+the package is not published.
+
+- Integrate composable React widgets into an application and match its design system.
+
+Standalone HTML generation is planned for coding agents and chatbots that
+create one-off reports and analysis output.
 
 The Storybook catalog demonstrates:
 

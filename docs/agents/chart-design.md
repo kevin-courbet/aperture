@@ -48,5 +48,6 @@ The common API must include default styles and behavior.
 
 ## Contexts
 
-Use the same chart components in React applications and standalone pages.
-Do not make report generation or build-tool selection part of chart design.
+Use the same chart semantics, quality rules, and reader experience in React
+applications. Planned standalone HTML generation must preserve these rules.
+Keep report layout and build-tool selection separate from chart design.
