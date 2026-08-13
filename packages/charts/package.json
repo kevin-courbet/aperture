@@ -3,6 +3,30 @@
   "version": "0.1.0",
   "description": "React chart components and composable widgets built on TanStack Charts.",
   "license": "MIT",
+  "author": "Kevin Courbet",
+  "homepage": "https://github.com/kevin-courbet/aperture#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kevin-courbet/aperture.git",
+    "directory": "packages/charts"
+  },
+  "bugs": {
+    "url": "https://github.com/kevin-courbet/aperture/issues"
+  },
+  "keywords": [
+    "charts",
+    "data-visualization",
+    "react",
+    "tanstack"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": false,
+    "registry": "https://registry.npmjs.org/"
+  },
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -29,6 +53,7 @@
   },
   "scripts": {
     "build": "vite build && tsc -p tsconfig.build.json --emitDeclarationOnly",
+    "prepack": "pnpm build",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "peerDependencies": {

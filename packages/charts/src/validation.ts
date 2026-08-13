@@ -1,4 +1,4 @@
-import type { NumericPoint } from './types'
+import type { NumericPoint } from './types.js'
 
 export function finite(value: number, message: string): number {
   if (!Number.isFinite(value)) throw new TypeError(message)

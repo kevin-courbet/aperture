@@ -30,8 +30,9 @@ Aperture currently implements:
 For React integration, the host application manages data access, business
 rules, and controlled state.
 
-The React package is implemented in this repository. Its API is not stable and
-the package is not published.
+The React package is prepared for public releases as
+`@kevin-courbet/aperture`. Its API is unstable while Aperture is in the `0.x`
+release series.
 
 ## Application Integration
 

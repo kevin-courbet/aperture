@@ -4,8 +4,14 @@ Aperture is a React chart component library built on TanStack Charts. It
 exports typed charts, widget slots, controls, exact-value tables, semantic CSS
 tokens, and replaceable icons.
 
-The React library is implemented in this repository. Its API is not stable and
-the package is not published.
+The public React package name is `@kevin-courbet/aperture`. Its API is unstable
+while Aperture is in the `0.x` release series.
+
+Install a published release:
+
+```sh
+pnpm add @kevin-courbet/aperture react react-dom
+```
 
 - Integrate composable React widgets into an application and match its design system.
 
@@ -36,9 +42,12 @@ pnpm dev
 Validate changes:
 
 ```sh
-pnpm typecheck
-pnpm build
+pnpm validate
 ```
+
+Package releases run on `beast`. IQ validates and signs the exact candidate
+commit before it lands. Publication starts only from the clean landed
+`origin/main` commit. See [Release](docs/release.md).
 
 The repository contains:
 

@@ -2,10 +2,10 @@ import type { ReactNode } from 'react'
 import type { ChartValue, DomChartDefinition } from '@tanstack/charts'
 import { Chart as SvgChart } from '@tanstack/charts/react'
 import { Chart as CanvasChart } from '@tanstack/charts/react/canvas'
-import { useChartConfiguration } from './provider'
-import { ExactValues, SemanticLegend, type ExactValueModel, type SemanticLegendItem } from './exact-values'
-import type { ChartDataState, CommonChartProps, SingletonChartDataState } from './types'
-import { positiveHeight } from './validation'
+import { useChartConfiguration } from './provider.js'
+import { ExactValues, SemanticLegend, type ExactValueModel, type SemanticLegendItem } from './exact-values.js'
+import type { ChartDataState, CommonChartProps, SingletonChartDataState } from './types.js'
+import { positiveHeight } from './validation.js'
 
 export const defaultChartHeight = 320
 

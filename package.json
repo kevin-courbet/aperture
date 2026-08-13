@@ -14,7 +14,13 @@
     "storybook": "pnpm --filter @aperture/catalog storybook",
     "typecheck": "pnpm -r --if-present typecheck",
     "build": "pnpm -r --if-present build",
-    "test": "pnpm -r --if-present test"
+    "test": "pnpm -r --if-present test",
+    "package:check": "node scripts/check-package.mjs",
+    "validate": "pnpm typecheck && pnpm build && pnpm test && pnpm package:check",
+    "signoff:iq": "bash scripts/signoff-iq.sh",
+    "signoff:install": "bash scripts/install-signoff.sh install",
+    "signoff:check": "bash scripts/install-signoff.sh check",
+    "release": "bash scripts/release.sh"
   },
   "devDependencies": {
     "typescript": "^5.9.3"

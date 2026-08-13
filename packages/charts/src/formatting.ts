@@ -1,6 +1,6 @@
 import type { ChartTooltipInput, ChartValue } from '@tanstack/charts'
 import { tooltip as tooltipExtension } from '@tanstack/charts/tooltip'
-import { useChartConfiguration } from './provider'
+import { useChartConfiguration } from './provider.js'
 
 export interface ChartFormatters {
   readonly date: (value: Date) => string

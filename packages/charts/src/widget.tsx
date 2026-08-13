@@ -8,7 +8,7 @@ import type {
   ChartSlot,
   ChartSlotClassNames,
   ChartWidgetSlotProps,
-} from './types'
+} from './types.js'
 
 interface WidgetContextValue {
   readonly tableVisible: boolean

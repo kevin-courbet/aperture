@@ -11,7 +11,7 @@ export {
   ScatterChart,
   StackedAreaChart,
   WaterfallChart,
-} from './cartesian'
+} from './cartesian.js'
 export type {
   AreaChartProps,
   AreaDatum,
@@ -39,7 +39,7 @@ export type {
   VerticalBarDatum,
   WaterfallChartProps,
   WaterfallDatum,
-} from './cartesian'
+} from './cartesian.js'
 export {
   BoxPlotChart,
   BeeswarmChart,
@@ -47,7 +47,7 @@ export {
   EcdfChart,
   RidgelineChart,
   ViolinChart,
-} from './distributions'
+} from './distributions.js'
 export type {
   BeeswarmChartProps,
   BeeswarmDatum,
@@ -60,8 +60,8 @@ export type {
   EcdfDatum,
   RidgelineChartProps,
   ViolinChartProps,
-} from './distributions'
-export { DonutChart, GaugeChart, RadarChart, SunburstChart } from './polar-charts'
+} from './distributions.js'
+export { DonutChart, GaugeChart, RadarChart, SunburstChart } from './polar-charts.js'
 export type {
   DonutChartProps,
   DonutDatum,
@@ -71,8 +71,8 @@ export type {
   RadarChartProps,
   RadarDatum,
   SunburstChartProps,
-} from './polar-charts'
-export { NetworkChart, SankeyChart, TreemapChart } from './hierarchy-network'
+} from './polar-charts.js'
+export { NetworkChart, SankeyChart, TreemapChart } from './hierarchy-network.js'
 export type {
   NetworkChartProps,
   NetworkData,
@@ -83,8 +83,8 @@ export type {
   SankeyLinkDatum,
   SankeyNodeDatum,
   TreemapChartProps,
-} from './hierarchy-network'
-export { ChoroplethChart, RouteMapChart } from './maps'
+} from './hierarchy-network.js'
+export { ChoroplethChart, RouteMapChart } from './maps.js'
 export type {
   ChoroplethChartProps,
   ChoroplethDatum,
@@ -94,30 +94,30 @@ export type {
   RouteDatum,
   RouteGeometry,
   RouteMapChartProps,
-} from './maps'
-export { ChartProvider, defaultIcons, englishMessages, useChartConfiguration } from './provider'
-export type { ChartProviderProps } from './provider'
-export { ChartStateBoundary, SingletonChartStateBoundary } from './surface'
-export type { ChartStateBoundaryProps, SingletonChartStateBoundaryProps } from './surface'
-export { ChartWidget, ExactValueTable, useChartWidget } from './widget'
+} from './maps.js'
+export { ChartProvider, defaultIcons, englishMessages, useChartConfiguration } from './provider.js'
+export type { ChartProviderProps } from './provider.js'
+export { ChartStateBoundary, SingletonChartStateBoundary } from './surface.js'
+export type { ChartStateBoundaryProps, SingletonChartStateBoundaryProps } from './surface.js'
+export { ChartWidget, ExactValueTable, useChartWidget } from './widget.js'
 export type {
   ChartWidgetRootProps,
   ExactValueColumn,
   ExactValueTableProps,
-} from './widget'
+} from './widget.js'
 export {
   DataTableControl,
   FullscreenControl,
   TimeRangeControl,
   ToggleControl,
-} from './controls'
+} from './controls.js'
 export type {
   FullscreenControlProps,
   TimeRangeControlProps,
   TimeRangeOption,
   ToggleControlProps,
-} from './controls'
-export { chartData } from './types'
+} from './controls.js'
+export { chartData } from './types.js'
 export type {
   ApertureIcon,
   ApertureIcons,
@@ -134,4 +134,4 @@ export type {
   NumericPoint,
   SingletonChartDataState,
   PartialApertureMessages,
-} from './types'
+} from './types.js'

@@ -4,7 +4,7 @@ import type {
   ApertureIcons,
   ApertureMessages,
   PartialApertureMessages,
-} from './types'
+} from './types.js'
 
 export const englishMessages: ApertureMessages = {
   controls: {

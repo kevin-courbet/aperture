@@ -20,12 +20,12 @@ import { scaleBand } from '@tanstack/charts/scales/band'
 import { scaleLinear } from '@tanstack/charts/scales/linear'
 import { scalePoint } from '@tanstack/charts/scales/point'
 import { scaleLinear as scaleLinearColor, scaleUtc } from 'd3-scale'
-import { exactRow, exactValues, seriesLegend, type SemanticLegendItem } from './exact-values'
-import { dateAxis, localizedTooltip, numberAxis, useChartFormatters } from './formatting'
-import { useChartConfiguration } from './provider'
-import { ChartStateBoundary, ChartSurface } from './surface'
-import type { ChartDataState, CommonChartProps, CrosshairChartProps, NumericPoint } from './types'
-import { finite, increasingDomain, numericPoint, positiveRadius, validCandlestick, validDate, validErrorInterval, validHistogramBin, validRange } from './validation'
+import { exactRow, exactValues, seriesLegend, type SemanticLegendItem } from './exact-values.js'
+import { dateAxis, localizedTooltip, numberAxis, useChartFormatters } from './formatting.js'
+import { useChartConfiguration } from './provider.js'
+import { ChartStateBoundary, ChartSurface } from './surface.js'
+import type { ChartDataState, CommonChartProps, CrosshairChartProps, NumericPoint } from './types.js'
+import { finite, increasingDomain, numericPoint, positiveRadius, validCandlestick, validDate, validErrorInterval, validHistogramBin, validRange } from './validation.js'
 
 const chartColors = [
   'var(--aperture-chart-1)',

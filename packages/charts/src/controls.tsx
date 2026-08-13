@@ -6,9 +6,9 @@ import {
   ToggleButtonGroup,
   type Selection,
 } from 'react-aria-components'
-import { useChartConfiguration } from './provider'
-import type { ApertureIcon } from './types'
-import { useChartWidget } from './widget'
+import { useChartConfiguration } from './provider.js'
+import type { ApertureIcon } from './types.js'
+import { useChartWidget } from './widget.js'
 
 export function DataTableControl() {
   const { messages, icons } = useChartConfiguration()

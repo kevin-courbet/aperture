@@ -13,12 +13,12 @@ import {
 } from '@tanstack/charts/polar'
 import { scaleLinear } from '@tanstack/charts/scales/linear'
 import { scalePoint } from '@tanstack/charts/scales/point'
-import { exactRow, exactValues, seriesLegend } from './exact-values'
-import { localizedTooltip, useChartFormatters } from './formatting'
-import { useChartConfiguration } from './provider'
-import { ChartStateBoundary, ChartSurface, SingletonChartStateBoundary } from './surface'
-import type { ChartDataState, CommonChartProps, SingletonChartDataState } from './types'
-import { bounded, finite, increasingDomain, validDonutValues } from './validation'
+import { exactRow, exactValues, seriesLegend } from './exact-values.js'
+import { localizedTooltip, useChartFormatters } from './formatting.js'
+import { useChartConfiguration } from './provider.js'
+import { ChartStateBoundary, ChartSurface, SingletonChartStateBoundary } from './surface.js'
+import type { ChartDataState, CommonChartProps, SingletonChartDataState } from './types.js'
+import { bounded, finite, increasingDomain, validDonutValues } from './validation.js'
 
 const colors = [
   'var(--aperture-chart-1)',

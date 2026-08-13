@@ -10,12 +10,12 @@ import {
 import { scaleBand } from '@tanstack/charts/scales/band'
 import { scaleLinear } from '@tanstack/charts/scales/linear'
 import { densityContour } from '@tanstack/charts/spatial/density'
-import { exactRow, exactValues, seriesLegend } from './exact-values'
-import { localizedTooltip, numberAxis, useChartFormatters } from './formatting'
-import { useChartConfiguration } from './provider'
-import { ChartStateBoundary, ChartSurface } from './surface'
-import type { ChartDataState, CommonChartProps } from './types'
-import { bounded, finite } from './validation'
+import { exactRow, exactValues, seriesLegend } from './exact-values.js'
+import { localizedTooltip, numberAxis, useChartFormatters } from './formatting.js'
+import { useChartConfiguration } from './provider.js'
+import { ChartStateBoundary, ChartSurface } from './surface.js'
+import type { ChartDataState, CommonChartProps } from './types.js'
+import { bounded, finite } from './validation.js'
 
 const colors = [
   'var(--aperture-chart-1)',

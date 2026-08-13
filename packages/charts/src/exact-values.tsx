@@ -1,7 +1,7 @@
 import { useId, useState, type ReactNode } from 'react'
-import { useChartFormatters } from './formatting'
-import { useChartConfiguration } from './provider'
-import type { AccessibleExactValueReplacement, NumericPoint } from './types'
+import { useChartFormatters } from './formatting.js'
+import { useChartConfiguration } from './provider.js'
+import type { AccessibleExactValueReplacement, NumericPoint } from './types.js'
 
 export type ExactValue = string | number | Date | null | NumericPoint
 
