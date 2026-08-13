@@ -8,7 +8,9 @@ expected_repo="kevin-courbet/aperture"
 expected_login="kevin-courbet"
 context="signoff/beast"
 registry="https://registry.npmjs.org/"
+token_entry="npm/aperture-beast-release"
 release_root=""
+npm_config=""
 
 fail() {
   printf 'release failed: %s\n' "$1" >&2
@@ -25,9 +27,27 @@ require_command hostname
 require_command jq
 require_command node
 require_command npm
+require_command pass
 require_command pnpm
 
+create_npm_config() {
+  [[ -z "$npm_config" ]] || fail "npm configuration already exists"
+  npm_config="$(mktemp "$runtime_directory/aperture-npmrc.XXXXXX")"
+  local npm_token
+  npm_token="$(pass show "$token_entry")" || fail "could not read $token_entry from pass"
+  [[ -n "$npm_token" && "$npm_token" != *$'\n'* ]] || fail "$token_entry must contain one token"
+  printf '//registry.npmjs.org/:_authToken=%s\n' "$npm_token" >"$npm_config"
+}
+
+remove_npm_config() {
+  if [[ -n "$npm_config" ]]; then
+    rm -f "$npm_config"
+    npm_config=""
+  fi
+}
+
 cleanup() {
+  remove_npm_config
   if [[ -n "$release_root" && -d "$release_root" ]]; then
     rm -rf "$release_root"
   fi
@@ -40,7 +60,13 @@ trap cleanup EXIT
 [[ "$(git -C "$repo_root" symbolic-ref --quiet --short HEAD)" == "main" ]] || fail "must run from main"
 [[ "$(git -C "$repo_root" remote get-url origin)" == "git@github.com:${expected_repo}.git" ]] || fail "origin must be $expected_repo"
 [[ "$(gh api user --jq .login)" == "$expected_login" ]] || fail "gh must use $expected_login"
-[[ "$(npm whoami --registry="$registry")" == "$expected_login" ]] || fail "npm must use $expected_login"
+
+runtime_directory="${XDG_RUNTIME_DIR:-/dev/shm}"
+[[ -d "$runtime_directory" ]] || fail "runtime directory does not exist: $runtime_directory"
+umask 077
+create_npm_config
+[[ "$(NPM_CONFIG_USERCONFIG="$npm_config" npm whoami --registry="$registry")" == "$expected_login" ]] || fail "npm must use $expected_login"
+remove_npm_config
 
 git -C "$repo_root" fetch origin '+refs/heads/main:refs/remotes/origin/main' --tags
 release_sha="$(git -C "$repo_root" rev-parse HEAD)"
@@ -96,10 +122,12 @@ git fetch origin '+refs/heads/main:refs/remotes/origin/main'
 
 if [[ -z "$existing_package_sha" ]]; then
   cd "$release_checkout/packages/charts"
+  create_npm_config
   set +e
-  npm publish --access public --registry="$registry"
+  NPM_CONFIG_USERCONFIG="$npm_config" npm publish --access public --registry="$registry"
   publish_status=$?
   set -e
+  remove_npm_config
 else
   publish_status=0
 fi

@@ -40,16 +40,23 @@ Run this command from the clean `main` integration checkout after IQ lands:
 pnpm release
 ```
 
-The command requires local npm authentication for `kevin-courbet`. It rejects
-a package version or tag that points to a different commit. A retry can finish
-a release that npm already records for the same landed commit. The command also
-requires `HEAD` to equal `origin/main` and requires trusted `signoff/beast`
-success on that exact SHA. It validates again, publishes the public package,
-verifies the npm `gitHead`, and pushes the annotated `v<version>` tag. Build and
-publication occur in an isolated checkout of the landed SHA.
+The command reads the npm granular access token from
+`pass show npm/aperture-beast-release`. The token must have read/write access
+only to the `@kevin-courbet` scope and must bypass 2FA for publication. The
+command writes it to a temporary mode-600 npm configuration and removes that
+file before it runs validation. It creates another temporary configuration only
+for publication and removes it immediately after npm returns.
 
-Use interactive authentication when npm credentials expire:
+The command rejects a package version or tag that points to a different commit.
+A retry can finish a release that npm already records for the same landed
+commit. It also requires `HEAD` to equal `origin/main` and requires trusted
+`signoff/beast` success on that exact SHA. It validates again, publishes the
+public package, verifies the npm `gitHead`, and pushes the annotated
+`v<version>` tag. Build and publication occur in an isolated checkout of the
+landed SHA.
+
+Replace the password-store entry when the token expires:
 
 ```sh
-npm login
+pass insert --force npm/aperture-beast-release
 ```
