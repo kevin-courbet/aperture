@@ -45,17 +45,6 @@ known diagnostics in one run. It does not render a chart.
 
 Example specifications are in `assets/examples/`.
 
-## Standalone Audit
-
-```sh
-bun "$SKILL_DIR/scripts/chart" audit-html report.html --delivery single-file --json
-bun "$SKILL_DIR/scripts/chart" audit-html report.html --delivery bundle --json
-```
-
-Bundle mode recursively verifies local HTML, CSS, and static JavaScript resource
-links. Single-file mode rejects external and relative runtime assets. The audit
-does not execute dynamic JavaScript to discover computed URLs.
-
 ## Storybook Adapter
 
 ```sh
@@ -75,8 +64,7 @@ APERTURE_MCP_URL=http://localhost:6006/mcp
 
 The CLI keeps Storybook optional. It discovers the available MCP tools before
 each operation and reports an unavailable service when the required tool is not
-present. Chart selection, specification validation, and standalone audits work
-without a server.
+present. Chart selection and specification validation work without a server.
 
 ## Future MCP Layer
 

@@ -18,5 +18,5 @@ pnpm build
 
 <!-- PROJECT-AGENTS-MD-START -->
 [Project Docs]|root: ./docs/agents|Aperture product and engineering guidance
-|chart-design.md: chart selection, data accuracy, accessibility, composition, themes, controls, standalone pages
+|chart-design.md: chart selection, data accuracy, accessibility, composition, themes, controls
 <!-- PROJECT-AGENTS-MD-END -->

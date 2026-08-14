@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted
+Amended by ADR 0005
 
 ## Decision
 
@@ -20,6 +20,6 @@ The public repository is the canonical source for the skill, its references,
 schemas, assets, and validation CLI. Global agent configuration does not keep a
 second copy or load the skill automatically.
 
-The skill supports React chart work with Aperture and standalone HTML report
-work. Standalone report creation remains an agent workflow until Aperture
-provides a standalone renderer.
+The original decision also assigned standalone report work to this skill. ADR
+0005 moves report composition and generation to the separate Reports library
+and skill.

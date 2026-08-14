@@ -49,5 +49,5 @@ The common API must include default styles and behavior.
 ## Contexts
 
 Use the same chart semantics, quality rules, and reader experience in React
-applications. Planned standalone HTML generation must preserve these rules.
-Keep report layout and build-tool selection separate from chart design.
+applications and in Reports compositions. Keep report layout, narrative, and
+build-tool selection in `@kevin-courbet/reports`.

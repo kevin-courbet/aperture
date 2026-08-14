@@ -253,7 +253,6 @@ export function DemoPage() {
           <h1>React charts.<br /><em>Composable widgets.</em></h1>
           <p>Typed chart components, widget slots, controls, exact-value tables, semantic CSS tokens, and replaceable icons.</p>
           <div className="demo-meta"><span>React integration</span><span>Composable controls</span><span>Accessible exact values</span></div>
-          <p className="demo-planned">Planned: standalone HTML generation for coding agents and chatbots.</p>
         </header>
 
         <section className="demo-section" aria-labelledby="demo-widget-heading">

@@ -62,8 +62,6 @@
 .demo-hero > p { max-width: 700px; color: var(--demo-muted); font-size: clamp(1.1rem, 2vw, 1.42rem); line-height: 1.5; }
 .demo-meta { display: flex; flex-wrap: wrap; gap: 1rem 1.7rem; margin-top: 3.2rem; }
 .demo-meta span { padding-left: .75rem; border-left: 2px solid var(--demo-line); }
-.demo-planned { margin-top: 1rem !important; color: var(--demo-muted); font-size: .78rem; font-weight: 550; letter-spacing: .04em; }
-
 .demo-section { padding-block: clamp(5rem, 9vw, 8rem); border-top: 1px solid var(--demo-rule); }
 .demo-section-intro { display: grid; grid-template-columns: .7fr 1.4fr 1fr; gap: clamp(1.5rem, 4vw, 4rem); align-items: start; margin-bottom: 3.5rem; }
 .demo-eyebrow { color: var(--demo-line); font-size: .72rem; font-weight: 700; letter-spacing: .13em; text-transform: uppercase; }

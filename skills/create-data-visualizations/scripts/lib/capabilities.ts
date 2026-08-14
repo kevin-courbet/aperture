@@ -1,6 +1,6 @@
 export const capabilities = {
   name: 'create-data-visualizations',
-  version: '1.0.0',
+  version: '2.0.0',
   commands: [
     {
       name: 'capabilities',
@@ -47,33 +47,7 @@ export const capabilities = {
           type: 'object',
           additionalProperties: false,
           required: ['file', 'schema'],
-          properties: { file: { type: 'string' }, schema: { const: 'chart-spec@1.0' } },
-        },
-      },
-      requires: ['Bun runtime'],
-    },
-    {
-      name: 'audit-html',
-      description: 'Audit standalone HTML structure, accessibility, and delivery integrity.',
-      input: {
-        type: 'object',
-        additionalProperties: false,
-        required: ['file', 'delivery'],
-        properties: {
-          file: { type: 'string' },
-          delivery: { enum: ['single-file', 'bundle'] },
-        },
-      },
-      output: {
-        envelopeSchema: 'command-result',
-        dataSchema: {
-          type: 'object',
-          additionalProperties: false,
-          required: ['file', 'delivery'],
-          properties: {
-            file: { type: 'string' },
-            delivery: { enum: ['single-file', 'bundle'] },
-          },
+          properties: { file: { type: 'string' }, schema: { const: 'chart-spec@2.0' } },
         },
       },
       requires: ['Bun runtime'],
@@ -109,6 +83,6 @@ export const capabilities = {
     'Validate a chart specification for non-trivial work.',
     'Use Aperture for React when available.',
     'Use Storybook tools after React visual changes.',
-    'Audit standalone HTML before handoff.',
+    'Redirect standalone report work to create-data-reports.',
   ],
 } as const

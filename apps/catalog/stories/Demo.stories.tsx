@@ -9,7 +9,7 @@ const meta = {
     controls: { disable: true },
     layout: 'fullscreen',
     pageStyle: 'demo',
-    docs: { description: { component: 'An adopter overview of the Aperture React chart experience and its planned standalone HTML generation path.' } },
+    docs: { description: { component: 'An adopter overview of the Aperture React chart experience.' } },
   },
 } satisfies Meta<typeof DemoPage>
 
