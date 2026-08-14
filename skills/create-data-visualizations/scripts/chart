@@ -4,7 +4,6 @@ import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { capabilities } from './lib/capabilities'
 import { CliInputError, commandResult, diagnostic, ServiceUnavailableError, type CommandResult } from './lib/contracts'
-import { auditHtml } from './lib/html'
 import { validateJsonSchema } from './lib/json-schema'
 import { validateSpecSemantics } from './lib/spec'
 import { callStorybook } from './lib/storybook'
@@ -25,7 +24,6 @@ Commands:
   capabilities
   schema <chart-spec|command-result|capabilities|diagnostic>
   validate-spec <file|->
-  audit-html <file> --delivery <single-file|bundle>
   storybook status
   storybook instructions
   storybook list [--with-story-ids]
@@ -119,17 +117,7 @@ try {
       const schema = JSON.parse(await readFile(resolve(skillDir, 'schemas', schemaNames['chart-spec']), 'utf8'))
       const schemaDiagnostics = validateJsonSchema(spec, schema)
       const diagnostics = [...schemaDiagnostics, ...validateSpecSemantics(spec)]
-      output(commandResult(command, { file, schema: 'chart-spec@1.0' }, diagnostics))
-      break
-    }
-    case 'audit-html': {
-      const file = args[1]
-      const deliveryFlag = args.indexOf('--delivery')
-      const delivery = deliveryFlag >= 0 ? args[deliveryFlag + 1] : undefined
-      if (args.length !== 4 || deliveryFlag !== 2 || args.filter((value) => value === '--delivery').length !== 1 || !file || !['single-file', 'bundle'].includes(String(delivery))) invalid(command, 'Use audit-html <file> --delivery single-file|bundle.')
-      const html = await readFile(file, 'utf8')
-      const diagnostics = await auditHtml(html, resolve(file), delivery as 'single-file' | 'bundle')
-      output(commandResult(command, { file: resolve(file), delivery }, diagnostics))
+      output(commandResult(command, { file, schema: 'chart-spec@2.0' }, diagnostics))
       break
     }
     case 'storybook':

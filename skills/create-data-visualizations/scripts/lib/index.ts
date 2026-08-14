@@ -1,7 +1,6 @@
 export { capabilities } from './capabilities'
 export { commandResult, diagnostic, resultSchemaVersion } from './contracts'
 export type { CommandResult, Diagnostic, Severity } from './contracts'
-export { auditHtml } from './html'
 export { validateJsonSchema } from './json-schema'
 export { validateSpecSemantics } from './spec'
 export { callStorybook } from './storybook'

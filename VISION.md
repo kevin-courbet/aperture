@@ -40,19 +40,15 @@ Applications use Aperture as a React library. Composable widget parts provide
 the chart experience, while semantic tokens, structural slots, and replaceable icons
 let the result match the application design system.
 
-## Planned Standalone HTML
+## Report Integration
 
-Standalone HTML generation is a planned product surface. Coding agents and
-chatbots will use it to create charts for one-off reports and analysis output.
-This path must make a complete, accessible result easy to produce without a new
-application or repeated chart-design decisions.
+Standalone report generation belongs to `@kevin-courbet/reports`. Reports
+composes Aperture through its public React API and owns report specifications,
+narrative structure, SSR, hydration, asset bundling, and output formats.
 
-The standalone artifact, asset, and local-state contract is not decided. Do not
-present standalone generation as available until Aperture implements and
-validates that contract.
-
-The planned path must use the same chart semantics, quality rules, and reader
-interaction patterns as the React API.
+Aperture supplies the chart semantics, controls, exact values, and reader
+interaction patterns used in those reports. Aperture does not provide a report
+renderer or a generic report-building API.
 
 ## Developer Experience
 
@@ -66,7 +62,8 @@ interaction patterns as the React API.
 ## Reader Experience
 
 - Make charts understandable, trustworthy, and usable with keyboard and pointer input.
-- Keep units, sources, notes, controls, and exact values with the chart.
+- Keep units, controls, and exact values with the chart. Keep report-level
+  provenance and narrative in the report composition.
 - Use the same interaction patterns across applications and generated HTML.
 - Match the host design system without losing accessible defaults.
 
@@ -83,8 +80,7 @@ interaction patterns as the React API.
 
 ## Scope
 
-Aperture is a chart component and widget library. Planned generation tools will
-create chart content for reports. Aperture is not a general report builder,
+Aperture is a chart component and widget library. It is not a report builder,
 data platform, or dashboard builder.
 
 The current catalog demonstrates the API and user experience. The package API

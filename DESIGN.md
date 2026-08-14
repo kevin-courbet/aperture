@@ -3,15 +3,8 @@
 ## Users
 
 The adopter demo is for React developers and coding agents that need a reusable
-chart experience across projects. They need to understand
-the two adoption paths, inspect a realistic widget, compare major chart
-families, and see how Aperture matches a host design system.
-
-The two adoption paths are:
-
-- React library integration for larger applications, implemented in this repository.
-- Planned standalone HTML generation for coding agents and chatbots that create
-  one-off reports and analysis output.
+chart experience across projects. They need to inspect a realistic widget,
+compare major chart families, and see how Aperture matches a host design system.
 
 ## Brand Personality
 
@@ -56,7 +49,7 @@ Linear phrases or imply a relationship with Linear.
 - State compatibility, defaults, limits, and failure conditions directly.
 - Do not use broad claims such as `best`, `complete`, `seamless`, `powerful`, or
   unsupported claims about future readiness.
-- Do not present planned standalone HTML generation as available.
+- Keep report composition and generation in the separate Reports product.
 
 ### Documentation
 
@@ -75,7 +68,7 @@ Prefer:
 - `React charts. Composable widgets.`
 - `TimeRangeControl renders a controlled single-selection group.`
 - `The host application owns data access and controlled state.`
-- `Standalone HTML generation is planned. It is not implemented.`
+- `Use Reports for standalone report composition.`
 
 Avoid:
 
@@ -110,7 +103,7 @@ restrained controls. Do not use cream or beige surfaces.
 
 - Lead with one realistic product widget and the code that creates it.
 - State the complete chart experience as the product, not API breadth alone.
-- Distinguish the available React library from planned standalone generation.
+- Keep the chart library boundary separate from report composition.
 - Show breadth through a compact chart gallery, not a dashboard grid.
 - Explain host-theme integration with semantic tokens and replaceable icons.
 - Keep exact values, units, sources, and accessible controls near each chart.

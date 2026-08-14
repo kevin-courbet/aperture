@@ -15,8 +15,7 @@ pnpm add @kevin-courbet/aperture react react-dom
 
 - Integrate composable React widgets into an application and match its design system.
 
-Standalone HTML generation is planned for coding agents and chatbots that
-create one-off reports and analysis output.
+Use `@kevin-courbet/reports` for standalone report composition and generation.
 
 ## Agent Skill
 
@@ -24,17 +23,19 @@ Give this command to an interactive agent before the chart request. The command
 returns the skill prompt and its support files for that session:
 
 ```sh
-npx skills use kevin-courbet/aperture@create-data-visualizations
+npx skills use kevin-courbet/skills@create-data-visualizations
 ```
 
 Install it for later sessions:
 
 ```sh
-npx skills add kevin-courbet/aperture --skill create-data-visualizations -y
+npx skills add kevin-courbet/skills --skill create-data-visualizations -y
 ```
 
-The skill supports React charts, dashboards, and standalone HTML reports. Its
-bundled validation CLI requires Bun.
+The skill supports React charts and dashboards. Its bundled validation CLI
+requires Bun. Use the separate `create-data-reports` skill for reports.
+Aperture remains its development source. The central skills catalog publishes
+updates after they land on `main`.
 
 The Storybook catalog demonstrates:
 

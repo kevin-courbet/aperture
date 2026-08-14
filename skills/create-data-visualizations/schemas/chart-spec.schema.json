@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://kevin-courbet.dev/schemas/create-data-visualizations/chart-spec-1.0.json",
+  "$id": "https://kevin-courbet.dev/schemas/create-data-visualizations/chart-spec-2.0.json",
   "title": "Data visualization specification",
   "type": "object",
   "additionalProperties": false,
@@ -19,7 +19,7 @@
     "provenance"
   ],
   "properties": {
-    "schemaVersion": { "const": "1.0" },
+    "schemaVersion": { "const": "2.0" },
     "id": { "type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" },
     "intent": {
       "type": "object",
@@ -247,27 +247,14 @@
       }
     },
     "delivery": {
-      "oneOf": [
-        {
-          "type": "object",
-          "additionalProperties": false,
-          "required": ["target", "library", "api"],
-          "properties": {
-            "target": { "const": "react" },
-            "library": { "const": "@kevin-courbet/aperture" },
-            "api": { "enum": ["common", "advanced-tanstack"] }
-          }
-        },
-        {
-          "type": "object",
-          "additionalProperties": false,
-          "required": ["target", "mode"],
-          "properties": {
-            "target": { "const": "standalone-html" },
-            "mode": { "enum": ["single-file", "bundle"] }
-          }
-        }
-      ]
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["target", "library", "api"],
+      "properties": {
+        "target": { "const": "react" },
+        "library": { "const": "@kevin-courbet/aperture" },
+        "api": { "enum": ["common", "advanced-tanstack"] }
+      }
     },
     "provenance": {
       "type": "object",

@@ -1,6 +1,6 @@
 ---
 name: create-data-visualizations
-description: Create or review data visualizations, React chart widgets, chart-based dashboards, and standalone HTML reports. This skill should be used for chart selection, TanStack Charts, Aperture, controls, time ranges, fullscreen, theming, exact values, accessibility, responsive charts, provenance, and chart UX.
+description: Create or review data visualizations, React chart widgets, and chart-based dashboards with Aperture. Use for chart selection, TanStack Charts, controls, time ranges, fullscreen, theming, exact values, accessibility, responsive charts, and chart UX. Use the separate create-data-reports skill for standalone reports.
 ---
 
 # Create Data Visualizations
@@ -13,7 +13,7 @@ accessibility, responsive behavior, and visual quality across projects.
 1. Read `references/workflow.md` and `references/chart-selection.md`.
 2. Read `references/data-accessibility.md` before defining data or metrics.
 3. For React, read `references/react-aperture.md` and use Aperture when it is available.
-4. For standalone HTML, read `references/standalone-html.md`. Do not claim that Aperture standalone generation exists.
+4. For a standalone report, read `references/standalone-html.md` and switch to the separate report workflow.
 5. Read `references/design-ux.md` before styling or adding controls.
 6. Create and validate one versioned chart specification per chart before implementation when scope is not trivial.
 7. Read `references/validation.md` before handoff.
@@ -28,7 +28,7 @@ direct. The CLI requires Bun. Run it with:
 bun "$SKILL_DIR/scripts/chart" capabilities --json
 ```
 
-Use `schema`, `validate-spec`, `audit-html`, and `storybook` commands as
+Use `schema`, `validate-spec`, and `storybook` commands as
 documented in `references/cli.md`. Treat non-zero exit status as a failure.
 
 ## Non-Negotiables
@@ -42,4 +42,4 @@ documented in `references/cli.md`. Treat non-zero exit status as a failure.
 - Never use color as the only signal.
 - Never hide errors or unsupported states behind an empty chart.
 - Validate React charts through Storybook when the project exposes it.
-- Audit standalone HTML and verify all artifact links.
+- Redirect standalone report work to the Reports skill and renderer.

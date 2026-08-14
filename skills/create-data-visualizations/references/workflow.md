@@ -11,7 +11,7 @@ Confirm these facts before selecting a chart:
 - Field types and stable identifiers.
 - Unit, denominator, population, exclusions, and missing-value meaning.
 - Source, freshness, locale, and time zone.
-- Target: React application or standalone HTML report.
+- Target React application or dashboard. Redirect report targets to Reports.
 
 Stop and ask when any fact can change the meaning of the result. Do not infer a
 denominator, exclusion, target, or missing-value meaning from the data shape.
@@ -31,6 +31,9 @@ For React projects:
 Do not silently add another chart library when Aperture is unavailable. Report
 the missing dependency and resolve the integration path with the user.
 
+For standalone reports, use the separate `create-data-reports` skill and
+`@kevin-courbet/reports`. Do not create a report shell in this chart workflow.
+
 ## 3. Model The Chart
 
 Use one chart specification per chart for non-trivial work. Set `SKILL_DIR` to
@@ -41,9 +44,9 @@ bun "$SKILL_DIR/scripts/chart" schema chart-spec --json
 bun "$SKILL_DIR/scripts/chart" validate-spec chart.json --json
 ```
 
-The specification records intent, data state, encodings, controls, accessibility,
-delivery, and provenance. It is the stable boundary for the CLI and a future MCP
-adapter. It is not a rendering API.
+The specification records chart intent, data state, encodings, controls,
+accessibility, React delivery, and provenance. It is the stable boundary for the
+CLI and a future MCP adapter. It is not a report or rendering API.
 
 ## 4. Select The Chart
 
@@ -73,9 +76,8 @@ For React, compose Aperture widget slots. Keep controlled state in the host. Use
 advanced TanStack exports only when the common API cannot represent the required
 interaction or mark.
 
-For standalone HTML, produce an offline semantic artifact. Inline required CSS,
-scripts, and data for a single-file delivery. Use SVG or Canvas only when an HTML
-table and text summary preserve the same result.
+For standalone reports, leave this workflow and use Reports. Reports owns the
+report specification, composition, provenance, SSR, hydration, and artifact.
 
 ## 7. Validate
 
@@ -84,7 +86,7 @@ table and text summary preserve the same result.
 - Use Storybook story tests and previews for React visual changes. Do not commit
   new tests unless the user explicitly requires coverage; committed tests must
   prove accessible semantics or user interaction, not visual presentation.
-- Audit standalone HTML.
+- Redirect report validation to the Reports workflow.
 - Test desktop and mobile layouts.
 - Test keyboard access, visible focus, reduced motion, and forced colors.
 - Compare displayed values with source data.

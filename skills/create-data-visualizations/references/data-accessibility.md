@@ -41,9 +41,7 @@ For rates and evaluation results, show or disclose:
 - Technical failures separately from business mismatches.
 - Baseline, final result, target, and change magnitude.
 
-Validate displayed numbers against source artifacts. If the report uses linked
-artifacts, verify every link and state whether the HTML file is self-contained
-or requires a bundle.
+Validate displayed numbers against source artifacts.
 
 ## Accessible Chart Contract
 

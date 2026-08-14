@@ -39,15 +39,10 @@
   coverage. Committed tests prove semantics or interaction, not presentation.
 - Preview URL reviewed at desktop and mobile widths.
 
-## Standalone HTML
+## Reports
 
-- Explicit single-file or bundle delivery.
-- No undeclared remote dependency.
-- All relative links resolve.
-- SVG title and description where SVG is used.
-- Exact values are in HTML.
-- Provenance and caveats are complete.
-- CLI audit passes.
+Use the separate `create-data-reports` skill and Reports validation. Do not
+validate or repair a report with this chart workflow.
 
 ## Handoff
 
@@ -57,4 +52,4 @@ Report:
 - Data and accessibility constraints.
 - Validation commands and results.
 - Storybook preview URLs for React work.
-- Remaining limits, including unsupported standalone Aperture generation.
+- Remaining chart limits.
