@@ -16,13 +16,12 @@ export function DataTableControl() {
   const Icon = icons.table
   return (
     <ToggleButton
-      className="aperture-control"
+      className="aperture-control aperture-icon-control"
       isSelected={tableVisible}
       onChange={setTableVisible}
       aria-label={tableVisible ? messages.controls.hideTable : messages.controls.showTable}
     >
       <Icon aria-hidden="true" />
-      <span>{tableVisible ? messages.controls.hideTable : messages.controls.showTable}</span>
     </ToggleButton>
   )
 }

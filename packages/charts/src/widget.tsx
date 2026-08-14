@@ -114,12 +114,12 @@ function Footer(props: ChartWidgetSlotProps) {
 
 function TableRegion({ children, className, style }: ChartWidgetSlotProps) {
   const context = useChartWidget()
-  if (!context.tableVisible) return null
   return (
     <div
       data-aperture-slot="table"
       className={slotClass('table', className, context.slotClassNames)}
       style={style}
+      hidden={!context.tableVisible}
     >
       {children}
     </div>

@@ -20,7 +20,7 @@ import { scaleBand } from '@tanstack/charts/scales/band'
 import { scaleLinear } from '@tanstack/charts/scales/linear'
 import { scalePoint } from '@tanstack/charts/scales/point'
 import { scaleLinear as scaleLinearColor, scaleUtc } from 'd3-scale'
-import { exactRow, exactValues, seriesLegend, type SemanticLegendItem } from './exact-values.js'
+import { exactRow, exactValues, lineSeriesDasharrays, pointSeriesStyles, seriesLegend, type SemanticLegendItem } from './exact-values.js'
 import { dateAxis, localizedTooltip, numberAxis, useChartFormatters } from './formatting.js'
 import { useChartConfiguration } from './provider.js'
 import { ChartStateBoundary, ChartSurface } from './surface.js'
@@ -34,7 +34,6 @@ const chartColors = [
   'var(--aperture-chart-4)',
   'var(--aperture-chart-5)',
 ] as const
-const seriesDasharrays = ['', '8 3', '2 3', '10 3 2 3', '1 3'] as const
 
 interface TimeSeriesRow {
   readonly id: string
@@ -81,26 +80,60 @@ export function LineChart({ state, xLabel, yLabel, showPoints = true, reference,
         const rows = timeRows(data, messages.errors.invalidDate, messages.errors.invalidNumber)
         const series = [...new Set(rows.map((row) => row.series))]
         seriesLegend(series)
-        const oneObservation = new Set(rows.map((row) => row.date.getTime())).size === 1
-        const lineMarks = oneObservation
-          ? [dot(rows.filter((row) => row.value !== null), { x: 'date', y: 'value', color: 'series', key: 'id', r: 4.5 })]
-          : series.map((name, index) => lineY(rows.filter((row) => row.series === name), {
+        const rowsBySeries = new Map(series.map((name) => [name, [] as TimeSeriesRow[]]))
+        for (const row of rows) rowsBySeries.get(row.series)!.push(row)
+        const dates = [...new Set(rows.map((row) => row.date.getTime()))].sort((left, right) => left - right)
+        const oneDate = dates.length === 1
+        const seriesPresentation = new Map(series.map((name) => {
+          const presentDates = new Set(rowsBySeries.get(name)!
+            .filter((row) => row.value !== null)
+            .map((row) => row.date.getTime())).size
+          return [name, presentDates === 0 ? 'missing' : presentDates === 1 ? 'point' : 'line'] as const
+        }))
+        const lineMarks = series.flatMap((name, index) => {
+          const seriesRows = rowsBySeries.get(name)!
+          const presentation = seriesPresentation.get(name)
+          if (presentation === 'missing') return []
+          if (presentation === 'line') {
+            return [lineY(seriesRows, {
               x: 'date', y: 'value', color: 'series', key: 'id', points: showPoints,
-              strokeWidth: 2.25, strokeDasharray: seriesDasharrays[index],
-            }))
+              strokeWidth: 2.25, strokeDasharray: lineSeriesDasharrays[index],
+            })]
+          }
+          const pointStyle = pointSeriesStyles[index] ?? pointSeriesStyles[0]
+          return [dot(seriesRows.filter((row) => row.value !== null), {
+            x: 'date',
+            y: 'value',
+            key: 'id',
+            r: pointStyle.radius,
+            fill: pointStyle.hollow ? 'var(--aperture-color-background)' : chartColors[index],
+            stroke: chartColors[index],
+            strokeWidth: pointStyle.hollow ? 2 : 0,
+          })]
+        })
+        const firstDate = new Date(dates[0]!)
+        const lastDate = new Date(dates[dates.length - 1]!)
         const definition = defineChart({
           marks: [
             ...lineMarks,
             ...(referenceValue === undefined ? [] : [ruleY([referenceValue], { stroke: 'var(--aperture-color-text)', strokeDasharray: '6 4', strokeWidth: 1.5 })]),
             ...(common.crosshair ? [crosshairMark({ x: true, y: false, marker: true })] : []),
           ],
-          x: { scale: scaleUtc, axis: dateAxis(xLabel, formatters) },
+          x: {
+            scale: oneDate
+              ? () => scaleBand<Date>().domain([firstDate]).padding(0.5)
+              : () => scaleUtc().domain([firstDate, lastDate]),
+            axis: dateAxis(xLabel, formatters, rows.map((row) => row.date)),
+          },
           y: { scale: scaleLinear, nice: true, grid: true, axis: numberAxis(yLabel, formatters) },
           color: { domain: series, range: chartColors },
           focus: 'nearest-x',
           tooltip: localizedTooltip(common.tooltip, formatters),
         })
-        const legend: SemanticLegendItem[] = [...seriesLegend(rows.map((row) => row.series))]
+        const legend: SemanticLegendItem[] = [...seriesLegend(
+          series,
+          (name) => seriesPresentation.get(name) ?? 'missing',
+        )]
         if (reference !== undefined && referenceValue !== undefined) legend.push({ kind: 'reference', label: reference.label, detail: formatters.number(referenceValue) })
         if (data.some((datum) => datum.value.kind === 'missing')) legend.push({ kind: 'missing', label: messages.legend.missing })
         return <ChartSurface {...common} definition={definition} legend={legend} exactValues={exactValues(
@@ -139,7 +172,7 @@ export function AreaChart({ state, xLabel, yLabel, ...common }: AreaChartProps) 
               : areaY(rows, { x: 'date', y1: () => 0, y2: 'value', key: 'id', fill: 'var(--aperture-chart-1)', fillOpacity: 0.32, strokeWidth: 2 }),
             ...(common.crosshair ? [crosshairMark({ x: true, y: false })] : []),
           ],
-          x: { scale: scaleUtc, axis: dateAxis(xLabel, formatters) },
+          x: { scale: scaleUtc, axis: dateAxis(xLabel, formatters, rows.map((row) => row.date)) },
           y: { scale: scaleLinear, nice: true, grid: true, axis: numberAxis(yLabel, formatters) },
           focus: 'nearest-x',
           tooltip: localizedTooltip(common.tooltip, formatters),
@@ -403,7 +436,7 @@ export function RangeChart({ state, xLabel, yLabel, ...common }: RangeChartProps
             tickY(rows, { x: 'date', y: 'low', color: 'series', key: (row) => `${row.id}-low`, strokeWidth: 2 }),
             tickY(rows, { x: 'date', y: 'high', color: 'series', key: (row) => `${row.id}-high`, strokeWidth: 2 }),
           ],
-          x: { scale: scaleUtc, axis: dateAxis(xLabel, formatters) },
+          x: { scale: scaleUtc, axis: dateAxis(xLabel, formatters, rows.map((row) => row.date)) },
           y: { scale: scaleLinear, nice: true, grid: true, axis: numberAxis(yLabel, formatters) },
           color: { range: chartColors },
           focus: 'nearest-x',
@@ -492,7 +525,7 @@ export function StackedAreaChart({ state, seriesOrder, xLabel, yLabel, normaliza
             }),
             ruleY([0]),
           ],
-          x: { scale: scaleUtc, axis: dateAxis(xLabel, formatters) },
+          x: { scale: scaleUtc, axis: dateAxis(xLabel, formatters, rows.map((row) => row.date)) },
           y: { scale: scaleLinear, grid: true, axis: numberAxis(yLabel, formatters) },
           color: { domain: seriesOrder, range: chartColors },
           focus: 'group-x',
@@ -617,7 +650,7 @@ export function CandlestickChart({ state, priceLabel, ...common }: CandlestickCh
             link(rows, { x1: 'date', y1: 'low', x2: 'date', y2: 'high', key: 'id', stroke: 'var(--aperture-color-text)' }),
             rect(rows, { x: 'date', y1: 'open', y2: 'close', color: 'direction', key: 'id', inset: 3, stroke: 'var(--aperture-color-text)', strokeWidth: 1 }),
           ],
-          x: { scale: () => scaleBand<Date>().padding(0.2), axis: dateAxis(undefined, formatters) },
+          x: { scale: () => scaleBand<Date>().padding(0.2), axis: dateAxis(undefined, formatters, rows.map((row) => row.date)) },
           y: { scale: scaleLinear, nice: true, grid: true, axis: numberAxis(priceLabel, formatters) },
           color: { domain: ['increase', 'decrease'], range: ['var(--aperture-chart-2)', 'var(--aperture-color-danger)'] },
           focus: 'nearest-x',
