@@ -1,0 +1,63 @@
+{
+  "schemaVersion": "1.0",
+  "id": "active-teams-over-time",
+  "intent": {
+    "reader": "Product operations lead",
+    "question": "How did monthly active teams change relative to the goal?",
+    "decision": "Decide whether adoption work needs intervention."
+  },
+  "context": {
+    "locale": "en-GB",
+    "timeZone": "UTC"
+  },
+  "metric": {
+    "kind": "count",
+    "label": "Active teams",
+    "unit": "teams",
+    "displayPrecision": 0,
+    "population": "Teams with at least one active member in the calendar month",
+    "exclusions": ["Deleted teams"],
+    "aggregation": "Distinct active team count by UTC calendar month",
+    "missingValue": "The monthly observation was not reported"
+  },
+  "data": {
+    "state": "ready",
+    "rows": [
+      { "month": "2025-10-01", "activeTeams": 82 },
+      { "month": "2025-11-01", "activeTeams": 87 },
+      { "month": "2025-12-01", "activeTeams": 91 }
+    ]
+  },
+  "chart": {
+    "family": "line",
+    "rationale": "Ordered monthly observations make trend and goal crossing important.",
+    "reference": { "label": "Goal", "value": 80 }
+  },
+  "encodings": [
+    { "channel": "x", "field": "month", "fieldType": "temporal", "label": "Month" },
+    { "channel": "y", "field": "activeTeams", "fieldType": "quantitative", "label": "Active teams", "unit": "teams" }
+  ],
+  "controls": [
+    { "type": "time-range", "purpose": "Compare recent and full-history adoption", "controlled": true },
+    { "type": "exact-values", "purpose": "Inspect monthly counts", "controlled": true },
+    { "type": "fullscreen", "purpose": "Inspect the full history at presentation size", "controlled": true }
+  ],
+  "accessibility": {
+    "name": "Active teams by month",
+    "description": "Monthly active team counts from October to December 2025. The goal is 80 teams.",
+    "exactValues": true,
+    "keyboard": true,
+    "nonColorSignals": ["Direct series label", "Labeled goal reference"]
+  },
+  "delivery": {
+    "target": "react",
+    "library": "@kevin-courbet/aperture",
+    "api": "common"
+  },
+  "provenance": {
+    "source": "Product analytics monthly adoption model",
+    "freshness": { "state": "scheduled", "schedule": "Updated daily at 03:00 UTC" },
+    "dataset": "analytics.active_teams_monthly",
+    "generatedAt": "2026-08-13T00:00:00Z"
+  }
+}

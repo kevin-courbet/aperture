@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kevin-courbet.dev/schemas/create-data-visualizations/capabilities-1.0.json",
+  "title": "Chart CLI capabilities",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["name", "version", "commands", "schemas", "instructions"],
+  "properties": {
+    "name": { "const": "create-data-visualizations" },
+    "version": { "type": "string" },
+    "commands": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "description", "input", "output", "requires"],
+        "properties": {
+          "name": { "type": "string" },
+          "description": { "type": "string" },
+          "input": { "type": "object" },
+          "output": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["envelopeSchema", "dataSchema"],
+            "properties": {
+              "envelopeSchema": { "const": "command-result" },
+              "dataSchema": { "type": "object" }
+            }
+          },
+          "requires": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "instructions": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  }
+}

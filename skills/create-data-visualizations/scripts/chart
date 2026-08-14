@@ -1,0 +1,159 @@
+#!/usr/bin/env bun
+import { readFile } from 'node:fs/promises'
+import { dirname, resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
+import { capabilities } from './lib/capabilities'
+import { CliInputError, commandResult, diagnostic, ServiceUnavailableError, type CommandResult } from './lib/contracts'
+import { auditHtml } from './lib/html'
+import { validateJsonSchema } from './lib/json-schema'
+import { validateSpecSemantics } from './lib/spec'
+import { callStorybook } from './lib/storybook'
+
+const scriptDir = dirname(fileURLToPath(import.meta.url))
+const skillDir = resolve(scriptDir, '..')
+const rawArgs = Bun.argv.slice(2)
+const jsonFlags = rawArgs.filter((arg) => arg === '--json').length
+if (jsonFlags > 1) {
+  console.log(JSON.stringify(commandResult('chart', null, [diagnostic('error', 'CLI_ARGUMENTS', '$', 'Use --json at most once.')]), null, 2))
+  process.exit(2)
+}
+const args = rawArgs.filter((arg) => arg !== '--json')
+
+const usage = `chart <command> [arguments] [--json]
+
+Commands:
+  capabilities
+  schema <chart-spec|command-result|capabilities|diagnostic>
+  validate-spec <file|->
+  audit-html <file> --delivery <single-file|bundle>
+  storybook status
+  storybook instructions
+  storybook list [--with-story-ids]
+  storybook docs <component-id>
+  storybook preview <story-id> [story-id ...]
+  storybook test [story-id ...]
+
+Environment:
+  APERTURE_MCP_URL  Storybook MCP endpoint (default: http://localhost:6006/mcp)`
+
+const output = (result: CommandResult, exitCode = result.ok ? 0 : 3) => {
+  console.log(JSON.stringify(result, null, 2))
+  process.exit(exitCode)
+}
+
+const invalid = (command: string, message: string): never =>
+  output(commandResult(command, { usage }, [diagnostic('error', 'CLI_ARGUMENTS', '$', message)]), 2)
+
+const readJson = async (file: string) => {
+  const text = file === '-' ? await Bun.stdin.text() : await readFile(file, 'utf8')
+  try {
+    return JSON.parse(text) as unknown
+  } catch (error) {
+    throw new CliInputError(`Invalid JSON: ${error instanceof Error ? error.message : String(error)}`)
+  }
+}
+
+const schemaNames: Record<string, string> = {
+  'chart-spec': 'chart-spec.schema.json',
+  'command-result': 'command-result.schema.json',
+  capabilities: 'capabilities.schema.json',
+  diagnostic: 'diagnostic.schema.json',
+}
+
+const runStorybook = async (rest: string[]) => {
+  const operation = rest[0]
+  if (!operation) invalid('storybook', 'Provide a Storybook operation.')
+  const urlFlag = rest.indexOf('--url')
+  if (rest.filter((value) => value === '--url').length > 1) invalid(`storybook.${operation}`, 'Use --url at most once.')
+  if (urlFlag >= 0 && urlFlag !== rest.length - 2) invalid(`storybook.${operation}`, 'Put --url and its value last.')
+  const url = urlFlag >= 0 ? rest[urlFlag + 1] : process.env.APERTURE_MCP_URL ?? 'http://localhost:6006/mcp'
+  if (urlFlag >= 0 && !url) invalid(`storybook.${operation}`, 'Provide a URL after --url.')
+  const values = rest.slice(1).filter((_, index) => index !== urlFlag - 1 && index !== urlFlag)
+  const withStoryIds = values.includes('--with-story-ids')
+  const ids = values.filter((value) => value !== '--with-story-ids')
+  let tool: string | undefined
+  let toolArgs: Record<string, unknown> = {}
+  switch (operation) {
+    case 'status':
+      if (ids.length || withStoryIds) invalid('storybook.status', 'status accepts no operation arguments.')
+      break
+    case 'instructions':
+      if (ids.length || withStoryIds) invalid('storybook.instructions', 'instructions accepts no operation arguments.')
+      tool = 'get-storybook-story-instructions'; break
+    case 'list':
+      if (ids.length || values.filter((value) => value === '--with-story-ids').length > 1) invalid('storybook.list', 'list accepts only one optional --with-story-ids flag.')
+      tool = 'list-all-documentation'; toolArgs = { withStoryIds }; break
+    case 'docs':
+      if (ids.length !== 1 || withStoryIds) invalid('storybook.docs', 'Provide one component ID.')
+      tool = 'get-documentation'; toolArgs = { id: ids[0] }; break
+    case 'preview':
+      if (ids.length === 0 || withStoryIds) invalid('storybook.preview', 'Provide at least one verified story ID.')
+      tool = 'preview-stories'; toolArgs = { stories: ids.map((storyId) => ({ storyId })) }; break
+    case 'test':
+      if (withStoryIds) invalid('storybook.test', 'test does not accept --with-story-ids.')
+      tool = 'run-story-tests'; toolArgs = { a11y: true, ...(ids.length ? { stories: ids.map((storyId) => ({ storyId })) } : {}) }; break
+    default: invalid('storybook', `Unknown Storybook operation: ${operation}`)
+  }
+  const { result, diagnostics } = await callStorybook(url, tool, toolArgs)
+  output(commandResult(`storybook.${operation}`, { url, result }, diagnostics))
+}
+
+try {
+  const command = args[0]
+  switch (command) {
+    case 'capabilities':
+      if (args.length !== 1) invalid(command, 'capabilities accepts no arguments.')
+      output(commandResult(command, capabilities))
+      break
+    case 'schema': {
+      const name = args[1]
+      if (args.length !== 2 || !name || !schemaNames[name]) invalid(command, 'Provide a valid schema name.')
+      const schema = JSON.parse(await readFile(resolve(skillDir, 'schemas', schemaNames[name]), 'utf8'))
+      output(commandResult(command, { name, schema }))
+      break
+    }
+    case 'validate-spec': {
+      const file = args[1]
+      if (args.length !== 2 || !file) invalid(command, 'Provide one JSON file path or -.')
+      const spec = await readJson(file)
+      const schema = JSON.parse(await readFile(resolve(skillDir, 'schemas', schemaNames['chart-spec']), 'utf8'))
+      const schemaDiagnostics = validateJsonSchema(spec, schema)
+      const diagnostics = [...schemaDiagnostics, ...validateSpecSemantics(spec)]
+      output(commandResult(command, { file, schema: 'chart-spec@1.0' }, diagnostics))
+      break
+    }
+    case 'audit-html': {
+      const file = args[1]
+      const deliveryFlag = args.indexOf('--delivery')
+      const delivery = deliveryFlag >= 0 ? args[deliveryFlag + 1] : undefined
+      if (args.length !== 4 || deliveryFlag !== 2 || args.filter((value) => value === '--delivery').length !== 1 || !file || !['single-file', 'bundle'].includes(String(delivery))) invalid(command, 'Use audit-html <file> --delivery single-file|bundle.')
+      const html = await readFile(file, 'utf8')
+      const diagnostics = await auditHtml(html, resolve(file), delivery as 'single-file' | 'bundle')
+      output(commandResult(command, { file: resolve(file), delivery }, diagnostics))
+      break
+    }
+    case 'storybook':
+      await runStorybook(args.slice(1))
+      break
+    case 'help':
+    case '--help':
+    case '-h':
+    case undefined:
+      console.log(usage)
+      process.exit(0)
+    default:
+      invalid(String(command), `Unknown command: ${command}`)
+  }
+} catch (error) {
+  const message = error instanceof Error ? error.message : String(error)
+  const code = typeof error === 'object' && error !== null && 'code' in error ? String(error.code) : ''
+  const unavailable = error instanceof ServiceUnavailableError
+  const invalidInput = error instanceof CliInputError || ['EACCES', 'EISDIR', 'ENOENT', 'EPERM'].includes(code)
+  const command = args[0] === 'storybook' && args[1] ? `storybook.${args[1]}` : args[0] ?? 'chart'
+  output(
+    commandResult(command, null, [
+      diagnostic('error', unavailable ? 'CLI_SERVICE_UNAVAILABLE' : invalidInput ? 'CLI_INPUT' : 'CLI_INTERNAL', '$', message),
+    ]),
+    unavailable ? 4 : invalidInput ? 3 : 5,
+  )
+}

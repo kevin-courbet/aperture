@@ -1,0 +1,61 @@
+{
+  "schemaVersion": "1.0",
+  "id": "workflow-checkpoint-recall",
+  "intent": {
+    "reader": "Workflow engineer",
+    "question": "Did checkpoint recall improve from baseline to the accepted run?",
+    "decision": "Decide whether the workflow change meets the release target."
+  },
+  "context": {
+    "locale": "en-GB",
+    "timeZone": "UTC"
+  },
+  "metric": {
+    "kind": "percentage",
+    "label": "Checkpoint recall",
+    "unit": "percent",
+    "displayPrecision": 1,
+    "population": "Selected 21-row golden cohort",
+    "numerator": "Expected checkpoint outcomes that matched",
+    "denominator": "21 expected checkpoint outcomes",
+    "exclusions": [],
+    "aggregation": "Matching checkpoint outcomes divided by expected outcomes",
+    "missingValue": "Evaluation did not complete"
+  },
+  "data": {
+    "state": "ready",
+    "rows": [
+      { "run": "Baseline", "matched": 19, "total": 21, "percent": 90.5 },
+      { "run": "Accepted", "matched": 21, "total": 21, "percent": 100 }
+    ]
+  },
+  "chart": {
+    "family": "bar",
+    "rationale": "Two discrete evaluation runs require direct result comparison.",
+    "reference": { "label": "Release target", "value": 100 }
+  },
+  "encodings": [
+    { "channel": "x", "field": "run", "fieldType": "ordinal", "label": "Evaluation run" },
+    { "channel": "y", "field": "percent", "fieldType": "quantitative", "label": "Checkpoint recall", "unit": "percent" }
+  ],
+  "controls": [],
+  "accessibility": {
+    "name": "Checkpoint recall by evaluation run",
+    "description": "Checkpoint recall improved from 19 of 21 at baseline to 21 of 21 in the accepted run.",
+    "exactValues": true,
+    "keyboard": true,
+    "nonColorSignals": ["Run labels", "Exact numerator and denominator labels"]
+  },
+  "delivery": {
+    "target": "standalone-html",
+    "mode": "single-file"
+  },
+  "provenance": {
+    "source": "Workflow evaluation summary JSON",
+    "freshness": { "state": "unknown", "reason": "The source did not provide an update time." },
+    "dataset": "golden-cohort-21",
+    "run": "accepted-run",
+    "commit": "example",
+    "generatedAt": "2026-08-13T00:00:00Z"
+  }
+}

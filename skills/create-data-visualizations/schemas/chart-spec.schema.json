@@ -1,0 +1,321 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kevin-courbet.dev/schemas/create-data-visualizations/chart-spec-1.0.json",
+  "title": "Data visualization specification",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "id",
+    "intent",
+    "context",
+    "metric",
+    "data",
+    "chart",
+    "encodings",
+    "controls",
+    "accessibility",
+    "delivery",
+    "provenance"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1.0" },
+    "id": { "type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" },
+    "intent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["reader", "question", "decision"],
+      "properties": {
+        "reader": { "type": "string", "minLength": 1 },
+        "question": { "type": "string", "minLength": 1 },
+        "decision": { "type": "string", "minLength": 1 }
+      }
+    },
+    "context": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["locale", "timeZone"],
+      "properties": {
+        "locale": { "type": "string", "minLength": 2 },
+        "timeZone": { "type": "string", "minLength": 1 }
+      }
+    },
+    "metric": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "label", "unit", "displayPrecision", "population", "exclusions", "aggregation", "missingValue"],
+          "properties": {
+            "kind": { "const": "count" },
+            "label": { "type": "string", "minLength": 1 },
+            "unit": { "type": "string", "minLength": 1 },
+            "displayPrecision": { "type": "integer", "minimum": 0, "maximum": 12 },
+            "population": { "type": "string", "minLength": 1 },
+            "exclusions": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+            "aggregation": { "type": "string", "minLength": 1 },
+            "missingValue": { "type": "string", "minLength": 1 }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "label", "unit", "displayPrecision", "population", "numerator", "denominator", "exclusions", "aggregation", "missingValue"],
+          "properties": {
+            "kind": { "const": "percentage" },
+            "label": { "type": "string", "minLength": 1 },
+            "unit": { "const": "percent" },
+            "displayPrecision": { "type": "integer", "minimum": 0, "maximum": 12 },
+            "population": { "type": "string", "minLength": 1 },
+            "numerator": { "type": "string", "minLength": 1 },
+            "denominator": { "type": "string", "minLength": 1 },
+            "exclusions": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+            "aggregation": { "type": "string", "minLength": 1 },
+            "missingValue": { "type": "string", "minLength": 1 }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "label", "unit", "displayPrecision", "population", "numerator", "denominator", "exclusions", "aggregation", "missingValue"],
+          "properties": {
+            "kind": { "const": "rate" },
+            "label": { "type": "string", "minLength": 1 },
+            "unit": { "type": "string", "minLength": 1 },
+            "displayPrecision": { "type": "integer", "minimum": 0, "maximum": 12 },
+            "population": { "type": "string", "minLength": 1 },
+            "numerator": { "type": "string", "minLength": 1 },
+            "denominator": { "type": "string", "minLength": 1 },
+            "exclusions": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+            "aggregation": { "type": "string", "minLength": 1 },
+            "missingValue": { "type": "string", "minLength": 1 }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "label", "unit", "displayPrecision", "population", "numerator", "denominator", "exclusions", "aggregation", "missingValue"],
+          "properties": {
+            "kind": { "const": "ratio" },
+            "label": { "type": "string", "minLength": 1 },
+            "unit": { "const": "ratio" },
+            "displayPrecision": { "type": "integer", "minimum": 0, "maximum": 12 },
+            "population": { "type": "string", "minLength": 1 },
+            "numerator": { "type": "string", "minLength": 1 },
+            "denominator": { "type": "string", "minLength": 1 },
+            "exclusions": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+            "aggregation": { "type": "string", "minLength": 1 },
+            "missingValue": { "type": "string", "minLength": 1 }
+          }
+        }
+      ]
+    },
+    "data": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["state"],
+          "properties": { "state": { "const": "loading" } }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["state", "reason"],
+          "properties": {
+            "state": { "const": "empty" },
+            "reason": { "type": "string", "minLength": 1 }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["state", "message"],
+          "properties": {
+            "state": { "const": "error" },
+            "message": { "type": "string", "minLength": 1 }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["state", "rows"],
+          "properties": {
+            "state": { "const": "ready" },
+            "rows": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "object",
+                "minProperties": 1,
+                "additionalProperties": {
+                  "type": ["string", "number", "boolean", "null"]
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "chart": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["family", "rationale"],
+      "properties": {
+        "family": {
+          "enum": [
+            "line",
+            "area",
+            "bar",
+            "horizontal-bar",
+            "stacked-bar",
+            "donut",
+            "histogram",
+            "box-plot",
+            "violin",
+            "density",
+            "scatter",
+            "range",
+            "error-bar",
+            "heatmap",
+            "choropleth",
+            "route-map",
+            "treemap",
+            "sankey",
+            "result",
+            "table",
+            "advanced"
+          ]
+        },
+        "rationale": { "type": "string", "minLength": 1 },
+        "reference": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["label", "value"],
+          "properties": {
+            "label": { "type": "string", "minLength": 1 },
+            "value": { "type": "number" }
+          }
+        }
+      }
+    },
+    "encodings": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["channel", "field", "fieldType", "label"],
+        "properties": {
+          "channel": {
+            "enum": ["x", "y", "color", "size", "row", "column", "label", "detail"]
+          },
+          "field": { "type": "string", "minLength": 1 },
+          "fieldType": { "enum": ["quantitative", "temporal", "ordinal", "nominal"] },
+          "label": { "type": "string", "minLength": 1 },
+          "unit": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "controls": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["type", "purpose", "controlled"],
+        "properties": {
+          "type": { "enum": ["time-range", "series", "exact-values", "fullscreen", "brush", "zoom", "toggle"] },
+          "purpose": { "type": "string", "minLength": 1 },
+          "controlled": { "const": true }
+        }
+      }
+    },
+    "accessibility": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "description", "exactValues", "keyboard", "nonColorSignals"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "description": { "type": "string", "minLength": 1 },
+        "exactValues": { "const": true },
+        "keyboard": { "const": true },
+        "nonColorSignals": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "delivery": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["target", "library", "api"],
+          "properties": {
+            "target": { "const": "react" },
+            "library": { "const": "@kevin-courbet/aperture" },
+            "api": { "enum": ["common", "advanced-tanstack"] }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["target", "mode"],
+          "properties": {
+            "target": { "const": "standalone-html" },
+            "mode": { "enum": ["single-file", "bundle"] }
+          }
+        }
+      ]
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source", "freshness"],
+      "properties": {
+        "source": { "type": "string", "minLength": 1 },
+        "freshness": {
+          "oneOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["state", "asOf"],
+              "properties": {
+                "state": { "const": "known" },
+                "asOf": {
+                  "oneOf": [
+                    { "type": "string", "format": "date" },
+                    { "type": "string", "format": "date-time" }
+                  ]
+                }
+              }
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["state", "schedule"],
+              "properties": {
+                "state": { "const": "scheduled" },
+                "schedule": { "type": "string", "minLength": 1 }
+              }
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["state", "reason"],
+              "properties": {
+                "state": { "const": "unknown" },
+                "reason": { "type": "string", "minLength": 1 }
+              }
+            }
+          ]
+        },
+        "dataset": { "type": "string", "minLength": 1 },
+        "run": { "type": "string", "minLength": 1 },
+        "commit": { "type": "string", "minLength": 1 },
+        "generatedAt": { "type": "string", "format": "date-time" }
+      }
+    }
+  }
+}

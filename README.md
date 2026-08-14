@@ -18,6 +18,24 @@ pnpm add @kevin-courbet/aperture react react-dom
 Standalone HTML generation is planned for coding agents and chatbots that
 create one-off reports and analysis output.
 
+## Agent Skill
+
+Give this command to an interactive agent before the chart request. The command
+returns the skill prompt and its support files for that session:
+
+```sh
+npx skills use kevin-courbet/aperture@create-data-visualizations
+```
+
+Install it for later sessions:
+
+```sh
+npx skills add kevin-courbet/aperture --skill create-data-visualizations -y
+```
+
+The skill supports React charts, dashboards, and standalone HTML reports. Its
+bundled validation CLI requires Bun.
+
 The Storybook catalog demonstrates:
 
 - Composable widgets and controls.
@@ -53,6 +71,7 @@ The repository contains:
 
 - `packages/charts`: the `@kevin-courbet/aperture` React package.
 - `apps/catalog`: the Storybook design and behavior catalog.
+- `skills/create-data-visualizations`: the public agent workflow and validation tools.
 
 TanStack Charts is pinned to `0.11.1`. Its API is pre-alpha. Common Aperture
 exports do not expose TanStack types. Use `@kevin-courbet/aperture/tanstack`

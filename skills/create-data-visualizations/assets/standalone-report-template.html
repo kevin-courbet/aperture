@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Analysis report</title>
+    <style>
+      :root { color-scheme: light; font-family: system-ui, sans-serif; color: #172033; background: #f7f8fa; }
+      body { margin: 0; }
+      main { width: min(72rem, calc(100% - 2rem)); margin: 0 auto; padding: 3rem 0; }
+      section { padding: 2rem 0; border-top: 1px solid #cbd2dc; }
+      svg { display: block; width: 100%; height: auto; }
+      table { width: 100%; border-collapse: collapse; }
+      th, td { padding: .6rem; border-bottom: 1px solid #dce1e8; text-align: left; }
+      :focus-visible { outline: 3px solid #145ea8; outline-offset: 3px; }
+      @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; } }
+      @media (forced-colors: active) { svg { forced-color-adjust: auto; } }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <p>ANALYSIS REPORT</p>
+        <h1>State the report subject</h1>
+        <p>Define population, period, target, and status.</p>
+      </header>
+      <section aria-labelledby="chart-title">
+        <h2 id="chart-title">State the analytical question</h2>
+        <p id="chart-description">Define the measure, population, unit, and notable reference.</p>
+        <svg role="img" aria-labelledby="svg-title svg-description" viewBox="0 0 800 360">
+          <title id="svg-title">Replace with the chart name</title>
+          <desc id="svg-description">Replace with a concise result description.</desc>
+          <text x="400" y="180" text-anchor="middle">Replace with a data-accurate SVG chart.</text>
+        </svg>
+        <table>
+          <caption>Exact chart values</caption>
+          <thead><tr><th scope="col">Category</th><th scope="col">Value</th></tr></thead>
+          <tbody><tr><th scope="row">Example</th><td>Replace</td></tr></tbody>
+        </table>
+        <footer><p>Source: replace. Updated: replace.</p></footer>
+      </section>
+      <section aria-labelledby="provenance-title">
+        <h2 id="provenance-title">Provenance</h2>
+        <dl><dt>Dataset</dt><dd>Replace</dd><dt>Run</dt><dd>Replace</dd></dl>
+      </section>
+    </main>
+  </body>
+</html>
