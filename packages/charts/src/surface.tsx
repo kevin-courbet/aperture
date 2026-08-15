@@ -5,9 +5,10 @@ import { Chart as CanvasChart } from '@tanstack/charts/react/canvas'
 import { useChartConfiguration } from './provider.js'
 import { ExactValues, SemanticLegend, type ExactValueModel, type SemanticLegendItem } from './exact-values.js'
 import type { ChartDataState, CommonChartProps, SingletonChartDataState } from './types.js'
-import { positiveHeight } from './validation.js'
+import { positiveHeight, positiveWidth } from './validation.js'
 
 export const defaultChartHeight = 320
+export const defaultChartInitialWidth = 640
 
 interface ChartSurfaceProps<
   TDatum,
@@ -29,33 +30,36 @@ export function ChartSurface<
   ariaLabel,
   ariaDescription,
   height = defaultChartHeight,
+  width,
+  initialWidth = defaultChartInitialWidth,
   className,
   style,
   exactValues,
   legend = [],
-  accessibleExactValues,
 }: ChartSurfaceProps<TDatum, TXValue, TYValue>) {
   const { messages } = useChartConfiguration()
   positiveHeight(height, messages.errors.invalidHeight)
-  const chartProps = { definition, ariaLabel, ariaDescription, height }
+  if (width !== undefined) positiveWidth(width, messages.errors.invalidWidth)
+  positiveWidth(initialWidth, messages.errors.invalidWidth)
+  const chartProps = { definition, ariaLabel, ariaDescription, height, width, initialWidth }
 
   return (
     <div
       data-aperture-root=""
       data-aperture-renderer={renderer}
       className={['aperture-chart', className].filter(Boolean).join(' ')}
-      style={style}
+      style={{ ...style, ...(width === undefined ? {} : { width }) }}
     >
       {renderer === 'svg' ? <SvgChart {...chartProps} /> : <CanvasChart {...chartProps} />}
       <SemanticLegend items={legend} />
-      <ExactValues model={exactValues} replacement={accessibleExactValues} />
+      <ExactValues model={exactValues} />
     </div>
   )
 }
 
 export interface ChartStateBoundaryProps<TDatum> {
   readonly state: ChartDataState<TDatum>
-  readonly rootProps: Pick<CommonChartProps, 'ariaLabel' | 'ariaDescription' | 'height' | 'className' | 'style'>
+  readonly rootProps: Pick<CommonChartProps, 'ariaLabel' | 'ariaDescription' | 'height' | 'width' | 'initialWidth' | 'className' | 'style'>
   readonly children: (data: readonly [TDatum, ...TDatum[]]) => ReactNode
 }
 
@@ -65,8 +69,10 @@ export function ChartStateBoundary<TDatum>({
   children,
 }: ChartStateBoundaryProps<TDatum>) {
   const { messages } = useChartConfiguration()
-  const { ariaLabel, ariaDescription, height = defaultChartHeight, className, style } = rootProps
+  const { ariaLabel, ariaDescription, height = defaultChartHeight, width, initialWidth = defaultChartInitialWidth, className, style } = rootProps
   positiveHeight(height, messages.errors.invalidHeight)
+  if (width !== undefined) positiveWidth(width, messages.errors.invalidWidth)
+  positiveWidth(initialWidth, messages.errors.invalidWidth)
 
   if (state.status === 'ready') return children(state.data)
 
@@ -82,7 +88,7 @@ export function ChartStateBoundary<TDatum>({
     <div
       data-aperture-root=""
       className={['aperture-chart', 'aperture-state', className].filter(Boolean).join(' ')}
-      style={{ minHeight: height, ...style }}
+      style={{ minHeight: height, ...style, ...(width === undefined ? {} : { width }) }}
       role={role}
       aria-label={ariaLabel}
       aria-description={ariaDescription}
@@ -94,7 +100,7 @@ export function ChartStateBoundary<TDatum>({
 
 export interface SingletonChartStateBoundaryProps<TDatum> {
   readonly state: SingletonChartDataState<TDatum>
-  readonly rootProps: Pick<CommonChartProps, 'ariaLabel' | 'ariaDescription' | 'height' | 'className' | 'style'>
+  readonly rootProps: Pick<CommonChartProps, 'ariaLabel' | 'ariaDescription' | 'height' | 'width' | 'initialWidth' | 'className' | 'style'>
   readonly children: (data: TDatum) => ReactNode
 }
 

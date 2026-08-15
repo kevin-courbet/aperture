@@ -99,12 +99,8 @@ export { ChartProvider, defaultIcons, englishMessages, useChartConfiguration } f
 export type { ChartProviderProps } from './provider.js'
 export { ChartStateBoundary, SingletonChartStateBoundary } from './surface.js'
 export type { ChartStateBoundaryProps, SingletonChartStateBoundaryProps } from './surface.js'
-export { ChartWidget, ExactValueTable, useChartWidget } from './widget.js'
-export type {
-  ChartWidgetRootProps,
-  ExactValueColumn,
-  ExactValueTableProps,
-} from './widget.js'
+export { ChartWidget, useChartWidget } from './widget.js'
+export type { ChartWidgetRootProps } from './widget.js'
 export {
   DataTableControl,
   FullscreenControl,
@@ -119,10 +115,14 @@ export type {
 } from './controls.js'
 export { chartData } from './types.js'
 export type {
+  CalendarTickInterval,
+  CalendarTickUnit,
+  TimeAxisOptions,
+} from './time-axis.js'
+export type {
   ApertureIcon,
   ApertureIcons,
   ApertureMessages,
-  AccessibleExactValueReplacement,
   ChartDataState,
   ChartRenderer,
   ChartSlot,

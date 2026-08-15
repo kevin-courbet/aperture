@@ -17,6 +17,11 @@ export function positiveHeight(value: number, message: string): number {
   return value
 }
 
+export function positiveWidth(value: number, message: string): number {
+  if (!Number.isFinite(value) || value <= 0) throw new RangeError(message)
+  return value
+}
+
 export function numericPoint(value: NumericPoint, message: string): number | null {
   return value.kind === 'missing' ? null : finite(value.value, message)
 }

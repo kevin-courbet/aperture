@@ -12,14 +12,17 @@ import { useChartWidget } from './widget.js'
 
 export function DataTableControl() {
   const { messages, icons } = useChartConfiguration()
-  const { tableVisible, setTableVisible } = useChartWidget()
+  const { tableId, tableAvailable, tableVisible, setTableVisible } = useChartWidget()
   const Icon = icons.table
+  const selected = tableAvailable && tableVisible
   return (
     <ToggleButton
       className="aperture-control aperture-icon-control"
-      isSelected={tableVisible}
+      isSelected={selected}
+      isDisabled={!tableAvailable}
       onChange={setTableVisible}
-      aria-label={tableVisible ? messages.controls.hideTable : messages.controls.showTable}
+      aria-label={selected ? messages.controls.hideTable : messages.controls.showTable}
+      aria-controls={tableAvailable ? tableId : undefined}
     >
       <Icon aria-hidden="true" />
     </ToggleButton>

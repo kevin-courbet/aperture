@@ -57,6 +57,8 @@ export interface AdvancedChartProps<
   readonly ariaLabel: string
   readonly ariaDescription: string
   readonly height?: number
+  readonly width?: number
+  readonly initialWidth?: number
   readonly className?: string
   readonly style?: CSSProperties
 }
@@ -65,6 +67,7 @@ export function AdvancedChart<
   TDatum,
   TXValue extends ChartValue,
   TYValue extends ChartValue,
->({ renderer, ...props }: AdvancedChartProps<TDatum, TXValue, TYValue>) {
-  return renderer === 'svg' ? <SvgChart {...props} /> : <CanvasChart {...props} />
+>({ renderer, width, style, ...props }: AdvancedChartProps<TDatum, TXValue, TYValue>) {
+  const chartProps = { ...props, width, style: { ...style, ...(width === undefined ? {} : { width }) } }
+  return renderer === 'svg' ? <SvgChart {...chartProps} /> : <CanvasChart {...chartProps} />
 }

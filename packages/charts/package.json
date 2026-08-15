@@ -1,6 +1,6 @@
 {
   "name": "@kevin-courbet/aperture",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "React chart components and composable widgets built on TanStack Charts.",
   "license": "MIT",
   "author": "Kevin Courbet",
@@ -24,7 +24,6 @@
   },
   "publishConfig": {
     "access": "public",
-    "provenance": false,
     "registry": "https://registry.npmjs.org/"
   },
   "type": "module",
@@ -62,6 +61,7 @@
   },
   "dependencies": {
     "@fontsource-variable/ibm-plex-sans": "^5.2.8",
+    "@internationalized/date": "3.12.3",
     "@tanstack/charts": "0.11.1",
     "d3-geo": "^3.1.1",
     "d3-scale": "^4.0.2",

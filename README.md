@@ -64,9 +64,9 @@ Validate changes:
 pnpm validate
 ```
 
-Package releases run on `beast`. IQ validates and signs the exact candidate
-commit before it lands. Publication starts only from the clean landed
-`origin/main` commit. See [Release](docs/release.md).
+IQ validates and signs the exact candidate commit on `beast`. GitHub Actions
+publishes the package only from the clean landed `origin/main` commit. See
+[Release](docs/release.md).
 
 The repository contains:
 

@@ -19,8 +19,7 @@
     "validate": "pnpm typecheck && pnpm build && pnpm test && pnpm package:check",
     "signoff:iq": "bash scripts/signoff-iq.sh",
     "signoff:install": "bash scripts/install-signoff.sh install",
-    "signoff:check": "bash scripts/install-signoff.sh check",
-    "release": "bash scripts/release.sh"
+    "signoff:check": "bash scripts/install-signoff.sh check"
   },
   "devDependencies": {
     "typescript": "^5.9.3"

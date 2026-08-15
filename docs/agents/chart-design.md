@@ -18,6 +18,14 @@ because it is new or unusual.
 - Do not truncate a scale if truncation exaggerates or hides a difference.
 - Do not use 3D effects.
 - Do not add marks that do not encode data or a reference value.
+- Use calendar-aware time ticks. Show larger date context when it changes
+  instead of repeating it on every tick.
+- Aperture calendar intervals use the Gregorian calendar with localized labels.
+- Declare the represented interval for candlesticks. Do not infer candle width
+  from gaps between observations.
+- Set the expected `initialWidth` for deterministic responsive server output.
+- Use SVG when server output must contain a visible chart. Canvas paints after
+  browser hydration.
 
 ## Compose The Widget
 

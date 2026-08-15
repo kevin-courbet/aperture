@@ -1,8 +1,8 @@
 import {
   createContext,
   use,
+  useId,
   useState,
-  type ReactNode,
 } from 'react'
 import type {
   ChartSlot,
@@ -10,26 +10,52 @@ import type {
   ChartWidgetSlotProps,
 } from './types.js'
 
-interface WidgetContextValue {
+interface InternalWidgetContextValue {
+  readonly tableId: string
+  readonly tableAvailable: boolean
   readonly tableVisible: boolean
   readonly setTableVisible: (visible: boolean) => void
   readonly slotClassNames: ChartSlotClassNames
 }
 
-const WidgetContext = createContext<WidgetContextValue | null>(null)
+export type ChartWidgetContextValue = InternalWidgetContextValue
 
-export function useChartWidget(): WidgetContextValue {
+const WidgetContext = createContext<InternalWidgetContextValue | null>(null)
+
+function useInternalChartWidget(): InternalWidgetContextValue {
   const context = use(WidgetContext)
   if (!context) throw new Error('ChartWidget slots must be inside ChartWidget.Root.')
   return context
 }
 
-export interface ChartWidgetRootProps extends ChartWidgetSlotProps {
+export function useChartWidget(): ChartWidgetContextValue {
+  return useInternalChartWidget()
+}
+
+export function useOptionalChartWidget(): InternalWidgetContextValue | null {
+  return use(WidgetContext)
+}
+
+interface ChartWidgetRootBaseProps extends ChartWidgetSlotProps {
   readonly slotClassNames?: ChartSlotClassNames
-  readonly tableVisible?: boolean
+}
+
+export type ChartWidgetRootProps = ChartWidgetRootBaseProps & ({
+  readonly exactValues: 'available'
+} & ({
+  readonly tableVisible: boolean
+  readonly defaultTableVisible?: never
+  readonly onTableVisibleChange: (visible: boolean) => void
+} | {
+  readonly tableVisible?: never
   readonly defaultTableVisible?: boolean
   readonly onTableVisibleChange?: (visible: boolean) => void
-}
+}) | {
+  readonly exactValues: 'unavailable'
+  readonly tableVisible?: never
+  readonly defaultTableVisible?: never
+  readonly onTableVisibleChange?: never
+})
 
 function slotClass(
   slot: ChartSlot,
@@ -46,11 +72,28 @@ function Root({
   className,
   style,
   slotClassNames = {},
+  exactValues,
   tableVisible,
-  defaultTableVisible = false,
+  defaultTableVisible,
   onTableVisibleChange,
 }: ChartWidgetRootProps) {
-  const [uncontrolledVisible, setUncontrolledVisible] = useState(defaultTableVisible)
+  if (exactValues !== 'available' && exactValues !== 'unavailable') {
+    throw new RangeError('ChartWidget.Root exactValues must be "available" or "unavailable".')
+  }
+  if (exactValues === 'unavailable' && (tableVisible !== undefined || defaultTableVisible !== undefined || onTableVisibleChange !== undefined)) {
+    throw new RangeError('ChartWidget.Root cannot configure table visibility when exact values are unavailable.')
+  }
+  if (tableVisible !== undefined && defaultTableVisible !== undefined) {
+    throw new RangeError('ChartWidget.Root cannot use tableVisible with defaultTableVisible.')
+  }
+  if (onTableVisibleChange !== undefined && typeof onTableVisibleChange !== 'function') {
+    throw new TypeError('ChartWidget.Root onTableVisibleChange must be a function.')
+  }
+  if (tableVisible !== undefined && typeof onTableVisibleChange !== 'function') {
+    throw new RangeError('Controlled table visibility requires onTableVisibleChange.')
+  }
+  const tableId = useId()
+  const [uncontrolledVisible, setUncontrolledVisible] = useState(defaultTableVisible ?? false)
   const visible = tableVisible ?? uncontrolledVisible
 
   function setVisible(next: boolean) {
@@ -60,7 +103,7 @@ function Root({
 
   return (
     <WidgetContext
-      value={{ tableVisible: visible, setTableVisible: setVisible, slotClassNames }}
+      value={{ tableId, tableAvailable: exactValues === 'available', tableVisible: visible, setTableVisible: setVisible, slotClassNames }}
     >
       <section
         data-aperture-root=""
@@ -81,10 +124,10 @@ function Slot({
   className,
   style,
 }: ChartWidgetSlotProps & {
-  readonly slot: Exclude<ChartSlot, 'root' | 'table'>
+  readonly slot: Exclude<ChartSlot, 'root'>
   readonly element: 'header' | 'div' | 'footer'
 }) {
-  const context = useChartWidget()
+  const context = useInternalChartWidget()
   const props = {
     'data-aperture-slot': slot,
     className: slotClass(slot, className, context.slotClassNames),
@@ -112,67 +155,4 @@ function Footer(props: ChartWidgetSlotProps) {
   return <Slot {...props} slot="footer" element="footer" />
 }
 
-function TableRegion({ children, className, style }: ChartWidgetSlotProps) {
-  const context = useChartWidget()
-  return (
-    <div
-      data-aperture-slot="table"
-      className={slotClass('table', className, context.slotClassNames)}
-      style={style}
-      hidden={!context.tableVisible}
-    >
-      {children}
-    </div>
-  )
-}
-
-export const ChartWidget = { Root, Header, Controls, Plot, TableRegion, Footer }
-
-export interface ExactValueColumn<TDatum> {
-  readonly id: string
-  readonly header: ReactNode
-  readonly value: (datum: TDatum) => ReactNode
-  readonly rowHeader?: boolean
-}
-
-export interface ExactValueTableProps<TDatum> {
-  readonly data: readonly TDatum[]
-  readonly columns: readonly [ExactValueColumn<TDatum>, ...ExactValueColumn<TDatum>[]]
-  readonly rowKey: (datum: TDatum, index: number) => string
-  readonly caption?: ReactNode
-  readonly className?: string
-}
-
-export function ExactValueTable<TDatum>({
-  data,
-  columns,
-  rowKey,
-  caption,
-  className,
-}: ExactValueTableProps<TDatum>) {
-  return (
-    <div data-aperture-root="" className="aperture-table-scroll">
-      <table className={['aperture-table', className].filter(Boolean).join(' ')}>
-        {caption ? <caption>{caption}</caption> : null}
-        <thead>
-          <tr>
-            {columns.map((column) => <th key={column.id} scope="col">{column.header}</th>)}
-          </tr>
-        </thead>
-        <tbody>
-          {data.map((datum, rowIndex) => (
-            <tr key={rowKey(datum, rowIndex)}>
-              {columns.map((column) =>
-                column.rowHeader ? (
-                  <th key={column.id} scope="row">{column.value(datum)}</th>
-                ) : (
-                  <td key={column.id}>{column.value(datum)}</td>
-                ),
-              )}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  )
-}
+export const ChartWidget = { Root, Header, Controls, Plot, Footer }

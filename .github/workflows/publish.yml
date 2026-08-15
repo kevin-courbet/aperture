@@ -1,0 +1,157 @@
+name: Publish
+
+on:
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: npm-publish
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      version: ${{ steps.release.outputs.version }}
+    steps:
+      - name: Check out the release commit
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Install pnpm and Node.js
+        uses: pnpm/setup@f7d0e5f4b1b3089d2799ef9722859e7ba314c4c8 # v1
+        with:
+          version: 11.9.0
+          runtime: node@24.18.0
+          cache: false
+          install: false
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Validate
+        run: pnpm validate
+
+      - name: Check the package version
+        id: release
+        run: node scripts/npm-release-state.mjs packages/charts/package.json >> "$GITHUB_OUTPUT"
+
+      - name: Check the release tag
+        env:
+          PACKAGE_VERSION: ${{ steps.release.outputs.version }}
+        run: |
+          tag="v${PACKAGE_VERSION}"
+          if git rev-parse --quiet --verify "refs/tags/${tag}" >/dev/null; then
+            test "$(git rev-list -n 1 "${tag}")" = "$GITHUB_SHA"
+          fi
+
+      - name: Create and verify the package artifact
+        run: node scripts/check-package.mjs release
+
+      - name: Upload the package artifact
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: aperture-package
+          path: release/
+          if-no-files-found: error
+          retention-days: 1
+
+  publish:
+    needs: validate
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Check out the release commit
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Install Node.js
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 24.18.0
+          registry-url: https://registry.npmjs.org
+          package-manager-cache: false
+
+      - name: Download the package artifact
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with:
+          name: aperture-package
+          path: release
+
+      - name: Check npm and the release tag
+        id: release
+        env:
+          PACKAGE_VERSION: ${{ needs.validate.outputs.version }}
+        run: |
+          node scripts/npm-release-state.mjs packages/charts/package.json >> "$GITHUB_OUTPUT"
+          tag="v${PACKAGE_VERSION}"
+          if git rev-parse --quiet --verify "refs/tags/${tag}" >/dev/null; then
+            test "$(git rev-list -n 1 "${tag}")" = "$GITHUB_SHA"
+          fi
+
+      - name: Publish the verified artifact to npm
+        if: steps.release.outputs.publish == 'true'
+        continue-on-error: true
+        run: npm publish release/*.tgz --access public --ignore-scripts
+
+      - name: Verify the npm release
+        run: |
+          for attempt in {1..12}; do
+            if node scripts/npm-release-state.mjs packages/charts/package.json verify release/pack.json; then
+              exit 0
+            fi
+            sleep 5
+          done
+          exit 1
+
+  tag:
+    needs:
+      - validate
+      - publish
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Check out the release commit
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          fetch-depth: 0
+
+      - name: Install Node.js
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 24.18.0
+          package-manager-cache: false
+
+      - name: Download the package artifact
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with:
+          name: aperture-package
+          path: release
+
+      - name: Verify the npm release
+        run: node scripts/npm-release-state.mjs packages/charts/package.json verify release/pack.json
+
+      - name: Create the release tag
+        env:
+          PACKAGE_VERSION: ${{ needs.validate.outputs.version }}
+        run: |
+          tag="v${PACKAGE_VERSION}"
+          git fetch --force --tags origin
+          if git rev-parse --quiet --verify "refs/tags/${tag}" >/dev/null; then
+            test "$(git rev-list -n 1 "${tag}")" = "$GITHUB_SHA"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag --annotate "${tag}" --message "Release @kevin-courbet/aperture@${PACKAGE_VERSION}" "$GITHUB_SHA"
+          git push origin "refs/tags/${tag}"

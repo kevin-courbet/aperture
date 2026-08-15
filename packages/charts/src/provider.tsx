@@ -23,6 +23,7 @@ export const englishMessages: ApertureMessages = {
   errors: {
     invalidDate: 'Chart dates must be valid Date values.',
     invalidHeight: 'Chart height must be a positive finite number.',
+    invalidWidth: 'Chart widths must be positive finite numbers.',
     invalidNumber: 'Chart numbers must be finite.',
     missingFullscreenTarget: 'The full-screen target is not available.',
     fullscreenFailed: 'The full-screen request failed.',

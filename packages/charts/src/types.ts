@@ -32,6 +32,7 @@ export interface ApertureMessages {
   readonly errors: {
     readonly invalidDate: string
     readonly invalidHeight: string
+    readonly invalidWidth: string
     readonly invalidNumber: string
     readonly missingFullscreenTarget: string
     readonly fullscreenFailed: string
@@ -69,22 +70,18 @@ export interface CommonChartProps {
   readonly ariaDescription: string
   readonly renderer?: ChartRenderer
   readonly height?: number
+  readonly width?: number
+  readonly initialWidth?: number
   readonly className?: string
   readonly style?: CSSProperties
   readonly tooltip?: boolean
-  readonly accessibleExactValues?: AccessibleExactValueReplacement
-}
-
-export interface AccessibleExactValueReplacement {
-  readonly content: ReactNode
-  readonly description: string
 }
 
 export interface CrosshairChartProps {
   readonly crosshair?: boolean
 }
 
-export type ChartSlot = 'root' | 'header' | 'controls' | 'plot' | 'table' | 'footer'
+export type ChartSlot = 'root' | 'header' | 'controls' | 'plot' | 'footer'
 export type ChartSlotClassNames = Partial<Record<ChartSlot, string>>
 
 export interface ChartWidgetSlotProps {

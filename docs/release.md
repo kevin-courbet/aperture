@@ -1,7 +1,7 @@
 # Release
 
-Aperture uses local CI on `beast`. GitHub stores the SHA-bound
-`signoff/beast` result. GitHub Actions does not validate or publish the package.
+Aperture publishes from GitHub Actions after a commit reaches `main`. npm
+trusted publishing authenticates `.github/workflows/publish.yml` through OIDC.
 
 ## Prepare A Release
 
@@ -34,29 +34,23 @@ Run `pnpm signoff:install` once to require this context on `main`. Run
 
 ## Publish A Release
 
-Run this command from the clean `main` integration checkout after IQ lands:
+Before the first push, configure the npm trusted publisher with:
 
-```sh
-pnpm release
-```
+- Organization or user: `kevin-courbet`
+- Repository: `aperture`
+- Workflow filename: `publish.yml`
+- Allowed action: `npm publish`
 
-The command reads the npm granular access token from
-`pass show npm/aperture-beast-release`. The token must have read/write access
-only to the `@kevin-courbet` scope and must bypass 2FA for publication. The
-command writes it to a temporary mode-600 npm configuration and removes that
-file before it runs validation. It creates another temporary configuration only
-for publication and removes it immediately after npm returns.
+Push the signed release commit to `main`. The `Publish` workflow installs from
+the frozen lockfile, runs `pnpm validate`, and creates one verified package
+artifact that records the release commit. A separate OIDC job publishes that
+artifact only when the version is unused. The workflow verifies npm `gitHead`
+and package integrity before a third job creates the matching annotated
+`v<version>` tag.
 
-The command rejects a package version or tag that points to a different commit.
-A retry can finish a release that npm already records for the same landed
-commit. It also requires `HEAD` to equal `origin/main` and requires trusted
-`signoff/beast` success on that exact SHA. It validates again, publishes the
-public package, verifies the npm `gitHead`, and pushes the annotated
-`v<version>` tag. Build and publication occur in an isolated checkout of the
-landed SHA.
+The workflow rejects a version already published from a different commit. Set a
+new SemVer version before every release commit.
 
-Replace the password-store entry when the token expires:
-
-```sh
-pass insert --force npm/aperture-beast-release
-```
+After the first OIDC release succeeds, revoke the old npm automation token. Set
+package access to require two-factor authentication and disallow token-based
+publication.

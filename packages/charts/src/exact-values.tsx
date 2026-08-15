@@ -1,7 +1,8 @@
 import { useId, useState, type ReactNode } from 'react'
 import { useChartFormatters } from './formatting.js'
 import { useChartConfiguration } from './provider.js'
-import type { AccessibleExactValueReplacement, NumericPoint } from './types.js'
+import type { NumericPoint } from './types.js'
+import { useOptionalChartWidget } from './widget.js'
 
 export type ExactValue = string | number | Date | null | NumericPoint
 
@@ -122,28 +123,38 @@ function ExactValueTable({ model }: { readonly model: ExactValueModel }) {
 
 export function ExactValues({
   model,
-  replacement,
 }: {
   readonly model: ExactValueModel
-  readonly replacement?: AccessibleExactValueReplacement
 }) {
   const { messages } = useChartConfiguration()
+  const widget = useOptionalChartWidget()
   const [visible, setVisible] = useState(false)
-  const id = useId()
-  if (replacement) {
-    return <section aria-label={replacement.description}>{replacement.content}</section>
+  const localId = useId()
+  const id = widget?.tableId ?? localId
+  const tableVisible = widget?.tableVisible ?? visible
+
+  if (widget !== null) {
+    if (!widget.tableAvailable) throw new Error('A ready chart requires ChartWidget.Root exactValues="available".')
+    return (
+      <section className="aperture-exact-values" aria-label={model.caption ?? messages.table.caption}>
+        <div id={id} className={tableVisible ? 'aperture-table-scroll' : 'aperture-visually-hidden'}>
+          <ExactValueTable model={model} />
+        </div>
+      </section>
+    )
   }
   return (
     <section className="aperture-exact-values">
       <button
         type="button"
         className="aperture-exact-toggle"
-        aria-pressed={visible}
+        aria-pressed={tableVisible}
+        aria-controls={id}
         onClick={() => setVisible((current) => !current)}
       >
-        {visible ? messages.controls.hideTable : messages.controls.showTable}
+        {tableVisible ? messages.controls.hideTable : messages.controls.showTable}
       </button>
-      <div id={id} className={visible ? 'aperture-table-scroll' : 'aperture-visually-hidden'}>
+      <div id={id} className={tableVisible ? 'aperture-table-scroll' : 'aperture-visually-hidden'}>
         <ExactValueTable model={model} />
       </div>
     </section>

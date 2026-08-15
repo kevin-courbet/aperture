@@ -13,7 +13,6 @@ import {
   DonutChart,
   EcdfChart,
   ErrorBarChart,
-  ExactValueTable,
   FacetChart,
   FullscreenControl,
   GaugeChart,
@@ -37,6 +36,7 @@ import {
   type ChartDataState,
   type ChartRenderer,
   type SingletonChartDataState,
+  type TimeAxisOptions,
   type TimeSeriesDatum,
 } from '@kevin-courbet/aperture'
 import { allocation, cashMovement, closingCash, marketSeries } from '../../src/fixtures/finance'
@@ -134,6 +134,18 @@ const completedSeries = throughputByMonth.map((row): TimeSeriesDatum => ({
   value: { kind: 'value', value: row.completed },
 }))
 
+export const calendarContextSeries: readonly TimeSeriesDatum[] = Array.from({ length: 18 }, (_, index) => ({
+  id: `calendar-${index}`,
+  date: new Date(Date.UTC(2025 + Math.floor((index + 2) / 12), (index + 2) % 12, 1)),
+  value: { kind: 'value', value: 40 + index + Math.sin(index / 2) * 4 },
+}))
+
+export const midMonthObservationSeries: readonly TimeSeriesDatum[] = [0, 1, 2].map((month) => ({
+  id: `mid-month-${month}`,
+  date: new Date(Date.UTC(2025, month, 15)),
+  value: { kind: 'value', value: 40 + month * 4 },
+}))
+
 const queuedSeries = throughputByMonth.map((row): TimeSeriesDatum => ({
   id: `queued-${row.period}`,
   date: new Date(`${row.period}T00:00:00Z`),
@@ -193,12 +205,22 @@ function commonProps(controls: ExampleControls, title: string, description: stri
   }
 }
 
-function ConcreteChart({ name, controls, lineData = completedSeries }: { name: ChartName; controls: ExampleControls; lineData?: readonly TimeSeriesDatum[] }) {
+function ConcreteChart({
+  name,
+  controls,
+  lineData = completedSeries,
+  timeAxis,
+}: {
+  name: ChartName
+  controls: ExampleControls
+  lineData?: readonly TimeSeriesDatum[]
+  timeAxis?: TimeAxisOptions
+}) {
   const details = metadata[name]
   const common = commonProps(controls, details.title, details.description)
   switch (name) {
     case 'LineChart':
-      return <LineChart {...common} state={stateFor(controls.state, lineData)} xLabel="Month" yLabel="Completed items" reference={controls.showGoal ? { value: 55, label: 'Goal: 55 items' } : undefined} />
+      return <LineChart {...common} state={stateFor(controls.state, lineData)} xLabel="Month" yLabel="Completed items" reference={controls.showGoal ? { value: 55, label: 'Goal: 55 items' } : undefined} timeAxis={timeAxis} />
     case 'AreaChart':
       return <AreaChart {...common} state={stateFor(controls.state, queuedSeries)} xLabel="Month" yLabel="Queued items" />
     case 'BarChart':
@@ -228,7 +250,7 @@ function ConcreteChart({ name, controls, lineData = completedSeries }: { name: C
     case 'WaterfallChart':
       return <WaterfallChart {...common} state={stateFor(controls.state, cashMovement)} includeTotal valueLabel="Cash (£k)" />
     case 'CandlestickChart':
-      return <CandlestickChart {...common} state={stateFor(controls.state, candleData)} priceLabel="Price (£)" />
+      return <CandlestickChart {...common} state={stateFor(controls.state, candleData)} candleInterval={{ unit: 'day', step: 1 }} priceLabel="Price (£)" />
     case 'TreemapChart':
       return <TreemapChart {...common} state={stateFor(controls.state, hierarchyNodes)} />
     case 'SunburstChart':
@@ -267,7 +289,16 @@ export function BarVariantExample({ layout, orientation }: { layout: 'single' | 
   return <BarChart {...common} state={chartData(comparativeBarData)} orientation={orientation} layout={layout} seriesOrder={['Current', 'Previous']} categoryLabel="Channel" valueLabel="Completed items" />
 }
 
-export function ChartExample({ name, dataOverride, ...controls }: { name: ChartName; dataOverride?: readonly TimeSeriesDatum[] } & ExampleControls) {
+export function ChartExample({
+  name,
+  dataOverride,
+  timeAxis,
+  ...controls
+}: {
+  name: ChartName
+  dataOverride?: readonly TimeSeriesDatum[]
+  timeAxis?: TimeAxisOptions
+} & ExampleControls) {
   const details = metadata[name]
   return (
     <ChartProvider locale="en-GB" timeZone="UTC">
@@ -284,7 +315,7 @@ export function ChartExample({ name, dataOverride, ...controls }: { name: ChartN
           </dl>
         </header>
         <div className="catalog-plot">
-          <ConcreteChart name={name} controls={controls} lineData={dataOverride} />
+          <ConcreteChart name={name} controls={controls} lineData={dataOverride} timeAxis={timeAxis} />
         </div>
         <footer className="catalog-sheet__footer">Values, units, and missing-value meaning belong with the chart.</footer>
       </article>
@@ -303,32 +334,52 @@ export function RendererComparison() {
 }
 
 export function ExactValueSelectionExample() {
-  const [selectedPeriod, setSelectedPeriod] = useState('2025-04-01')
-  const selected = throughputByMonth.find((row) => row.period === selectedPeriod) ?? throughputByMonth[0]
   return (
     <ChartProvider locale="en-GB" timeZone="UTC">
-      <ChartWidget.Root className="catalog-sheet catalog-linked" style={{ maxWidth: 900 }}>
+      <ChartWidget.Root className="catalog-sheet catalog-linked" style={{ maxWidth: 900 }} exactValues="available">
         <ChartWidget.Header className="catalog-sheet__header">
-          <div><p className="catalog-index">Linked selection</p><h2>Completed work and exact values</h2><p>Show the table, then select a period to update the linked readout.</p></div>
+          <div><p className="catalog-index">Integrated disclosure</p><h2>Completed work and exact values</h2><p>The widget toolbar controls the chart-owned semantic table.</p></div>
           <DataTableControl />
         </ChartWidget.Header>
-        <div className="catalog-selection" aria-live="polite"><span>Selected period</span><strong>{selected.period}</strong><span>{selected.completed} completed items</span></div>
         <ChartWidget.Plot className="catalog-plot">
           <LineChart ariaLabel="Completed work by month" ariaDescription="Monthly completed items." state={chartData(completedSeries)} xLabel="Month" yLabel="Completed items" reference={{ value: 55, label: 'Goal: 55 items' }} />
         </ChartWidget.Plot>
-        <ChartWidget.TableRegion className="catalog-table-wrap">
-          <ExactValueTable
-            data={throughputByMonth}
-            caption="Exact monthly completed work"
-            rowKey={(row) => row.period}
-            columns={[
-              { id: 'period', header: 'Period', rowHeader: true, value: (row) => <button type="button" onClick={() => setSelectedPeriod(row.period)}>{row.period}</button> },
-              { id: 'completed', header: 'Completed items', value: (row) => row.completed },
-              { id: 'goal', header: 'Goal', value: (row) => row.goal },
-            ]}
-          />
-        </ChartWidget.TableRegion>
       </ChartWidget.Root>
+    </ChartProvider>
+  )
+}
+
+export function UnavailableExactValueExample() {
+  return (
+    <ChartProvider locale="en-GB" timeZone="UTC">
+      <ChartWidget.Root className="catalog-sheet" style={{ maxWidth: 900 }} exactValues="unavailable">
+        <ChartWidget.Header className="catalog-sheet__header">
+          <h2>Loading chart values</h2>
+          <DataTableControl />
+        </ChartWidget.Header>
+        <ChartWidget.Plot className="catalog-plot">
+          <LineChart ariaLabel="Loading monthly work" ariaDescription="Monthly work values are loading." state={{ status: 'loading' }} />
+        </ChartWidget.Plot>
+      </ChartWidget.Root>
+    </ChartProvider>
+  )
+}
+
+export function MonthEndCandlestickExample() {
+  const rows = [
+    { id: 'jan', date: new Date('2025-01-31T00:00:00Z'), open: 100, high: 108, low: 97, close: 105 },
+    { id: 'feb', date: new Date('2025-02-28T00:00:00Z'), open: 105, high: 112, low: 101, close: 109 },
+    { id: 'mar', date: new Date('2025-03-31T00:00:00Z'), open: 109, high: 114, low: 104, close: 107 },
+  ] as const
+  return (
+    <ChartProvider locale="en-GB" timeZone="UTC">
+      <CandlestickChart
+        ariaLabel="Month-end market range"
+        ariaDescription="Three monthly candles observed at calendar month end."
+        state={chartData(rows)}
+        candleInterval={{ unit: 'month', step: 1 }}
+        priceLabel="Price (£)"
+      />
     </ChartProvider>
   )
 }

@@ -52,7 +52,7 @@ const teamSeries = monthlyTeams.map((row): TimeSeriesDatum => ({
 const codeSample = `const [range, setRange] = useState<'3M' | '6M' | 'All'>('6M')
 const rows = teamSeries.slice(range === 'All' ? 0 : range === '3M' ? -3 : -6)
 
-<ChartWidget.Root>
+<ChartWidget.Root exactValues="available">
   <ChartWidget.Header>
     <h2>Active teams</h2>
   </ChartWidget.Header>
@@ -115,7 +115,7 @@ function ProductWidget() {
   const rows = range === 'All' ? teamSeries : teamSeries.slice(range === '3M' ? -3 : -6)
 
   return (
-    <ChartWidget.Root className="demo-widget">
+    <ChartWidget.Root className="demo-widget" exactValues="available">
       <div ref={frameRef} className="demo-widget-frame">
         <ChartWidget.Header className="demo-widget-header">
           <div>
@@ -215,7 +215,7 @@ function ThemeIntegration() {
       </div>
       <div className="demo-theme-preview">
         <ChartProvider icons={{ calendar: AlternateCalendarIcon }}>
-          <ChartWidget.Root className="demo-theme-widget">
+          <ChartWidget.Root className="demo-theme-widget" exactValues="available">
             <ChartWidget.Controls>
               <TimeRangeControl value={range} options={rangeOptions} onChange={setRange} />
             </ChartWidget.Controls>
