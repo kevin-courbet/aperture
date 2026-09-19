@@ -12,19 +12,13 @@ import { scaleLinear } from '@tanstack/charts/scales/linear'
 import { densityContour } from '@tanstack/charts/spatial/density'
 import { exactRow, exactValues, seriesLegend } from './exact-values.js'
 import { localizedTooltip, numberAxis, useChartFormatters } from './formatting.js'
+import { chartColors } from './palette.js'
 import { useChartConfiguration } from './provider.js'
 import { ChartStateBoundary, ChartSurface } from './surface.js'
 import type { ChartDataState, CommonChartProps } from './types.js'
 import { bounded, finite } from './validation.js'
 
-const colors = [
-  'var(--aperture-chart-1)',
-  'var(--aperture-chart-2)',
-  'var(--aperture-chart-3)',
-  'var(--aperture-chart-4)',
-  'var(--aperture-chart-5)',
-] as const
-const seriesDasharrays = ['', '8 3', '2 3', '10 3 2 3', '1 3'] as const
+const seriesDasharrays = ['', '8 3', '2 3', '10 3 2 3', '1 3', '12 4', '4 2 1 2', '2 2 8 2'] as const
 
 export interface BoxPlotDatum {
   readonly id: string
@@ -40,7 +34,7 @@ export interface BoxPlotChartProps extends CommonChartProps {
 
 export function BoxPlotChart({ state, categoryLabel, valueLabel, ...common }: BoxPlotChartProps) {
   const { messages } = useChartConfiguration()
-  const formatters = useChartFormatters()
+  const formatters = useChartFormatters(common.formatters)
   return (
     <ChartStateBoundary state={state} rootProps={common}>
       {(data) => {
@@ -74,7 +68,7 @@ export interface ViolinChartProps extends CommonChartProps {
 
 export function ViolinChart({ state, categoryLabel, valueLabel, ...common }: ViolinChartProps) {
   const { messages } = useChartConfiguration()
-  const formatters = useChartFormatters()
+  const formatters = useChartFormatters(common.formatters)
   return (
     <ChartStateBoundary state={state} rootProps={common}>
       {(data) => {
@@ -87,7 +81,7 @@ export function ViolinChart({ state, categoryLabel, valueLabel, ...common }: Vio
           marks: [violinY(rows, { x: 'category', y: 'position', width: 'density', color: 'category', key: 'id', fillOpacity: 0.56, stroke: 'var(--aperture-color-text)' })],
           x: { scale: () => scaleBand<string>().padding(0.2), axis: categoryLabel ? { label: categoryLabel } : undefined },
           y: { scale: scaleLinear, nice: true, grid: true, axis: numberAxis(valueLabel, formatters) },
-          color: { range: colors },
+          color: { range: chartColors },
           tooltip: localizedTooltip(common.tooltip, formatters),
         })
         return <ChartSurface {...common} definition={definition} legend={seriesLegend(rows.map((row) => row.category))} exactValues={exactValues(
@@ -107,7 +101,7 @@ export interface RidgelineChartProps extends CommonChartProps {
 
 export function RidgelineChart({ state, categoryLabel, valueLabel, overlap = 0.75, ...common }: RidgelineChartProps) {
   const { messages } = useChartConfiguration()
-  const formatters = useChartFormatters()
+  const formatters = useChartFormatters(common.formatters)
   finite(overlap, messages.errors.invalidNumber)
   return (
     <ChartStateBoundary state={state} rootProps={common}>
@@ -121,7 +115,7 @@ export function RidgelineChart({ state, categoryLabel, valueLabel, overlap = 0.7
           marks: [ridgelineY(rows, { x: 'position', y: 'category', height: 'density', color: 'category', key: 'id', overlap, fillOpacity: 0.5, stroke: 'var(--aperture-color-text)' })],
           x: { scale: scaleLinear, nice: true, grid: true, axis: numberAxis(valueLabel, formatters) },
           y: { scale: () => scaleBand<string>().padding(0.1), axis: categoryLabel ? { label: categoryLabel } : undefined },
-          color: { range: colors },
+          color: { range: chartColors },
           tooltip: localizedTooltip(common.tooltip, formatters),
         })
         return <ChartSurface {...common} definition={definition} legend={seriesLegend(rows.map((row) => row.category))} exactValues={exactValues(
@@ -145,7 +139,7 @@ export interface BeeswarmChartProps extends CommonChartProps {
 
 export function BeeswarmChart({ state, valueLabel, ...common }: BeeswarmChartProps) {
   const { messages } = useChartConfiguration()
-  const formatters = useChartFormatters()
+  const formatters = useChartFormatters(common.formatters)
   return (
     <ChartStateBoundary state={state} rootProps={common}>
       {(data) => {
@@ -153,7 +147,7 @@ export function BeeswarmChart({ state, valueLabel, ...common }: BeeswarmChartPro
         const definition = defineChart({
           marks: [dot(rows, { x: 'value', color: 'category', key: 'id', r: 4, layout: dodgeY({ anchor: 'middle', padding: 1 }), fillOpacity: 0.78 })],
           x: { scale: scaleLinear, nice: true, grid: true, axis: numberAxis(valueLabel, formatters) },
-          color: { range: colors },
+          color: { range: chartColors },
           tooltip: localizedTooltip(common.tooltip, formatters),
         })
         return <ChartSurface {...common} definition={definition} legend={seriesLegend(rows.map((row) => row.category))} exactValues={exactValues(
@@ -182,7 +176,7 @@ export interface DensityChartProps extends CommonChartProps {
 
 export function DensityChart({ state, xLabel, yLabel, bandwidth = 20, thresholds = 12, ...common }: DensityChartProps) {
   const { messages } = useChartConfiguration()
-  const formatters = useChartFormatters()
+  const formatters = useChartFormatters(common.formatters)
   finite(bandwidth, messages.errors.invalidNumber)
   finite(thresholds, messages.errors.invalidNumber)
   return (
@@ -205,7 +199,7 @@ export function DensityChart({ state, xLabel, yLabel, bandwidth = 20, thresholds
           ],
           x: { scale: scaleLinear, nice: true, grid: true, axis: numberAxis(xLabel, formatters) },
           y: { scale: scaleLinear, nice: true, grid: true, axis: numberAxis(yLabel, formatters) },
-          color: { range: colors },
+          color: { range: chartColors },
           tooltip: localizedTooltip(common.tooltip, formatters),
         })
         return <ChartSurface {...common} definition={definition} legend={seriesLegend(rows.map((row) => row.series))} exactValues={exactValues(
@@ -231,7 +225,7 @@ export interface EcdfChartProps extends CommonChartProps {
 
 export function EcdfChart({ state, valueLabel, proportionLabel, ...common }: EcdfChartProps) {
   const { messages } = useChartConfiguration()
-  const formatters = useChartFormatters()
+  const formatters = useChartFormatters(common.formatters)
   return (
     <ChartStateBoundary state={state} rootProps={common}>
       {(data) => {
@@ -258,7 +252,7 @@ export function EcdfChart({ state, valueLabel, proportionLabel, ...common }: Ecd
           })),
           x: { scale: scaleLinear, nice: true, grid: true, axis: numberAxis(valueLabel, formatters) },
           y: { scale: scaleLinear().domain([0, 1]), grid: true, axis: numberAxis(proportionLabel, formatters) },
-          color: { domain: series, range: colors },
+          color: { domain: series, range: chartColors },
           focus: 'nearest-x',
           tooltip: localizedTooltip(common.tooltip, formatters),
         })

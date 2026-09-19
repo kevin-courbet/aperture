@@ -13,7 +13,7 @@ export const CalendarContext: ChartStory = {
   args: {
     name: 'LineChart',
     dataOverride: calendarContextSeries,
-    timeAxis: { kind: 'automatic' },
+    timeAxis: { position: 'elapsed', ticks: { kind: 'automatic' } },
   },
   parameters: { docs: { description: { story: 'Automatic calendar ticks adapt to width and show the year only when context changes.' } } },
 }
@@ -21,7 +21,7 @@ export const QuarterlyTicks: ChartStory = {
   args: {
     name: 'LineChart',
     dataOverride: calendarContextSeries,
-    timeAxis: { kind: 'calendar', interval: { unit: 'quarter', step: 1 } },
+    timeAxis: { position: 'elapsed', ticks: { kind: 'calendar', interval: { unit: 'quarter', step: 1 } } },
   },
   parameters: { docs: { description: { story: 'A caller can require one tick for each calendar quarter.' } } },
 }
@@ -29,12 +29,13 @@ export const ObservationDates: ChartStory = {
   args: {
     name: 'LineChart',
     dataOverride: midMonthObservationSeries,
-    timeAxis: { kind: 'observations' },
+    timeAxis: { position: 'observations' },
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement)
-    await expect(canvas.getByText('15 Jan 2025')).toBeVisible()
-    await expect(canvas.getByText('15 Feb')).toBeVisible()
-    await expect(canvas.getByText('15 Mar')).toBeVisible()
+    const chart = within(canvas.getByRole('img', { name: 'Completed work by month' }))
+    await expect(chart.getByText('15 Jan 2025')).toBeVisible()
+    await expect(chart.getByText('15 Feb')).toBeVisible()
+    await expect(chart.getByText('15 Mar')).toBeVisible()
   },
 }

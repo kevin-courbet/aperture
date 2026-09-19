@@ -46,21 +46,39 @@ ticks at observations:
 <LineChart
   {...props}
   timeAxis={{
-    kind: 'calendar',
-    interval: { unit: 'quarter', step: 1 },
+    position: 'elapsed',
+    ticks: { kind: 'calendar', interval: { unit: 'quarter', step: 1 } },
   }}
 />
 ```
 
 Fixed calendar intervals reject invalid steps and domains that exceed the
-supported tick limit. Use the advanced entry point for arbitrary tick values
-or formatting.
+supported tick limit. Use `position: 'observations'` for equal spacing between
+source observations. The optional `format` function replaces time-axis labels.
 
 Clock steps must divide their containing unit. For example, seconds can use 1,
 2, 5, 10, 15, 20, or 30. They cannot use 7.
 
 Dense fixed intervals keep their calendar tick marks. Their labels use
 self-contained dates and thin to prevent overlap.
+
+## Presentation Options
+
+Use `AreaChart.appearance` or `StackedAreaChart.appearance` for a solid fill or
+a vertical gradient. An optional outline uses the color of each series.
+
+Set `DateBrush.appearance` to `low-emphasis` to hide the selection at rest. The
+selection appears during pointer or keyboard interaction.
+
+Set `DonutChart.labelPlacement` to `inline` to show each label, value, and
+percentage around the donut. This option also shows the total in the center.
+
+Set `BarChart.appearance.cornerRadius` to a nonnegative pixel radius for rounded
+bars. The radius applies to all corners, including each grouped or stacked bar.
+
+Horizontal single-series bars accept `valueLabelPlacement="outside-end"`.
+`SankeyChart.appearance` controls node width, node spacing, link color, link
+curves, and node-label details.
 
 ## Responsive Server Output
 

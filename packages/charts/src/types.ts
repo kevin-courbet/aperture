@@ -2,6 +2,18 @@ import type { ComponentType, CSSProperties, ReactNode, SVGProps } from 'react'
 
 export type ChartRenderer = 'svg' | 'canvas'
 
+export type ApertureChartColorIndex = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8
+export type ApertureChartStyle = CSSProperties & Partial<
+  Record<`--aperture-chart-${ApertureChartColorIndex}`, string>
+>
+
+export interface ChartFormatters {
+  readonly date?: (value: Date) => string
+  readonly axisNumber?: (value: number) => string
+  readonly number?: (value: number) => string
+  readonly percentage?: (value: number) => string
+}
+
 export type ApertureIcon = ComponentType<SVGProps<SVGSVGElement>>
 
 export interface ApertureIcons {
@@ -73,8 +85,9 @@ export interface CommonChartProps {
   readonly width?: number
   readonly initialWidth?: number
   readonly className?: string
-  readonly style?: CSSProperties
+  readonly style?: ApertureChartStyle
   readonly tooltip?: boolean
+  readonly formatters?: ChartFormatters
 }
 
 export interface CrosshairChartProps {

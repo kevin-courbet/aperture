@@ -1,15 +1,17 @@
 import type { ChartTooltipInput, ChartValue } from '@tanstack/charts'
 import { tooltip as tooltipExtension } from '@tanstack/charts/tooltip'
 import { useChartConfiguration } from './provider.js'
+import type { ChartFormatters as ChartFormatterOverrides } from './types.js'
 
 export interface ChartFormatters {
   readonly date: (value: Date) => string
   readonly axisNumber: (value: number) => string
   readonly number: (value: number) => string
+  readonly percentage: (value: number) => string
   readonly value: (value: ChartValue) => string
 }
 
-export function useChartFormatters(): ChartFormatters {
+export function useChartFormatters(overrides?: ChartFormatterOverrides): ChartFormatters {
   const { locale, timeZone } = useChartConfiguration()
   const minuteFormatter = new Intl.DateTimeFormat(locale, {
     calendar: 'gregory',
@@ -46,15 +48,18 @@ export function useChartFormatters(): ChartFormatters {
   })
   const axisNumberFormatter = new Intl.NumberFormat(locale, { maximumFractionDigits: 6 })
   const numberFormatter = new Intl.NumberFormat(locale, { maximumSignificantDigits: 21 })
-  const date = (value: Date) => {
+  const percentageFormatter = new Intl.NumberFormat(locale, { style: 'percent', maximumFractionDigits: 0 })
+  const defaultDate = (value: Date) => {
     if (value.getUTCMilliseconds() !== 0) return millisecondFormatter.format(value)
     if (value.getUTCSeconds() !== 0) return secondFormatter.format(value)
     return minuteFormatter.format(value)
   }
-  const axisNumber = (value: number) => axisNumberFormatter.format(value)
-  const number = (value: number) => numberFormatter.format(value)
+  const date = overrides?.date ?? defaultDate
+  const axisNumber = overrides?.axisNumber ?? ((value: number) => axisNumberFormatter.format(value))
+  const number = overrides?.number ?? ((value: number) => numberFormatter.format(value))
+  const percentage = overrides?.percentage ?? ((value: number) => percentageFormatter.format(value))
   const value = (input: ChartValue) => input instanceof Date ? date(input) : typeof input === 'number' ? number(input) : input
-  return { date, axisNumber, number, value }
+  return { date, axisNumber, number, percentage, value }
 }
 
 export function numberAxis(label: string | undefined, formatters: ChartFormatters) {
@@ -65,10 +70,34 @@ export function localizedTooltip(
   enabled: boolean | undefined,
   formatters: ChartFormatters,
   readout?: string,
+  grouped = false,
 ): ChartTooltipInput<any, any, any, 'dom'> | undefined {
   if (enabled === false) return undefined
   return {
     use: tooltipExtension,
     format: (point) => readout ?? `${formatters.value(point.xValue)}: ${formatters.value(point.yValue)}`,
+    ...(grouped
+      ? {
+          formatGroup: (points) => {
+            const first = points[0]
+            if (first === undefined) return ''
+            return [
+              formatters.value(first.xValue),
+              ...points.map((point) => `${point.groupLabel}: ${formatters.value(point.yValue)}`),
+            ].join('\n')
+          },
+        }
+      : {}),
+  }
+}
+
+export function localizedHorizontalTooltip(
+  enabled: boolean | undefined,
+  formatters: ChartFormatters,
+): ChartTooltipInput<any, any, any, 'dom'> | undefined {
+  if (enabled === false) return undefined
+  return {
+    use: tooltipExtension,
+    format: (point) => `${formatters.value(point.yValue)}: ${formatters.value(point.xValue)}`,
   }
 }

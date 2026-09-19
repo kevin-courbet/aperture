@@ -35,17 +35,30 @@ type DateTickInterval = CalendarTickInterval & {
   readonly unit: 'day' | 'week' | 'month' | 'quarter' | 'year'
 }
 
-export type TimeAxisOptions =
+export type TimeTickPolicy =
   | { readonly kind: 'automatic' }
   | { readonly kind: 'calendar'; readonly interval: CalendarTickInterval }
   | { readonly kind: 'observations' }
+
+export type TimeAxisOptions =
+  | {
+      readonly position: 'elapsed'
+      readonly ticks?: TimeTickPolicy
+      readonly format?: (value: Date) => string
+    }
+  | {
+      readonly position: 'observations'
+      readonly format?: (value: Date) => string
+    }
+
+export type ElapsedTimeAxisOptions = Extract<TimeAxisOptions, { readonly position: 'elapsed' }>
 
 interface TimeAxisPlanInput {
   readonly dates: readonly Date[]
   readonly width: number
   readonly locale: string
   readonly timeZone: string
-  readonly options?: TimeAxisOptions
+  readonly options?: TimeTickPolicy
   readonly domain?: readonly [Date, Date]
 }
 
@@ -67,7 +80,7 @@ interface TimeAxisPlan {
   }
 }
 
-const automaticTimeAxis: TimeAxisOptions = { kind: 'automatic' }
+const automaticTimeTicks: TimeTickPolicy = { kind: 'automatic' }
 const maximumTickCandidates = 512
 const maximumAutomaticTicks = 12
 const minimumAutomaticTicks = 2
@@ -111,7 +124,7 @@ function validatedInterval(interval: CalendarTickInterval): CalendarTickInterval
   return { unit: interval.unit, step }
 }
 
-function validatedTimeAxisOptions(options: TimeAxisOptions): TimeAxisOptions {
+function validatedTimeTickPolicy(options: TimeTickPolicy): TimeTickPolicy {
   if (typeof options !== 'object' || options === null || !('kind' in options)) {
     throw new RangeError('Time-axis options must select a supported policy.')
   }
@@ -665,18 +678,30 @@ function dateLabels(
   return { labels, contextBoundaries, yearBoundaries }
 }
 
+export function observationTickFormatter(
+  values: readonly Date[],
+  locale: string,
+  timeZone: string,
+  intervalValues: readonly Date[] = values,
+): (value: Date) => string {
+  const chronologicalValues = [...intervalValues].sort((left, right) => left.getTime() - right.getTime())
+  const interval = inferredObservationInterval(chronologicalValues, timeZone)
+  const { labels } = dateLabels(values, interval, locale, timeZone, false)
+  return (value) => labels.get(value.getTime()) ?? ''
+}
+
 export function planTimeAxis({
   dates,
   width,
   locale,
   timeZone,
-  options = automaticTimeAxis,
+  options = automaticTimeTicks,
   domain: suppliedDomain,
 }: TimeAxisPlanInput): TimeAxisPlan {
   const observations = uniqueDates(dates)
   let domain = suppliedDomain === undefined ? extent(observations) : checkedDomain(suppliedDomain)
   const target = automaticTickTarget(width)
-  const validatedOptions = validatedTimeAxisOptions(options)
+  const validatedOptions = validatedTimeTickPolicy(options)
   if (observations.length === 1 && validatedOptions.kind === 'calendar') {
     const intervalDomain = intervalDomainForObservation(observations[0]!, validatedOptions.interval, locale, timeZone)
     domain = [

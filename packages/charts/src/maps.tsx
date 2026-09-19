@@ -5,6 +5,7 @@ import { scaleLinear } from 'd3-scale'
 import { useChartConfiguration } from './provider.js'
 import { exactRow, exactValues, seriesLegend } from './exact-values.js'
 import { localizedTooltip, useChartFormatters } from './formatting.js'
+import { chartColors } from './palette.js'
 import { ChartStateBoundary, ChartSurface } from './surface.js'
 import type { ChartDataState, CommonChartProps, NumericPoint } from './types.js'
 import { increasingDomain, numericPoint } from './validation.js'
@@ -53,7 +54,7 @@ function projectionType(projection: MapProjection) {
 
 export function ChoroplethChart({ state, projection = 'mercator', colorDomain, ...common }: ChoroplethChartProps) {
   const { messages } = useChartConfiguration()
-  const formatters = useChartFormatters()
+  const formatters = useChartFormatters(common.formatters)
   increasingDomain(colorDomain, 'Choropleth color')
   return (
     <ChartStateBoundary state={state} rootProps={common}>
@@ -107,7 +108,7 @@ export interface RouteMapChartProps extends CommonChartProps {
 }
 
 export function RouteMapChart({ state, projection = 'mercator', ...common }: RouteMapChartProps) {
-  const formatters = useChartFormatters()
+  const formatters = useChartFormatters(common.formatters)
   return (
     <ChartStateBoundary state={state} rootProps={common}>
       {(data) => {
@@ -122,13 +123,7 @@ export function RouteMapChart({ state, projection = 'mercator', ...common }: Rou
             strokeWidth: 2.5,
           })],
           margin: 8,
-          color: { range: [
-            'var(--aperture-chart-1)',
-            'var(--aperture-chart-2)',
-            'var(--aperture-chart-3)',
-            'var(--aperture-chart-4)',
-            'var(--aperture-chart-5)',
-          ] },
+          color: { range: chartColors },
           tooltip: localizedTooltip(common.tooltip, formatters),
         })
         return <ChartSurface {...common} definition={definition} legend={seriesLegend(rows.map((row) => row.properties.series ?? 'Route'))} exactValues={exactValues(

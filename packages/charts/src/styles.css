@@ -20,6 +20,9 @@
   --aperture-chart-3: #b54708;
   --aperture-chart-4: #7f56d9;
   --aperture-chart-5: #c11574;
+  --aperture-chart-6: #087e8b;
+  --aperture-chart-7: #9a6700;
+  --aperture-chart-8: #475467;
   --aperture-chart-missing: #98a2b3;
   --aperture-radius-small: 0.375rem;
   --aperture-radius-medium: 0.75rem;
@@ -53,6 +56,9 @@
   --aperture-chart-3: #f7b26a;
   --aperture-chart-4: #c3a6ff;
   --aperture-chart-5: #ff8fc8;
+  --aperture-chart-6: #61dbe7;
+  --aperture-chart-7: #ffd166;
+  --aperture-chart-8: #b7c3d7;
   --aperture-chart-missing: #77849a;
 }
 
@@ -171,11 +177,23 @@
 [data-aperture-root] .aperture-legend-line[data-series='4'],
 [data-aperture-root] .aperture-legend-point[data-series='4'],
 [data-aperture-root] .aperture-legend-swatch[data-series='4'] { color: var(--aperture-chart-5); }
+[data-aperture-root] .aperture-legend-line[data-series='5'],
+[data-aperture-root] .aperture-legend-point[data-series='5'],
+[data-aperture-root] .aperture-legend-swatch[data-series='5'] { color: var(--aperture-chart-6); }
+[data-aperture-root] .aperture-legend-line[data-series='6'],
+[data-aperture-root] .aperture-legend-point[data-series='6'],
+[data-aperture-root] .aperture-legend-swatch[data-series='6'] { color: var(--aperture-chart-7); }
+[data-aperture-root] .aperture-legend-line[data-series='7'],
+[data-aperture-root] .aperture-legend-point[data-series='7'],
+[data-aperture-root] .aperture-legend-swatch[data-series='7'] { color: var(--aperture-chart-8); }
 
 [data-aperture-root] .aperture-legend-swatch[data-symbol='1'] { border-radius: 999px; }
 [data-aperture-root] .aperture-legend-swatch[data-symbol='2'] { transform: skewX(-20deg); }
 [data-aperture-root] .aperture-legend-swatch[data-symbol='3'] { background: currentColor; }
 [data-aperture-root] .aperture-legend-swatch[data-symbol='4'] { border-style: dashed; }
+[data-aperture-root] .aperture-legend-swatch[data-symbol='5'] { border-radius: 0 999px 999px 0; }
+[data-aperture-root] .aperture-legend-swatch[data-symbol='6'] { transform: rotate(45deg) scale(0.75); }
+[data-aperture-root] .aperture-legend-swatch[data-symbol='7'] { background: currentColor; border-radius: 999px; }
 [data-aperture-root] .aperture-legend-swatch[data-kind='reference'] { border-style: dashed; background: none; }
 [data-aperture-root] .aperture-legend-swatch[data-kind='missing'] { color: var(--aperture-chart-missing); border-style: dotted; background: none; }
 
@@ -208,6 +226,29 @@
 
 [data-aperture-root] .aperture-plot {
   min-width: 0;
+}
+
+[data-aperture-root].aperture-brush-low-emphasis .ts-chart__brush-x-fallback .selection,
+[data-aperture-root].aperture-brush-low-emphasis .ts-chart__brush-x-fallback .handle,
+[data-aperture-root].aperture-brush-low-emphasis svg[data-chart-brush] [data-chart-brush-selection],
+[data-aperture-root].aperture-brush-low-emphasis svg[data-chart-brush] [data-chart-brush-handle] {
+  opacity: 0;
+  transition: opacity var(--aperture-motion-duration);
+}
+
+[data-aperture-root].aperture-brush-low-emphasis .ts-chart__brush-x-fallback:hover .selection,
+[data-aperture-root].aperture-brush-low-emphasis .ts-chart__brush-x-fallback:focus-within .selection,
+[data-aperture-root].aperture-brush-low-emphasis svg[data-chart-brush]:hover [data-chart-brush-selection],
+[data-aperture-root].aperture-brush-low-emphasis svg[data-chart-brush]:focus-within [data-chart-brush-selection] {
+  opacity: 1;
+}
+
+[data-aperture-root].aperture-brush-low-emphasis .ts-chart__brush-x-fallback:hover .handle,
+[data-aperture-root].aperture-brush-low-emphasis .ts-chart__brush-x-fallback:focus-within .handle,
+[data-aperture-root].aperture-brush-low-emphasis svg[data-chart-brush] [data-chart-brush-selection]:hover ~ [data-chart-brush-handle],
+[data-aperture-root].aperture-brush-low-emphasis svg[data-chart-brush] [data-chart-brush-handle]:hover,
+[data-aperture-root].aperture-brush-low-emphasis svg[data-chart-brush] [data-chart-brush-handle]:focus {
+  opacity: 0.9;
 }
 
 [data-aperture-root] .aperture-control,
@@ -332,6 +373,9 @@
     --aperture-chart-3: Mark;
     --aperture-chart-4: VisitedText;
     --aperture-chart-5: ActiveText;
+    --aperture-chart-6: ButtonText;
+    --aperture-chart-7: HighlightText;
+    --aperture-chart-8: GrayText;
     --aperture-chart-missing: GrayText;
     forced-color-adjust: auto;
   }

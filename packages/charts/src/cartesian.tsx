@@ -13,28 +13,93 @@ import {
   rect,
   ruleY,
   stack,
+  text,
   tickY,
   waterfall,
 } from '@tanstack/charts'
+import { d3Curve } from '@tanstack/charts/d3/shape'
+import { brushX, type BrushXChange } from '@tanstack/charts/interaction/brush'
+import { controlledSignal } from '@tanstack/charts/interaction/signal'
 import { scaleBand } from '@tanstack/charts/scales/band'
 import { scaleLinear } from '@tanstack/charts/scales/linear'
 import { scalePoint } from '@tanstack/charts/scales/point'
 import { scaleLinear as scaleLinearColor, scaleUtc } from 'd3-scale'
+import { curveMonotoneX } from 'd3-shape'
+import { useId } from 'react'
 import { exactRow, exactValues, lineSeriesDasharrays, pointSeriesStyles, seriesLegend, type SemanticLegendItem } from './exact-values.js'
-import { localizedTooltip, numberAxis, useChartFormatters } from './formatting.js'
+import { localizedHorizontalTooltip, localizedTooltip, numberAxis, useChartFormatters } from './formatting.js'
+import { chartColors } from './palette.js'
 import { useChartConfiguration } from './provider.js'
 import { ChartStateBoundary, ChartSurface } from './surface.js'
-import { planTimeAxis, timeIntervalNeighbors, type CalendarTickInterval, type TimeAxisOptions } from './time-axis.js'
+import { observationTickFormatter, planTimeAxis, timeIntervalNeighbors, type CalendarTickInterval, type ElapsedTimeAxisOptions, type TimeAxisOptions } from './time-axis.js'
 import type { ChartDataState, CommonChartProps, CrosshairChartProps, NumericPoint } from './types.js'
-import { finite, increasingDomain, numericPoint, positiveRadius, validCandlestick, validDate, validErrorInterval, validHistogramBin, validRange } from './validation.js'
+import { bounded, finite, increasingDomain, numericPoint, positiveRadius, validCandlestick, validDate, validErrorInterval, validHistogramBin, validRange } from './validation.js'
 
-const chartColors = [
-  'var(--aperture-chart-1)',
-  'var(--aperture-chart-2)',
-  'var(--aperture-chart-3)',
-  'var(--aperture-chart-4)',
-  'var(--aperture-chart-5)',
-] as const
+export type CartesianInterpolation = 'linear' | 'monotone-x'
+
+export interface DateRange {
+  readonly start: Date
+  readonly end: Date
+}
+
+export interface DateBrush {
+  readonly value: DateRange
+  readonly onChange: (value: DateRange) => void
+  readonly ariaLabel: string
+  readonly startAriaLabel: string
+  readonly endAriaLabel: string
+  readonly appearance?: 'standard' | 'low-emphasis'
+}
+
+export type AreaFillAppearance =
+  | { readonly kind: 'solid'; readonly opacity?: number }
+  | { readonly kind: 'vertical-gradient'; readonly topOpacity?: number; readonly bottomOpacity?: number }
+
+export interface AreaAppearance {
+  readonly fill: AreaFillAppearance
+  readonly outline?: { readonly width?: number }
+}
+
+function areaPaint(
+  series: readonly string[],
+  appearance: AreaAppearance | undefined,
+  defaultOpacity: number,
+  idPrefix: string,
+) {
+  const fill = appearance?.fill ?? { kind: 'solid' as const, opacity: defaultOpacity }
+  const outlineWidth = appearance?.outline?.width ?? 0
+  if (outlineWidth < 0 || !Number.isFinite(outlineWidth)) {
+    throw new RangeError('Area outline width must be a nonnegative finite number.')
+  }
+  const colors = new Map(series.map((name, index) => [name, chartColors[index % chartColors.length]!] as const))
+  const stroke = outlineWidth === 0 ? undefined : (row: { readonly series: string }) => colors.get(row.series) ?? chartColors[0]
+  if (fill.kind === 'solid') {
+    const opacity = bounded(fill.opacity ?? defaultOpacity, 0, 1, 'Area fill opacity must be between zero and one.')
+    return { fill: (row: { readonly series: string }) => colors.get(row.series) ?? chartColors[0], fillOpacity: opacity, gradients: [], stroke, strokeWidth: outlineWidth }
+  }
+  const topOpacity = bounded(fill.topOpacity ?? 0.4, 0, 1, 'Area gradient opacity must be between zero and one.')
+  const bottomOpacity = bounded(fill.bottomOpacity ?? 0.05, 0, 1, 'Area gradient opacity must be between zero and one.')
+  const gradientIds = new Map(series.map((name, index) => [name, `${idPrefix}-${index + 1}`] as const))
+  return {
+    fill: (row: { readonly series: string }) => `url(#${gradientIds.get(row.series) ?? `${idPrefix}-1`})`,
+    fillOpacity: 1,
+    gradients: series.map((name, index) => ({
+      id: gradientIds.get(name)!,
+      x1: 0,
+      y1: 0,
+      x2: 0,
+      y2: 1,
+      stops: [
+        { offset: 0, color: chartColors[index % chartColors.length]!, opacity: topOpacity },
+        { offset: 1, color: chartColors[index % chartColors.length]!, opacity: bottomOpacity },
+      ],
+    })),
+    stroke,
+    strokeWidth: outlineWidth,
+  }
+}
+
+const monotoneXCurve = d3Curve(curveMonotoneX)
 
 interface TimeSeriesRow {
   readonly id: string
@@ -72,9 +137,78 @@ function timeRows(
   }))
 }
 
+function uniqueDateValues(dates: readonly Date[]): readonly Date[] {
+  const seen = new Set<number>()
+  const values: Date[] = []
+  for (const date of dates) {
+    const timestamp = date.getTime()
+    if (seen.has(timestamp)) continue
+    seen.add(timestamp)
+    values.push(new Date(timestamp))
+  }
+  return values
+}
+
+function timeXAxis(
+  dates: readonly Date[],
+  width: number,
+  locale: string,
+  timeZone: string,
+  options: TimeAxisOptions | undefined,
+  label: string | undefined,
+  dateFormatOverride: ((value: Date) => string) | undefined,
+) {
+  if (options !== undefined && options.position !== 'elapsed' && options.position !== 'observations') {
+    throw new RangeError('Time-axis positions must be elapsed or observations.')
+  }
+  if (options?.position === 'observations' && 'ticks' in options) {
+    throw new RangeError('Observation-position time axes do not accept a tick policy.')
+  }
+  const position = options?.position ?? 'elapsed'
+  const ticks = options?.position === 'observations' ? { kind: 'observations' as const } : options?.ticks
+  const time = planTimeAxis({
+    dates,
+    width,
+    locale,
+    timeZone,
+    options: ticks,
+  })
+  const observations = uniqueDateValues(dates)
+  const format = options?.format ?? dateFormatOverride
+  const observationTicks = position === 'observations'
+    ? selectEvenly(observations, time.axis.ticks.values.length)
+    : time.axis.ticks.values
+  const observationFormat = position === 'observations'
+    ? observationTickFormatter(observationTicks, locale, timeZone, observations)
+    : undefined
+  const axis = {
+    ...time.axis,
+    ticks: {
+      ...time.axis.ticks,
+      values: observationTicks,
+      ...(format === undefined
+        ? observationFormat === undefined ? {} : { format: observationFormat }
+        : { format }),
+    },
+    ...(label === undefined ? {} : { label }),
+  }
+  return {
+    scale: position === 'observations'
+      ? () => scalePoint<Date>().domain(observations).padding(0.5)
+      : scaleUtc().domain(time.domain),
+    axis,
+  }
+}
+
+function selectEvenly<TValue>(values: readonly TValue[], count: number): readonly TValue[] {
+  if (values.length <= count) return values
+  return Array.from({ length: count }, (_, index) =>
+    values[Math.round(index * (values.length - 1) / (count - 1))]!)
+}
+
 export function LineChart({ state, xLabel, yLabel, showPoints = true, reference, timeAxis, ...common }: LineChartProps) {
   const { messages, locale, timeZone } = useChartConfiguration()
-  const formatters = useChartFormatters()
+  const formatters = useChartFormatters(common.formatters)
   const referenceValue = reference === undefined ? undefined : finite(reference.value, 'LineChart reference value must be finite.')
   return (
     <ChartStateBoundary state={state} rootProps={common}>
@@ -121,13 +255,9 @@ export function LineChart({ state, xLabel, yLabel, showPoints = true, reference,
           focus: 'nearest-x',
           tooltip: localizedTooltip(common.tooltip, formatters),
           chart: ({ width }) => {
-            const time = planTimeAxis({ dates, width, locale, timeZone, options: timeAxis })
             return {
               marks,
-              x: {
-                scale: scaleUtc().domain(time.domain),
-                axis: { ...time.axis, ...(xLabel === undefined ? {} : { label: xLabel }) },
-              },
+              x: timeXAxis(dates, width, locale, timeZone, timeAxis, xLabel, common.formatters?.date),
               y: { scale: scaleLinear, nice: true, grid: true, axis: numberAxis(yLabel, formatters) },
               color: { domain: series, range: chartColors },
             }
@@ -159,20 +289,26 @@ export interface AreaChartProps extends CommonChartProps, CrosshairChartProps {
   readonly xLabel?: string
   readonly yLabel?: string
   readonly timeAxis?: TimeAxisOptions
+  readonly appearance?: AreaAppearance
 }
 
-export function AreaChart({ state, xLabel, yLabel, timeAxis, ...common }: AreaChartProps) {
+export function AreaChart({ state, xLabel, yLabel, timeAxis, appearance, ...common }: AreaChartProps) {
   const { messages, locale, timeZone } = useChartConfiguration()
-  const formatters = useChartFormatters()
+  const formatters = useChartFormatters(common.formatters)
+  const gradientIdPrefix = `aperture-area-${useId().replaceAll(':', '')}`
   return (
     <ChartStateBoundary state={state} rootProps={common}>
       {(data) => {
         const rows = timeRows(data, messages.errors.invalidDate, messages.errors.invalidNumber)
         const oneObservation = new Set(rows.map((row) => row.date.getTime())).size === 1
+        const paint = areaPaint(['Value'], appearance, 0.32, gradientIdPrefix)
         const marks = [
           oneObservation
             ? dot(rows.filter((row) => row.value !== null), { x: 'date', y: 'value', key: 'id', r: 4.5, fill: 'var(--aperture-chart-1)' })
-            : areaY(rows, { x: 'date', y1: () => 0, y2: 'value', key: 'id', fill: 'var(--aperture-chart-1)', fillOpacity: 0.32, strokeWidth: 2 }),
+            : areaY(rows, {
+                x: 'date', y1: () => 0, y2: 'value', key: 'id', fill: paint.fill,
+                fillOpacity: paint.fillOpacity, stroke: paint.stroke, strokeWidth: paint.strokeWidth,
+              }),
           ...(common.crosshair ? [crosshairMark({ x: true, y: false })] : []),
         ]
         const dates = rows.map((row) => row.date)
@@ -180,13 +316,10 @@ export function AreaChart({ state, xLabel, yLabel, timeAxis, ...common }: AreaCh
           focus: 'nearest-x',
           tooltip: localizedTooltip(common.tooltip, formatters),
           chart: ({ width }) => {
-            const time = planTimeAxis({ dates, width, locale, timeZone, options: timeAxis })
             return {
               marks,
-              x: {
-                scale: scaleUtc().domain(time.domain),
-                axis: { ...time.axis, ...(xLabel === undefined ? {} : { label: xLabel }) },
-              },
+              gradients: paint.gradients,
+              x: timeXAxis(dates, width, locale, timeZone, timeAxis, xLabel, common.formatters?.date),
               y: { scale: scaleLinear, nice: true, grid: true, axis: numberAxis(yLabel, formatters) },
             }
           },
@@ -225,19 +358,41 @@ interface BarLabels {
   readonly valueLabel?: string
 }
 
+interface HorizontalBarLabels extends BarLabels {
+  readonly valueLabelPlacement?: 'outside-end'
+}
+
+interface BarLabelsWithoutValues extends BarLabels {
+  readonly valueLabelPlacement?: never
+}
+
+export interface BarAppearance {
+  readonly cornerRadius?: number
+}
+
+interface BarAppearanceProps {
+  readonly appearance?: BarAppearance
+}
+
 export type BarChartProps =
-  | (CommonChartProps & BarLabels & {
+  | (CommonChartProps & BarLabelsWithoutValues & BarAppearanceProps & {
       readonly orientation: 'vertical'
       readonly layout: 'single'
       readonly state: ChartDataState<VerticalBarDatum>
     })
-  | (CommonChartProps & BarLabels & {
+  | (CommonChartProps & HorizontalBarLabels & BarAppearanceProps & {
       readonly orientation: 'horizontal'
       readonly layout: 'single'
       readonly state: ChartDataState<HorizontalBarDatum>
     })
-  | (CommonChartProps & BarLabels & {
-      readonly orientation: 'vertical' | 'horizontal'
+  | (CommonChartProps & BarLabelsWithoutValues & BarAppearanceProps & {
+      readonly orientation: 'vertical'
+      readonly layout: 'grouped' | 'stacked'
+      readonly state: ChartDataState<SeriesBarDatum>
+      readonly seriesOrder: readonly [string, ...string[]]
+    })
+  | (CommonChartProps & BarLabelsWithoutValues & BarAppearanceProps & {
+      readonly orientation: 'horizontal'
       readonly layout: 'grouped' | 'stacked'
       readonly state: ChartDataState<SeriesBarDatum>
       readonly seriesOrder: readonly [string, ...string[]]
@@ -261,9 +416,13 @@ function barRows(data: readonly (VerticalBarDatum | HorizontalBarDatum | SeriesB
 
 export function BarChart(props: BarChartProps) {
   const { messages } = useChartConfiguration()
-  const formatters = useChartFormatters()
-  const { state, orientation, layout, categoryLabel, valueLabel, ...rest } = props
+  const { state, orientation, layout, categoryLabel, valueLabel, valueLabelPlacement, appearance, ...rest } = props
   const { seriesOrder, ...common } = 'seriesOrder' in rest ? rest : { ...rest, seriesOrder: ['Value'] as const }
+  const formatters = useChartFormatters(common.formatters)
+  const cornerRadius = appearance?.cornerRadius ?? 0
+  if (cornerRadius < 0 || !Number.isFinite(cornerRadius)) {
+    throw new RangeError('Bar corner radius must be a nonnegative finite number.')
+  }
   return (
     <ChartStateBoundary state={state} rootProps={common}>
       {(data) => {
@@ -279,7 +438,7 @@ export function BarChart(props: BarChartProps) {
         const barLayout = layout === 'grouped' ? group({ padding: 0.12 }) : layout === 'stacked' ? stack({ order: seriesOrder }) : undefined
         if (orientation === 'vertical') {
           const definition = defineChart({
-            marks: [barY(rows, { x: 'category', y: 'value', z: 'series', color: 'series', key: 'id', inset: 2, layout: barLayout })],
+            marks: [barY(rows, { x: 'category', y: 'value', z: 'series', color: 'series', key: 'id', inset: 2, radius: cornerRadius, layout: barLayout })],
             x: { scale: () => scaleBand<string>().padding(0.12), axis: categoryLabel ? { label: categoryLabel } : undefined },
             y: { scale: scaleLinear, nice: true, grid: true, axis: numberAxis(valueLabel, formatters) },
             color: { domain: layout === 'single' ? ['Value'] : seriesOrder, range: chartColors },
@@ -287,14 +446,24 @@ export function BarChart(props: BarChartProps) {
           })
           return <ChartSurface {...common} definition={definition} exactValues={exact} legend={legend} />
         }
+        const marks = [
+          barX(rows, { x: 'value', y: 'category', z: 'series', color: 'series', key: 'id', inset: 2, radius: cornerRadius, layout: barLayout }),
+          ...(valueLabelPlacement === 'outside-end'
+            ? [text(rows, {
+                x: 'value', y: 'category', text: (row) => formatters.number(row.value), key: 'id',
+                fill: 'var(--aperture-color-text)', anchor: (row) => row.value < 0 ? 'end' : 'start',
+                dx: (row) => row.value < 0 ? -8 : 8, fontSize: 12, fontWeight: 650,
+              })]
+            : []),
+        ]
         const definition = defineChart({
-          marks: [barX(rows, { x: 'value', y: 'category', z: 'series', color: 'series', key: 'id', inset: 2, layout: barLayout })],
+          marks,
           x: { scale: scaleLinear, nice: true, grid: true, axis: numberAxis(valueLabel, formatters) },
           y: { scale: () => scaleBand<string>().padding(0.12), axis: categoryLabel ? { label: categoryLabel } : undefined },
           color: { domain: layout === 'single' ? ['Value'] : seriesOrder, range: chartColors },
-          tooltip: localizedTooltip(common.tooltip, formatters),
+          tooltip: localizedHorizontalTooltip(common.tooltip, formatters),
         })
-        return <ChartSurface {...common} definition={definition} exactValues={exact} legend={legend} />
+        return <ChartSurface {...common} definition={definition} exactValues={exact} legend={valueLabelPlacement === 'outside-end' ? [] : legend} />
       }}
     </ChartStateBoundary>
   )
@@ -316,7 +485,7 @@ export interface ScatterChartProps extends CommonChartProps, CrosshairChartProps
 
 export function ScatterChart({ state, xLabel, yLabel, ...common }: ScatterChartProps) {
   const { messages } = useChartConfiguration()
-  const formatters = useChartFormatters()
+  const formatters = useChartFormatters(common.formatters)
   return (
     <ChartStateBoundary state={state} rootProps={common}>
       {(data) => {
@@ -361,7 +530,7 @@ export interface HistogramChartProps extends CommonChartProps {
 
 export function HistogramChart({ state, valueLabel, countLabel, ...common }: HistogramChartProps) {
   const { messages } = useChartConfiguration()
-  const formatters = useChartFormatters()
+  const formatters = useChartFormatters(common.formatters)
   return (
     <ChartStateBoundary state={state} rootProps={common}>
       {(data) => {
@@ -399,7 +568,7 @@ export interface HeatmapChartProps extends CommonChartProps {
 
 export function HeatmapChart({ state, xLabel, yLabel, colorDomain, ...common }: HeatmapChartProps) {
   const { messages } = useChartConfiguration()
-  const formatters = useChartFormatters()
+  const formatters = useChartFormatters(common.formatters)
   increasingDomain(colorDomain, 'Heatmap color')
   return (
     <ChartStateBoundary state={state} rootProps={common}>
@@ -437,7 +606,7 @@ export interface RangeChartProps extends CommonChartProps {
 
 export function RangeChart({ state, xLabel, yLabel, timeAxis, ...common }: RangeChartProps) {
   const { messages, locale, timeZone } = useChartConfiguration()
-  const formatters = useChartFormatters()
+  const formatters = useChartFormatters(common.formatters)
   return (
     <ChartStateBoundary state={state} rootProps={common}>
       {(data) => {
@@ -455,13 +624,9 @@ export function RangeChart({ state, xLabel, yLabel, timeAxis, ...common }: Range
           focus: 'nearest-x',
           tooltip: localizedTooltip(common.tooltip, formatters),
           chart: ({ width }) => {
-            const time = planTimeAxis({ dates, width, locale, timeZone, options: timeAxis })
             return {
               marks,
-              x: {
-                scale: scaleUtc().domain(time.domain),
-                axis: { ...time.axis, ...(xLabel === undefined ? {} : { label: xLabel }) },
-              },
+              x: timeXAxis(dates, width, locale, timeZone, timeAxis, xLabel, common.formatters?.date),
               y: { scale: scaleLinear, nice: true, grid: true, axis: numberAxis(yLabel, formatters) },
               color: { range: chartColors },
             }
@@ -491,7 +656,7 @@ export interface ErrorBarChartProps extends CommonChartProps {
 
 export function ErrorBarChart({ state, categoryLabel, valueLabel, ...common }: ErrorBarChartProps) {
   const { messages } = useChartConfiguration()
-  const formatters = useChartFormatters()
+  const formatters = useChartFormatters(common.formatters)
   return (
     <ChartStateBoundary state={state} rootProps={common}>
       {(data) => {
@@ -525,54 +690,124 @@ export interface StackedAreaDatum {
   readonly series: string
 }
 
-export interface StackedAreaChartProps extends CommonChartProps {
+export interface StackedAreaChartProps extends CommonChartProps, CrosshairChartProps {
   readonly state: ChartDataState<StackedAreaDatum>
   readonly seriesOrder: readonly string[]
   readonly xLabel?: string
   readonly yLabel?: string
   readonly normalization?: 'none' | 'percent'
   readonly timeAxis?: TimeAxisOptions
+  readonly interpolation?: CartesianInterpolation
+  readonly appearance?: AreaAppearance
 }
 
-export function StackedAreaChart({ state, seriesOrder, xLabel, yLabel, normalization = 'none', timeAxis, ...common }: StackedAreaChartProps) {
+export interface BrushableStackedAreaChartProps extends StackedAreaChartProps {
+  readonly brush: DateBrush
+}
+
+function StackedAreaPlot({
+  state,
+  seriesOrder,
+  xLabel,
+  yLabel,
+  normalization = 'none',
+  timeAxis,
+  interpolation = 'linear',
+  appearance,
+  brush,
+  ...common
+}: StackedAreaChartProps & { readonly brush?: DateBrush }) {
   const { messages, locale, timeZone } = useChartConfiguration()
-  const formatters = useChartFormatters()
+  const formatters = useChartFormatters(common.formatters)
+  const gradientIdPrefix = `aperture-area-${useId().replaceAll(':', '')}`
+  if (interpolation !== 'linear' && interpolation !== 'monotone-x') {
+    throw new RangeError('Cartesian interpolation must be linear or monotone-x.')
+  }
   seriesLegend(seriesOrder)
   return (
     <ChartStateBoundary state={state} rootProps={common}>
       {(data) => {
         const rows = data.map((datum) => ({ ...datum, date: validDate(datum.date, messages.errors.invalidDate), value: finite(datum.value, messages.errors.invalidNumber) }))
-        const oneObservation = new Set(rows.map((row) => row.date.getTime())).size === 1
+        const dates = rows.map((row) => row.date)
+        const observations = uniqueDateValues(dates)
+        const oneObservation = observations.length === 1
+        const curve = interpolation === 'monotone-x' ? monotoneXCurve : undefined
+        const paint = areaPaint(seriesOrder, appearance, 0.78, gradientIdPrefix)
         const marks = [
           oneObservation ? dot(rows, { x: 'date', y: 'value', color: 'series', key: 'id', r: 4.5 }) : areaY(rows, {
-            x: 'date', y: 'value', z: 'series', color: 'series', key: 'id', fillOpacity: 0.78,
+            x: 'date', y: 'value', z: 'series', color: 'series', key: 'id', fill: paint.fill,
+            fillOpacity: paint.fillOpacity, stroke: paint.stroke, strokeWidth: paint.strokeWidth,
+            curve,
             layout: stack({ order: seriesOrder, ...(normalization === 'percent' ? { offset: 'normalize' as const } : {}) }),
           }),
           ruleY([0]),
+          ...(common.crosshair ? [crosshairMark({ x: true, y: false })] : []),
         ]
-        const dates = rows.map((row) => row.date)
+        let controls
+        if (brush !== undefined) {
+          const start = validDate(brush.value.start, messages.errors.invalidDate)
+          const end = validDate(brush.value.end, messages.errors.invalidDate)
+          const brushValues = timeAxis?.position === 'observations'
+            ? observations
+            : [...observations].sort((left, right) => left.getTime() - right.getTime())
+          const startIndex = brushValues.findIndex((date) => date.getTime() === start.getTime())
+          const endIndex = brushValues.findIndex((date) => date.getTime() === end.getTime())
+          if (startIndex === -1 || endIndex === -1) {
+            throw new RangeError('Brush range endpoints must match chart observations.')
+          }
+          if (startIndex > endIndex) throw new RangeError('Brush ranges must follow the chart position order.')
+          controls = [brushX({
+            range: controlledSignal<DateRange, BrushXChange<Date>>(
+              { start, end },
+              (next, { reason }) => {
+                if (reason.type === 'commit') brush.onChange(next)
+              },
+            ),
+            values: brushValues,
+            keyboard: true,
+            format: timeAxis?.format ?? formatters.date,
+            ariaLabel: brush.ariaLabel,
+            startAriaLabel: brush.startAriaLabel,
+            endAriaLabel: brush.endAriaLabel,
+            ...(brush.appearance === 'low-emphasis'
+              ? {
+                  selectionStyle: { fillOpacity: 0.12, strokeOpacity: 0.35, strokeWidth: 1 },
+                  handleStyle: { opacity: 0 },
+                }
+              : {}),
+          })]
+        }
         const definition = defineChart({
           focus: 'group-x',
-          tooltip: localizedTooltip(common.tooltip, formatters),
+          tooltip: localizedTooltip(common.tooltip, formatters, undefined, true),
+          controls,
           chart: ({ width }) => {
-            const time = planTimeAxis({ dates, width, locale, timeZone, options: timeAxis })
             return {
               marks,
-              x: {
-                scale: scaleUtc().domain(time.domain),
-                axis: { ...time.axis, ...(xLabel === undefined ? {} : { label: xLabel }) },
-              },
+              gradients: paint.gradients,
+              x: timeXAxis(dates, width, locale, timeZone, timeAxis, xLabel, common.formatters?.date),
               y: { scale: scaleLinear, grid: true, axis: numberAxis(yLabel, formatters) },
               color: { domain: seriesOrder, range: chartColors },
             }
           },
         })
-        return <ChartSurface {...common} definition={definition} legend={seriesLegend(seriesOrder)} exactValues={exactValues(
+        const surfaceClassName = brush?.appearance === 'low-emphasis'
+          ? [common.className, 'aperture-brush-low-emphasis'].filter(Boolean).join(' ')
+          : common.className
+        return <ChartSurface {...common} className={surfaceClassName} definition={definition} legend={seriesLegend(seriesOrder)} exactValues={exactValues(
           ['Date', 'Series', 'Value'], rows.map((row) => exactRow(row.id, row.date, row.series, row.value)),
         )} />
       }}
     </ChartStateBoundary>
   )
+}
+
+export function StackedAreaChart(props: StackedAreaChartProps) {
+  return <StackedAreaPlot {...props} />
+}
+
+export function BrushableStackedAreaChart({ brush, ...props }: BrushableStackedAreaChartProps) {
+  return <StackedAreaPlot {...props} brush={brush} />
 }
 
 export interface FacetDatum {
@@ -592,7 +827,7 @@ export interface FacetChartProps extends CommonChartProps {
 
 export function FacetChart({ state, columns = 2, xLabel, yLabel, ...common }: FacetChartProps) {
   const { messages } = useChartConfiguration()
-  const formatters = useChartFormatters()
+  const formatters = useChartFormatters(common.formatters)
   return (
     <ChartStateBoundary state={state} rootProps={common}>
       {(data) => {
@@ -636,7 +871,7 @@ export interface WaterfallChartProps extends CommonChartProps {
 
 export function WaterfallChart({ state, includeTotal = true, valueLabel, ...common }: WaterfallChartProps) {
   const { messages } = useChartConfiguration()
-  const formatters = useChartFormatters()
+  const formatters = useChartFormatters(common.formatters)
   return (
     <ChartStateBoundary state={state} rootProps={common}>
       {(data) => {
@@ -670,12 +905,15 @@ export interface CandlestickChartProps extends CommonChartProps {
   readonly state: ChartDataState<CandlestickDatum>
   readonly candleInterval: CalendarTickInterval
   readonly priceLabel?: string
-  readonly timeAxis?: TimeAxisOptions
+  readonly timeAxis?: ElapsedTimeAxisOptions
 }
 
 export function CandlestickChart({ state, candleInterval, priceLabel, timeAxis, ...common }: CandlestickChartProps) {
   const { messages, locale, timeZone } = useChartConfiguration()
-  const formatters = useChartFormatters()
+  const formatters = useChartFormatters(common.formatters)
+  if (timeAxis !== undefined && timeAxis.position !== 'elapsed') {
+    throw new RangeError('Candlestick time-axis positions must be elapsed.')
+  }
   return (
     <ChartStateBoundary state={state} rootProps={common}>
       {(data) => {
@@ -729,10 +967,14 @@ export function CandlestickChart({ state, candleInterval, priceLabel, timeAxis, 
           focus: 'nearest-x',
           tooltip: localizedTooltip(common.tooltip, formatters),
           chart: ({ width }) => {
-            const time = planTimeAxis({ dates, domain, width, locale, timeZone, options: timeAxis })
+            const time = planTimeAxis({ dates, domain, width, locale, timeZone, options: timeAxis?.ticks })
+            const dateFormat = timeAxis?.format ?? common.formatters?.date
+            const axis = dateFormat === undefined
+              ? time.axis
+              : { ...time.axis, ticks: { ...time.axis.ticks, format: dateFormat } }
             return {
               marks,
-              x: { scale: scaleUtc().domain(time.domain), axis: time.axis },
+              x: { scale: scaleUtc().domain(time.domain), axis },
               y: { scale: scaleLinear, nice: true, grid: true, axis: numberAxis(priceLabel, formatters) },
               color: { domain: ['increase', 'decrease'], range: ['var(--aperture-chart-2)', 'var(--aperture-color-danger)'] },
             }

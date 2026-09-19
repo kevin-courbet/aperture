@@ -1,21 +1,20 @@
 import { useState } from 'react'
 import {
+  BrushableStackedAreaChart,
   ChartProvider,
   LineChart,
   StackedAreaChart,
   ToggleControl,
   chartData,
+  type DateRange,
 } from '@kevin-courbet/aperture'
 import {
   AdvancedChart,
-  BrushX,
   ZoomX,
   controlledSignal,
   defineChart,
   lineY,
   scaleLinear,
-  type BrushRange,
-  type BrushXChange,
   type ZoomXChange,
   type ZoomXWindow,
 } from '@kevin-courbet/aperture/tanstack'
@@ -83,35 +82,50 @@ function LegendExample() {
 }
 
 const numericRows = throughputByMonth.map((row, index) => ({ month: index + 1, completed: row.completed }))
-const fullRange: BrushRange<number> = { start: 1, end: 6 }
-const focusedRange: BrushRange<number> = { start: 4, end: 6 }
+const fullRange: DateRange = {
+  start: stackedRows[0]!.date,
+  end: stackedRows.at(-1)!.date,
+}
+const focusedRange: DateRange = {
+  start: stackedRows.at(-6)!.date,
+  end: stackedRows.at(-1)!.date,
+}
+const month = new Intl.DateTimeFormat('en-GB', { month: 'short', year: 'numeric', timeZone: 'UTC' })
 
 function BrushExample() {
-  const [range, setRange] = useState<BrushRange<number>>(fullRange)
-  const definition = defineChart({
-    marks: [lineY(numericRows, { x: 'month', y: 'completed', points: true, stroke: 'var(--aperture-chart-1)', strokeWidth: 2.25 })],
-    x: { scale: scaleLinear().domain([1, 6]), axis: { label: 'Month' } },
-    y: { scale: scaleLinear, nice: true, grid: true, axis: { label: 'Completed items' } },
-    controls: [BrushX({
-      range: controlledSignal<BrushRange<number>, BrushXChange<number>>(range, (next, { reason }) => {
-        if (reason.type === 'commit') setRange(next)
-      }),
-      values: numericRows.map((row) => row.month),
-      format: (month) => `Month ${month}`,
-      ariaLabel: 'Completed work reporting range',
-      startAriaLabel: 'Range start',
-      endAriaLabel: 'Range end',
-    })],
-  })
+  const [range, setRange] = useState<DateRange>(fullRange)
   return (
-    <section className="catalog-interaction">
-      <div className="catalog-callout"><h2>Drag the range or use its two keyboard sliders.</h2><p>Arrow keys adjust a focused handle. The summary reports the accepted semantic range.</p></div>
-      <div className="catalog-toolbar">
-        <p role="status">Selected months: {range.start} to {range.end}</p>
-        <div><button type="button" onClick={() => setRange(focusedRange)}>Select last three months</button> <button type="button" disabled={range.start === 1 && range.end === 6} onClick={() => setRange(fullRange)}>Reset range</button></div>
-      </div>
-      <div className="catalog-interaction-chart"><AdvancedChart definition={definition} renderer="svg" ariaLabel="Completed work with reporting range brush" ariaDescription={`Selected months ${range.start} to ${range.end}.`} /></div>
-    </section>
+    <ChartProvider locale="en-GB" timeZone="UTC">
+      <section className="catalog-interaction">
+        <div className="catalog-callout"><h2>Drag the range or use its two keyboard sliders.</h2><p>Arrow keys adjust a focused handle. The summary reports the accepted semantic range.</p></div>
+        <div className="catalog-toolbar">
+          <p role="status">Selected months: {month.format(range.start)} to {month.format(range.end)}</p>
+          <div><button type="button" onClick={() => setRange(focusedRange)}>Select last two months</button> <button type="button" disabled={range.start.getTime() === fullRange.start.getTime() && range.end.getTime() === fullRange.end.getTime()} onClick={() => setRange(fullRange)}>Reset range</button></div>
+        </div>
+        <div className="catalog-interaction-chart">
+          <BrushableStackedAreaChart
+            ariaLabel="Work composition with reporting range brush"
+            ariaDescription={`Selected months ${month.format(range.start)} to ${month.format(range.end)}.`}
+            state={chartData(stackedRows)}
+            seriesOrder={seriesNames}
+            xLabel="Month"
+            yLabel="Items"
+            timeAxis={{ position: 'observations' }}
+            interpolation="monotone-x"
+            appearance={{ fill: { kind: 'vertical-gradient' }, outline: { width: 1 } }}
+            crosshair
+            brush={{
+              value: range,
+              onChange: setRange,
+              ariaLabel: 'Work composition reporting range',
+              startAriaLabel: 'Range start',
+              endAriaLabel: 'Range end',
+              appearance: 'low-emphasis',
+            }}
+          />
+        </div>
+      </section>
+    </ChartProvider>
   )
 }
 

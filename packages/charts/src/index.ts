@@ -10,11 +10,15 @@ export {
   RangeChart,
   ScatterChart,
   StackedAreaChart,
+  BrushableStackedAreaChart,
   WaterfallChart,
 } from './cartesian.js'
 export type {
   AreaChartProps,
+  AreaAppearance,
+  AreaFillAppearance,
   AreaDatum,
+  BarAppearance,
   BarChartProps,
   CandlestickChartProps,
   CandlestickDatum,
@@ -34,6 +38,10 @@ export type {
   ScatterChartProps,
   ScatterDatum,
   StackedAreaChartProps,
+  BrushableStackedAreaChartProps,
+  CartesianInterpolation,
+  DateBrush,
+  DateRange,
   StackedAreaDatum,
   TimeSeriesDatum,
   VerticalBarDatum,
@@ -79,9 +87,12 @@ export type {
   NetworkLinkDatum,
   NetworkNodeDatum,
   SankeyChartProps,
+  SankeyAppearance,
   SankeyData,
   SankeyLinkDatum,
   SankeyNodeDatum,
+  SankeyNodeLabelContext,
+  SankeyNodeLabels,
   TreemapChartProps,
 } from './hierarchy-network.js'
 export { ChoroplethChart, RouteMapChart } from './maps.js'
@@ -117,13 +128,18 @@ export { chartData } from './types.js'
 export type {
   CalendarTickInterval,
   CalendarTickUnit,
+  ElapsedTimeAxisOptions,
   TimeAxisOptions,
+  TimeTickPolicy,
 } from './time-axis.js'
 export type {
   ApertureIcon,
   ApertureIcons,
+  ApertureChartColorIndex,
+  ApertureChartStyle,
   ApertureMessages,
   ChartDataState,
+  ChartFormatters,
   ChartRenderer,
   ChartSlot,
   ChartSlotClassNames,

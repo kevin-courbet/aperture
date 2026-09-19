@@ -65,11 +65,10 @@ interval from the chart width and domain, then shows the year, month, date, or
 time-zone context only when it changes. Calendar intervals use the Gregorian
 calendar with labels localized by the provider locale.
 
-Use `timeAxis={{ kind: 'calendar', interval: { unit, step } }}` only when the
-reader task requires a fixed calendar interval. Use
-`timeAxis={{ kind: 'observations' }}` for sparse event charts where ticks must
-align with observations. Do not write custom date tick formatters in the common
-API.
+Use `timeAxis={{ position: 'elapsed', ticks: { kind: 'calendar', interval: { unit, step } } }}`
+only when the reader task requires a fixed calendar interval. Use
+`timeAxis={{ position: 'observations' }}` when observations need equal spacing.
+Use `format` only when source date labels are part of the reader task.
 
 Set `initialWidth` to the expected server container width when it differs from
 640 px. Use SVG when server HTML must include the visible chart. Canvas keeps

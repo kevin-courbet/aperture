@@ -26,6 +26,7 @@ export default defineConfig({
         /^react-aria-components(?:\/.*)?$/,
         /^lucide-react(?:\/.*)?$/,
         /^d3-scale(?:\/.*)?$/,
+        /^d3-shape(?:\/.*)?$/,
         /^@fontsource-variable\/ibm-plex-sans(?:\/.*)?$/,
       ],
     },

@@ -34,6 +34,7 @@ export function ChartSurface<
   initialWidth = defaultChartInitialWidth,
   className,
   style,
+  formatters,
   exactValues,
   legend = [],
 }: ChartSurfaceProps<TDatum, TXValue, TYValue>) {
@@ -52,7 +53,7 @@ export function ChartSurface<
     >
       {renderer === 'svg' ? <SvgChart {...chartProps} /> : <CanvasChart {...chartProps} />}
       <SemanticLegend items={legend} />
-      <ExactValues model={exactValues} />
+      <ExactValues model={exactValues} formatters={formatters} />
     </div>
   )
 }

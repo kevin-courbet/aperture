@@ -1,5 +1,5 @@
 import { useId, useState, type ReactNode } from 'react'
-import { useChartFormatters } from './formatting.js'
+import { useChartFormatters, type ChartFormatters } from './formatting.js'
 import { useChartConfiguration } from './provider.js'
 import type { NumericPoint } from './types.js'
 import { useOptionalChartWidget } from './widget.js'
@@ -34,13 +34,25 @@ export interface SemanticLegendItem {
     | { readonly kind: 'missing' }
 }
 
-export const lineSeriesDasharrays = ['', '8 3', '2 3', '10 3 2 3', '1 3'] as const
+export const lineSeriesDasharrays = [
+  '',
+  '8 3',
+  '2 3',
+  '10 3 2 3',
+  '1 3',
+  '12 4',
+  '4 2 1 2',
+  '2 2 8 2',
+] as const
 export const pointSeriesStyles = [
   { radius: 4.5, hollow: false },
   { radius: 4.5, hollow: true },
   { radius: 3.25, hollow: false },
   { radius: 6, hollow: true },
   { radius: 6, hollow: false },
+  { radius: 3.25, hollow: true },
+  { radius: 5.25, hollow: false },
+  { radius: 5.25, hollow: true },
 ] as const
 type SeriesLegendSymbolKind = 'swatch' | 'line' | 'point' | 'missing'
 
@@ -69,8 +81,8 @@ export function seriesLegend(
   symbolKind: SeriesLegendSymbolKind | ((label: string) => SeriesLegendSymbolKind) = 'swatch',
 ): readonly SemanticLegendItem[] {
   const unique = [...new Set(series)]
-  if (unique.length > 5) {
-    throw new RangeError('Series charts support at most 5 series.')
+  if (unique.length > 8) {
+    throw new RangeError('Series charts support at most 8 series.')
   }
   return unique.map((label, seriesIndex) => {
     const kind = typeof symbolKind === 'function' ? symbolKind(label) : symbolKind
@@ -87,9 +99,14 @@ export function seriesLegend(
   })
 }
 
-function ExactValueTable({ model }: { readonly model: ExactValueModel }) {
+function ExactValueTable({
+  model,
+  formatters,
+}: {
+  readonly model: ExactValueModel
+  readonly formatters: ChartFormatters
+}) {
   const { messages } = useChartConfiguration()
-  const formatters = useChartFormatters()
 
   function format(value: ExactValue): ReactNode {
     if (value === null) return 'Not applicable'
@@ -123,10 +140,13 @@ function ExactValueTable({ model }: { readonly model: ExactValueModel }) {
 
 export function ExactValues({
   model,
+  formatters: formatterOverrides,
 }: {
   readonly model: ExactValueModel
+  readonly formatters?: import('./types.js').ChartFormatters
 }) {
   const { messages } = useChartConfiguration()
+  const formatters = useChartFormatters(formatterOverrides)
   const widget = useOptionalChartWidget()
   const [visible, setVisible] = useState(false)
   const localId = useId()
@@ -138,7 +158,7 @@ export function ExactValues({
     return (
       <section className="aperture-exact-values" aria-label={model.caption ?? messages.table.caption}>
         <div id={id} className={tableVisible ? 'aperture-table-scroll' : 'aperture-visually-hidden'}>
-          <ExactValueTable model={model} />
+          <ExactValueTable model={model} formatters={formatters} />
         </div>
       </section>
     )
@@ -155,7 +175,7 @@ export function ExactValues({
         {tableVisible ? messages.controls.hideTable : messages.controls.showTable}
       </button>
       <div id={id} className={tableVisible ? 'aperture-table-scroll' : 'aperture-visually-hidden'}>
-        <ExactValueTable model={model} />
+        <ExactValueTable model={model} formatters={formatters} />
       </div>
     </section>
   )
@@ -194,10 +214,10 @@ export function SemanticLegend({ items }: { readonly items: readonly SemanticLeg
               className="aperture-legend-swatch"
               data-kind={item.symbol?.kind === 'missing' ? 'missing' : item.kind ?? 'series'}
               data-series={(item.kind === undefined || item.kind === 'series') && item.symbol?.kind !== 'missing'
-                ? item.symbol?.seriesIndex ?? index % 5
+                ? item.symbol?.seriesIndex ?? index % 8
                 : undefined}
               data-symbol={(item.kind === undefined || item.kind === 'series') && item.symbol?.kind !== 'missing'
-                ? index % 5
+                ? index % 8
                 : undefined}
               aria-hidden="true"
             />

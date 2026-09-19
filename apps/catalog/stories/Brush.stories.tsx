@@ -9,11 +9,11 @@ export const IntervalSelection: StoryObj<typeof meta> = {
     const start = canvas.getByRole('slider', { name: 'Range start' })
     start.focus()
     await userEvent.keyboard('{End}{ArrowLeft}{ArrowLeft}')
-    await expect(canvas.getByRole('status')).toHaveTextContent('Selected months: 4 to 6')
+    await expect(canvas.getByRole('status')).toHaveTextContent('Selected months: Feb 2025 to Apr 2025')
     const reset = canvas.getByRole('button', { name: 'Reset range' })
     await expect(reset).toBeEnabled()
     await userEvent.click(reset)
-    await expect(canvas.getByRole('status')).toHaveTextContent('Selected months: 1 to 6')
+    await expect(canvas.getByRole('status')).toHaveTextContent('Selected months: Jan 2025 to Apr 2025')
     await expect(reset).toBeDisabled()
   },
 }
