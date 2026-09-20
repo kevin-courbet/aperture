@@ -1,6 +1,32 @@
 import type { ComponentType, CSSProperties, ReactNode, SVGProps } from 'react'
 
-export type ChartRenderer = 'svg' | 'canvas'
+export type ChartRenderer = 'svg' | 'canvas' | 'motion'
+
+export type ChartMotionTransition =
+  | {
+      readonly type: 'tween'
+      readonly duration?: number
+      readonly easing?: 'linear' | 'ease' | 'ease-in' | 'ease-out' | 'ease-in-out'
+    }
+  | {
+      readonly type: 'spring'
+      readonly stiffness?: number
+      readonly damping?: number
+      readonly mass?: number
+      readonly restSpeed?: number
+      readonly restDelta?: number
+    }
+
+export interface ChartMotionOptions {
+  readonly initial?: boolean
+  readonly transition?: ChartMotionTransition
+  readonly resize?: boolean
+}
+
+export type ChartRendering =
+  | { readonly kind: 'svg' }
+  | { readonly kind: 'canvas' }
+  | { readonly kind: 'motion'; readonly options?: ChartMotionOptions }
 
 export type ApertureChartColorIndex = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8
 export type ApertureChartStyle = CSSProperties & Partial<
@@ -77,17 +103,56 @@ export type NumericPoint =
   | { readonly kind: 'value'; readonly value: number }
   | { readonly kind: 'missing'; readonly reason: string }
 
+export type ChartTooltipValue = Date | number | string
+
+export interface ChartTooltipPoint {
+  readonly key: string
+  readonly markId: string
+  readonly groupLabel: string
+  readonly datum: unknown
+  readonly datumIndex: number
+  readonly xValue: ChartTooltipValue
+  readonly yValue: ChartTooltipValue
+  readonly color: string
+}
+
+export interface ChartTooltipTotal {
+  readonly label: string
+  readonly value: string
+}
+
+export interface ChartTooltipRenderContext {
+  readonly points: readonly ChartTooltipPoint[]
+  readonly defaultBody: ReactNode
+  readonly pinned: boolean
+  readonly dismiss: () => void
+}
+
+export interface ChartTooltipOptions {
+  readonly renderBody?: (context: ChartTooltipRenderContext) => ReactNode
+}
+
+export interface GroupedChartTooltipOptions extends ChartTooltipOptions {
+  readonly groupedTotal?: (
+    points: readonly ChartTooltipPoint[],
+  ) => ChartTooltipTotal | undefined
+}
+
 export interface CommonChartProps {
   readonly ariaLabel: string
   readonly ariaDescription: string
-  readonly renderer?: ChartRenderer
+  readonly rendering?: ChartRendering
   readonly height?: number
   readonly width?: number
   readonly initialWidth?: number
   readonly className?: string
   readonly style?: ApertureChartStyle
-  readonly tooltip?: boolean
+  readonly tooltip?: boolean | ChartTooltipOptions
   readonly formatters?: ChartFormatters
+}
+
+export type GroupedCommonChartProps = Omit<CommonChartProps, 'tooltip'> & {
+  readonly tooltip?: boolean | GroupedChartTooltipOptions
 }
 
 export interface CrosshairChartProps {

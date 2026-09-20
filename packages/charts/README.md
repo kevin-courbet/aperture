@@ -64,6 +64,9 @@ self-contained dates and thin to prevent overlap.
 
 ## Presentation Options
 
+Set `LineChart.appearance` to control area fill, curve type, and point visibility.
+Use `appearance.series` when one series needs different options.
+
 Use `AreaChart.appearance` or `StackedAreaChart.appearance` for a solid fill or
 a vertical gradient. An optional outline uses the color of each series.
 
@@ -80,14 +83,38 @@ Horizontal single-series bars accept `valueLabelPlacement="outside-end"`.
 `SankeyChart.appearance` controls node width, node spacing, link color, link
 curves, and node-label details.
 
+## Tooltips
+
+Charts show the default localized tooltip unless `tooltip` is `false`. A tooltip
+options object can supply `renderBody` for custom React content.
+
+Grouped charts also accept `groupedTotal`. This function returns a label and a
+formatted total for the focused group.
+
+## Rendering
+
+Set `rendering.kind` to `svg`, `canvas`, or `motion`. The `motion` variant uses
+SVG transitions and respects reduced-motion preferences by default.
+
+Motion options control initial animation, resize animation, and tween or spring
+transitions. Aperture always respects reduced-motion preferences.
+
 ## Responsive Server Output
 
 Set `initialWidth` to the expected server container width when it differs from
 the 640 px default. Set `width` only when the chart must have a fixed width.
 
-Use SVG when server output must include a visible chart. Canvas charts keep
+Use SVG or motion when server output must include a visible chart. Canvas charts keep
 their accessible exact values in server HTML and paint the chart after browser
 hydration.
+
+## Advanced Charts
+
+Import `AdvancedChart` from `@kevin-courbet/aperture/tanstack` when the common
+API cannot express the required chart. This entry exposes pinned TanStack types.
+
+`AdvancedChart` supports all three rendering variants, dimension validation,
+theme-root styling, and custom React tooltip bodies.
 
 ## Candlesticks
 

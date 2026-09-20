@@ -1,6 +1,6 @@
 {
   "name": "@kevin-courbet/aperture",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "React chart components and composable widgets built on TanStack Charts.",
   "license": "MIT",
   "author": "Kevin Courbet",

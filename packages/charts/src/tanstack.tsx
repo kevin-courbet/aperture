@@ -1,7 +1,10 @@
-import type { CSSProperties } from 'react'
+import type { CSSProperties, ReactNode } from 'react'
 import type { ChartValue, DomChartDefinition } from '@tanstack/charts'
-import { Chart as SvgChart } from '@tanstack/charts/react'
-import { Chart as CanvasChart } from '@tanstack/charts/react/canvas'
+import { Chart as SvgChart, CanvasChart, RendererChart, type ChartTooltipBodyRenderContext } from '@tanstack/charts/react/tooltip'
+import { useChartConfiguration } from './provider.js'
+import { defaultChartHeight, defaultChartInitialWidth, useMotionRenderer } from './surface.js'
+import type { ChartRendering } from './types.js'
+import { positiveHeight, positiveWidth } from './validation.js'
 
 export {
   areaY,
@@ -32,6 +35,7 @@ export type {
   DomChartDefinition,
 } from '@tanstack/charts'
 export { controlledSignal } from '@tanstack/charts/interaction/signal'
+export { tooltip } from '@tanstack/charts/tooltip'
 export { brushX as BrushX } from '@tanstack/charts/interaction/brush'
 export type {
   BrushRange,
@@ -53,7 +57,7 @@ export interface AdvancedChartProps<
   TYValue extends ChartValue,
 > {
   readonly definition: DomChartDefinition<TDatum, TXValue, TYValue>
-  readonly renderer: 'svg' | 'canvas'
+  readonly rendering?: ChartRendering
   readonly ariaLabel: string
   readonly ariaDescription: string
   readonly height?: number
@@ -61,13 +65,34 @@ export interface AdvancedChartProps<
   readonly initialWidth?: number
   readonly className?: string
   readonly style?: CSSProperties
+  readonly renderTooltipBody?: (
+    context: ChartTooltipBodyRenderContext<TDatum, TXValue, TYValue>,
+  ) => ReactNode
 }
 
 export function AdvancedChart<
   TDatum,
   TXValue extends ChartValue,
   TYValue extends ChartValue,
->({ renderer, width, style, ...props }: AdvancedChartProps<TDatum, TXValue, TYValue>) {
-  const chartProps = { ...props, width, style: { ...style, ...(width === undefined ? {} : { width }) } }
-  return renderer === 'svg' ? <SvgChart {...chartProps} /> : <CanvasChart {...chartProps} />
+>({ rendering = { kind: 'svg' }, width, height = defaultChartHeight, initialWidth = defaultChartInitialWidth, className, style, renderTooltipBody, ...props }: AdvancedChartProps<TDatum, TXValue, TYValue>) {
+  const { messages } = useChartConfiguration()
+  positiveHeight(height, messages.errors.invalidHeight)
+  if (width !== undefined) positiveWidth(width, messages.errors.invalidWidth)
+  positiveWidth(initialWidth, messages.errors.invalidWidth)
+  const renderer = useMotionRenderer<TDatum, TXValue, TYValue>(rendering)
+  const chartProps = { ...props, width, height, initialWidth, renderTooltipBody }
+  return (
+    <div
+      data-aperture-root=""
+      data-aperture-renderer={rendering.kind}
+      className={['aperture-chart', className].filter(Boolean).join(' ')}
+      style={{ ...style, ...(width === undefined ? {} : { width }) }}
+    >
+      {rendering.kind === 'svg'
+        ? <SvgChart {...chartProps} />
+        : rendering.kind === 'canvas'
+          ? <CanvasChart {...chartProps} />
+          : <RendererChart {...chartProps} renderer={renderer!} />}
+    </div>
+  )
 }

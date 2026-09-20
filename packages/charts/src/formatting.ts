@@ -1,7 +1,7 @@
 import type { ChartTooltipInput, ChartValue } from '@tanstack/charts'
 import { tooltip as tooltipExtension } from '@tanstack/charts/tooltip'
 import { useChartConfiguration } from './provider.js'
-import type { ChartFormatters as ChartFormatterOverrides } from './types.js'
+import type { ChartFormatters as ChartFormatterOverrides, GroupedChartTooltipOptions } from './types.js'
 
 export interface ChartFormatters {
   readonly date: (value: Date) => string
@@ -67,12 +67,12 @@ export function numberAxis(label: string | undefined, formatters: ChartFormatter
 }
 
 export function localizedTooltip(
-  enabled: boolean | undefined,
+  tooltip: boolean | GroupedChartTooltipOptions | undefined,
   formatters: ChartFormatters,
   readout?: string,
   grouped = false,
 ): ChartTooltipInput<any, any, any, 'dom'> | undefined {
-  if (enabled === false) return undefined
+  if (tooltip === false) return undefined
   return {
     use: tooltipExtension,
     format: (point) => readout ?? `${formatters.value(point.xValue)}: ${formatters.value(point.yValue)}`,
@@ -81,9 +81,11 @@ export function localizedTooltip(
           formatGroup: (points) => {
             const first = points[0]
             if (first === undefined) return ''
+            const total = typeof tooltip === 'object' ? tooltip.groupedTotal?.(points) : undefined
             return [
               formatters.value(first.xValue),
               ...points.map((point) => `${point.groupLabel}: ${formatters.value(point.yValue)}`),
+              ...(total === undefined ? [] : [`${total.label}: ${total.value}`]),
             ].join('\n')
           },
         }
@@ -92,12 +94,27 @@ export function localizedTooltip(
 }
 
 export function localizedHorizontalTooltip(
-  enabled: boolean | undefined,
+  tooltip: boolean | GroupedChartTooltipOptions | undefined,
   formatters: ChartFormatters,
+  grouped = false,
 ): ChartTooltipInput<any, any, any, 'dom'> | undefined {
-  if (enabled === false) return undefined
+  if (tooltip === false) return undefined
   return {
     use: tooltipExtension,
     format: (point) => `${formatters.value(point.yValue)}: ${formatters.value(point.xValue)}`,
+    ...(grouped
+      ? {
+          formatGroup: (points) => {
+            const first = points[0]
+            if (first === undefined) return ''
+            const total = typeof tooltip === 'object' ? tooltip.groupedTotal?.(points) : undefined
+            return [
+              formatters.value(first.yValue),
+              ...points.map((point) => `${point.groupLabel}: ${formatters.value(point.xValue)}`),
+              ...(total === undefined ? [] : [`${total.label}: ${total.value}`]),
+            ].join('\n')
+          },
+        }
+      : {}),
   }
 }

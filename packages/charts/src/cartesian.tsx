@@ -20,6 +20,8 @@ import {
 import { d3Curve } from '@tanstack/charts/d3/shape'
 import { brushX, type BrushXChange } from '@tanstack/charts/interaction/brush'
 import { controlledSignal } from '@tanstack/charts/interaction/signal'
+import { focusGroupY } from '@tanstack/charts/focus'
+import { decorative } from '@tanstack/charts/mark/decorative'
 import { scaleBand } from '@tanstack/charts/scales/band'
 import { scaleLinear } from '@tanstack/charts/scales/linear'
 import { scalePoint } from '@tanstack/charts/scales/point'
@@ -32,7 +34,7 @@ import { chartColors } from './palette.js'
 import { useChartConfiguration } from './provider.js'
 import { ChartStateBoundary, ChartSurface } from './surface.js'
 import { observationTickFormatter, planTimeAxis, timeIntervalNeighbors, type CalendarTickInterval, type ElapsedTimeAxisOptions, type TimeAxisOptions } from './time-axis.js'
-import type { ChartDataState, CommonChartProps, CrosshairChartProps, NumericPoint } from './types.js'
+import type { ChartDataState, CommonChartProps, CrosshairChartProps, GroupedCommonChartProps, NumericPoint } from './types.js'
 import { bounded, finite, increasingDomain, numericPoint, positiveRadius, validCandlestick, validDate, validErrorInterval, validHistogramBin, validRange } from './validation.js'
 
 export type CartesianInterpolation = 'linear' | 'monotone-x'
@@ -65,13 +67,14 @@ function areaPaint(
   appearance: AreaAppearance | undefined,
   defaultOpacity: number,
   idPrefix: string,
+  colorOffset = 0,
 ) {
   const fill = appearance?.fill ?? { kind: 'solid' as const, opacity: defaultOpacity }
   const outlineWidth = appearance?.outline?.width ?? 0
   if (outlineWidth < 0 || !Number.isFinite(outlineWidth)) {
     throw new RangeError('Area outline width must be a nonnegative finite number.')
   }
-  const colors = new Map(series.map((name, index) => [name, chartColors[index % chartColors.length]!] as const))
+  const colors = new Map(series.map((name, index) => [name, chartColors[(index + colorOffset) % chartColors.length]!] as const))
   const stroke = outlineWidth === 0 ? undefined : (row: { readonly series: string }) => colors.get(row.series) ?? chartColors[0]
   if (fill.kind === 'solid') {
     const opacity = bounded(fill.opacity ?? defaultOpacity, 0, 1, 'Area fill opacity must be between zero and one.')
@@ -90,8 +93,8 @@ function areaPaint(
       x2: 0,
       y2: 1,
       stops: [
-        { offset: 0, color: chartColors[index % chartColors.length]!, opacity: topOpacity },
-        { offset: 1, color: chartColors[index % chartColors.length]!, opacity: bottomOpacity },
+        { offset: 0, color: chartColors[(index + colorOffset) % chartColors.length]!, opacity: topOpacity },
+        { offset: 1, color: chartColors[(index + colorOffset) % chartColors.length]!, opacity: bottomOpacity },
       ],
     })),
     stroke,
@@ -100,6 +103,17 @@ function areaPaint(
 }
 
 const monotoneXCurve = d3Curve(curveMonotoneX)
+
+const horizontalGroupedFocus: typeof focusGroupY = {
+  ...focusGroupY,
+  navigation: (points) => [...focusGroupY.navigation(points)].sort((left, right) => left.y - right.y || left.x - right.x),
+}
+
+function cartesianCurve(interpolation: CartesianInterpolation | undefined) {
+  if (interpolation === undefined || interpolation === 'linear') return undefined
+  if (interpolation === 'monotone-x') return monotoneXCurve
+  throw new RangeError(`Unknown Cartesian interpolation: ${interpolation}`)
+}
 
 interface TimeSeriesRow {
   readonly id: string
@@ -115,11 +129,21 @@ export interface TimeSeriesDatum {
   readonly series?: string
 }
 
+export interface LineSeriesAppearance {
+  readonly area?: AreaAppearance
+  readonly curve?: CartesianInterpolation
+  readonly points?: boolean
+}
+
+export interface LineAppearance extends LineSeriesAppearance {
+  readonly series?: Readonly<Record<string, LineSeriesAppearance>>
+}
+
 export interface LineChartProps extends CommonChartProps, CrosshairChartProps {
   readonly state: ChartDataState<TimeSeriesDatum>
   readonly xLabel?: string
   readonly yLabel?: string
-  readonly showPoints?: boolean
+  readonly appearance?: LineAppearance
   readonly reference?: { readonly value: number; readonly label: string }
   readonly timeAxis?: TimeAxisOptions
 }
@@ -206,16 +230,22 @@ function selectEvenly<TValue>(values: readonly TValue[], count: number): readonl
     values[Math.round(index * (values.length - 1) / (count - 1))]!)
 }
 
-export function LineChart({ state, xLabel, yLabel, showPoints = true, reference, timeAxis, ...common }: LineChartProps) {
+export function LineChart({ state, xLabel, yLabel, appearance, reference, timeAxis, ...common }: LineChartProps) {
   const { messages, locale, timeZone } = useChartConfiguration()
   const formatters = useChartFormatters(common.formatters)
   const referenceValue = reference === undefined ? undefined : finite(reference.value, 'LineChart reference value must be finite.')
+  const gradientIdPrefix = `aperture-line-area-${useId().replaceAll(':', '')}`
   return (
     <ChartStateBoundary state={state} rootProps={common}>
       {(data) => {
         const rows = timeRows(data, messages.errors.invalidDate, messages.errors.invalidNumber)
         const series = [...new Set(rows.map((row) => row.series))]
         seriesLegend(series)
+        for (const configuredSeries of Object.keys(appearance?.series ?? {})) {
+          if (!series.includes(configuredSeries)) {
+            throw new RangeError(`Line appearance references an unknown series: ${configuredSeries}`)
+          }
+        }
         const rowsBySeries = new Map(series.map((name) => [name, [] as TimeSeriesRow[]]))
         for (const row of rows) rowsBySeries.get(row.series)!.push(row)
         const seriesPresentation = new Map(series.map((name) => {
@@ -224,15 +254,31 @@ export function LineChart({ state, xLabel, yLabel, showPoints = true, reference,
             .map((row) => row.date.getTime())).size
           return [name, presentDates === 0 ? 'missing' : presentDates === 1 ? 'point' : 'line'] as const
         }))
+        const gradients: ReturnType<typeof areaPaint>['gradients'] = []
         const lineMarks = series.flatMap((name, index) => {
           const seriesRows = rowsBySeries.get(name)!
           const presentation = seriesPresentation.get(name)
           if (presentation === 'missing') return []
           if (presentation === 'line') {
-            return [lineY(seriesRows, {
-              x: 'date', y: 'value', color: 'series', key: 'id', points: showPoints,
-              strokeWidth: 2.25, strokeDasharray: lineSeriesDasharrays[index],
-            })]
+            const seriesAppearance = appearance?.series?.[name]
+            const curve = cartesianCurve(seriesAppearance?.curve ?? appearance?.curve)
+            const areaAppearance = seriesAppearance?.area ?? appearance?.area
+            const area = areaAppearance === undefined
+              ? undefined
+              : areaPaint([name], areaAppearance, 0.16, `${gradientIdPrefix}-${index + 1}`, index)
+            if (area !== undefined) gradients.push(...area.gradients)
+            return [
+              ...(area === undefined ? [] : [decorative(areaY(seriesRows, {
+                x: 'date', y1: () => 0, y2: 'value', key: 'id', curve,
+                fill: area.fill, fillOpacity: area.fillOpacity,
+              }))]),
+              lineY(seriesRows, {
+                x: 'date', y: 'value', color: 'series', key: 'id',
+                points: seriesAppearance?.points ?? appearance?.points ?? true,
+                curve, strokeWidth: area?.strokeWidth === 0 ? 2.25 : (area?.strokeWidth ?? 2.25),
+                strokeDasharray: lineSeriesDasharrays[index],
+              }),
+            ]
           }
           const pointStyle = pointSeriesStyles[index] ?? pointSeriesStyles[0]
           return [dot(seriesRows.filter((row) => row.value !== null), {
@@ -257,6 +303,7 @@ export function LineChart({ state, xLabel, yLabel, showPoints = true, reference,
           chart: ({ width }) => {
             return {
               marks,
+              gradients,
               x: timeXAxis(dates, width, locale, timeZone, timeAxis, xLabel, common.formatters?.date),
               y: { scale: scaleLinear, nice: true, grid: true, axis: numberAxis(yLabel, formatters) },
               color: { domain: series, range: chartColors },
@@ -385,13 +432,13 @@ export type BarChartProps =
       readonly layout: 'single'
       readonly state: ChartDataState<HorizontalBarDatum>
     })
-  | (CommonChartProps & BarLabelsWithoutValues & BarAppearanceProps & {
+  | (GroupedCommonChartProps & BarLabelsWithoutValues & BarAppearanceProps & {
       readonly orientation: 'vertical'
       readonly layout: 'grouped' | 'stacked'
       readonly state: ChartDataState<SeriesBarDatum>
       readonly seriesOrder: readonly [string, ...string[]]
     })
-  | (CommonChartProps & BarLabelsWithoutValues & BarAppearanceProps & {
+  | (GroupedCommonChartProps & BarLabelsWithoutValues & BarAppearanceProps & {
       readonly orientation: 'horizontal'
       readonly layout: 'grouped' | 'stacked'
       readonly state: ChartDataState<SeriesBarDatum>
@@ -438,11 +485,12 @@ export function BarChart(props: BarChartProps) {
         const barLayout = layout === 'grouped' ? group({ padding: 0.12 }) : layout === 'stacked' ? stack({ order: seriesOrder }) : undefined
         if (orientation === 'vertical') {
           const definition = defineChart({
+            focus: layout === 'single' ? undefined : 'group-x',
             marks: [barY(rows, { x: 'category', y: 'value', z: 'series', color: 'series', key: 'id', inset: 2, radius: cornerRadius, layout: barLayout })],
             x: { scale: () => scaleBand<string>().padding(0.12), axis: categoryLabel ? { label: categoryLabel } : undefined },
             y: { scale: scaleLinear, nice: true, grid: true, axis: numberAxis(valueLabel, formatters) },
             color: { domain: layout === 'single' ? ['Value'] : seriesOrder, range: chartColors },
-            tooltip: localizedTooltip(common.tooltip, formatters),
+            tooltip: localizedTooltip(common.tooltip, formatters, undefined, layout !== 'single'),
           })
           return <ChartSurface {...common} definition={definition} exactValues={exact} legend={legend} />
         }
@@ -457,11 +505,12 @@ export function BarChart(props: BarChartProps) {
             : []),
         ]
         const definition = defineChart({
+          focus: layout === 'single' ? undefined : horizontalGroupedFocus,
           marks,
           x: { scale: scaleLinear, nice: true, grid: true, axis: numberAxis(valueLabel, formatters) },
           y: { scale: () => scaleBand<string>().padding(0.12), axis: categoryLabel ? { label: categoryLabel } : undefined },
           color: { domain: layout === 'single' ? ['Value'] : seriesOrder, range: chartColors },
-          tooltip: localizedHorizontalTooltip(common.tooltip, formatters),
+          tooltip: localizedHorizontalTooltip(common.tooltip, formatters, layout !== 'single'),
         })
         return <ChartSurface {...common} definition={definition} exactValues={exact} legend={valueLabelPlacement === 'outside-end' ? [] : legend} />
       }}
@@ -690,7 +739,7 @@ export interface StackedAreaDatum {
   readonly series: string
 }
 
-export interface StackedAreaChartProps extends CommonChartProps, CrosshairChartProps {
+export interface StackedAreaChartProps extends GroupedCommonChartProps, CrosshairChartProps {
   readonly state: ChartDataState<StackedAreaDatum>
   readonly seriesOrder: readonly string[]
   readonly xLabel?: string

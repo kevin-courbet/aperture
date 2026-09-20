@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { expect, within } from 'storybook/test'
-import { calendarContextSeries, ChartExample, defaultControls, lineGoalArgType, midMonthObservationSeries, primitiveArgTypes } from './components/ChartExamples'
+import { calendarContextSeries, ChartExample, defaultControls, LinePresentationExample, lineGoalArgType, midMonthObservationSeries, primitiveArgTypes } from './components/ChartExamples'
 const meta = { title: 'Charts/Change over time', component: ChartExample, args: defaultControls, argTypes: primitiveArgTypes, parameters: { docs: { description: { component: 'Use these charts for ordered change. Do not draw a trend for one result.' } } } } satisfies Meta<typeof ChartExample>
 export default meta
 type ChartStory = StoryObj<typeof meta>
@@ -37,5 +37,14 @@ export const ObservationDates: ChartStory = {
     await expect(chart.getByText('15 Jan 2025')).toBeVisible()
     await expect(chart.getByText('15 Feb')).toBeVisible()
     await expect(chart.getByText('15 Mar')).toBeVisible()
+  },
+}
+
+export const LinePresentation: StoryObj = {
+  tags: ['!test'],
+  render: () => <LinePresentationExample />,
+  parameters: {
+    controls: { disable: true },
+    docs: { description: { story: 'Line appearance controls fill, curve, and point visibility for each series.' } },
   },
 }

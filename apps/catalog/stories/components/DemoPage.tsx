@@ -174,7 +174,7 @@ function GalleryItem({ index, title, question, children }: { index: string; titl
 }
 
 function ChartGallery() {
-  const common = { height: 230, renderer: 'svg' as const }
+  const common = { height: 230, rendering: { kind: 'svg' as const } }
   return (
     <div className="demo-gallery">
       <GalleryItem index="01" title="Line" question="How did it change?">

@@ -72,7 +72,7 @@ export type ExampleControls = {
 }
 
 export const primitiveArgTypes = {
-  renderer: { control: 'inline-radio', options: ['svg', 'canvas'] },
+  renderer: { control: 'inline-radio', options: ['svg', 'canvas', 'motion'] },
   width: { control: { type: 'range', min: 320, max: 1200, step: 40 } },
   theme: { control: 'inline-radio', options: ['paper', 'night'] },
   state: { control: 'select', options: ['ready', 'loading', 'empty', 'error'] },
@@ -152,6 +152,21 @@ const queuedSeries = throughputByMonth.map((row): TimeSeriesDatum => ({
   value: { kind: 'value', value: row.queued },
 }))
 
+const linePresentationSeries = throughputByMonth.flatMap((row): readonly TimeSeriesDatum[] => [
+  {
+    id: `completed-presentation-${row.period}`,
+    date: new Date(`${row.period}T00:00:00Z`),
+    value: { kind: 'value', value: row.completed },
+    series: 'Completed',
+  },
+  {
+    id: `queued-presentation-${row.period}`,
+    date: new Date(`${row.period}T00:00:00Z`),
+    value: { kind: 'value', value: row.queued },
+    series: 'Queued',
+  },
+])
+
 const barData = channelVolume.map((row) => ({ id: row.category.toLowerCase(), category: row.category, value: row.value }))
 const scatterData = relationshipStudy.map((row) => ({ id: row.subject, x: row.effort, y: row.outcome, series: row.group }))
 const histogramData = [
@@ -201,7 +216,9 @@ function commonProps(controls: ExampleControls, title: string, description: stri
   return {
     ariaLabel: title,
     ariaDescription: description,
-    renderer: controls.renderer,
+    rendering: controls.renderer === 'motion'
+      ? { kind: 'motion' as const }
+      : { kind: controls.renderer },
   }
 }
 
@@ -286,7 +303,29 @@ export function BarVariantExample({ layout, orientation }: { layout: 'single' | 
   if (layout === 'single') {
     return <BarChart {...common} state={chartData(barData)} orientation={orientation} layout="single" categoryLabel="Channel" valueLabel="Completed items" />
   }
-  return <BarChart {...common} state={chartData(comparativeBarData)} orientation={orientation} layout={layout} seriesOrder={['Current', 'Previous']} categoryLabel="Channel" valueLabel="Completed items" />
+  return (
+    <BarChart
+      {...common}
+      state={chartData(comparativeBarData)}
+      orientation={orientation}
+      layout={layout}
+      seriesOrder={['Current', 'Previous']}
+      categoryLabel="Channel"
+      valueLabel="Completed items"
+      tooltip={{
+        groupedTotal: (points) => {
+          const total = points.reduce((sum, point) => {
+            const value = orientation === 'vertical' ? point.yValue : point.xValue
+            if (typeof value !== 'number') {
+              throw new TypeError(`Grouped ${orientation} bar totals require numeric values.`)
+            }
+            return sum + value
+          }, 0)
+          return { label: 'Total', value: `${total} items` }
+        },
+      }}
+    />
+  )
 }
 
 export function ChartExample({
@@ -328,8 +367,31 @@ export function RendererComparison() {
     <div className="catalog-comparison">
       <section aria-label="SVG renderer example"><ChartExample name="ScatterChart" {...defaultControls} renderer="svg" width={620} /><p><b>SVG</b> paints this chart with the package SVG host.</p></section>
       <section aria-label="Canvas renderer example"><ChartExample name="ScatterChart" {...defaultControls} renderer="canvas" width={620} /><p><b>Canvas</b> paints this chart with the package Canvas host. Exact values remain in semantic output.</p></section>
+      <section aria-label="Motion renderer example"><ChartExample name="ScatterChart" {...defaultControls} renderer="motion" width={620} /><p><b>Motion</b> paints SVG transitions and respects reduced-motion preferences.</p></section>
       <aside>The caller selects the renderer. The catalog does not substitute another renderer.</aside>
     </div>
+  )
+}
+
+export function LinePresentationExample() {
+  return (
+    <ChartProvider locale="en-GB" timeZone="UTC">
+      <LineChart
+        ariaLabel="Completed and queued work"
+        ariaDescription="Completed and queued work use different point visibility with monotone curves and area fills."
+        state={chartData(linePresentationSeries)}
+        xLabel="Month"
+        yLabel="Items"
+        appearance={{
+          curve: 'monotone-x',
+          area: { fill: { kind: 'vertical-gradient', topOpacity: 0.2, bottomOpacity: 0.02 } },
+          points: false,
+          series: {
+            Completed: { points: true },
+          },
+        }}
+      />
+    </ChartProvider>
   )
 }
 

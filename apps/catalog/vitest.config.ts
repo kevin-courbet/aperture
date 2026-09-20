@@ -7,8 +7,12 @@ import { defineConfig } from 'vitest/config'
 const dirname = path.dirname(fileURLToPath(import.meta.url))
 
 export default defineConfig({
+  resolve: {
+    dedupe: ['react', 'react-dom'],
+  },
   optimizeDeps: {
     include: ['react/jsx-runtime', 'react/jsx-dev-runtime'],
+    exclude: ['@tanstack/charts/focus', '@tanstack/charts/mark/decorative'],
   },
   test: {
     projects: [

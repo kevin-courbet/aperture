@@ -1,14 +1,110 @@
-import type { ReactNode } from 'react'
+import { useMemo, type ReactNode } from 'react'
 import type { ChartValue, DomChartDefinition } from '@tanstack/charts'
-import { Chart as SvgChart } from '@tanstack/charts/react'
-import { Chart as CanvasChart } from '@tanstack/charts/react/canvas'
+import { motion } from '@tanstack/charts/motion'
+import { Chart as SvgChart, CanvasChart, RendererChart } from '@tanstack/charts/react/tooltip'
 import { useChartConfiguration } from './provider.js'
 import { ExactValues, SemanticLegend, type ExactValueModel, type SemanticLegendItem } from './exact-values.js'
-import type { ChartDataState, CommonChartProps, SingletonChartDataState } from './types.js'
+import type { ChartDataState, ChartRendering, ChartTooltipOptions, CommonChartProps, SingletonChartDataState } from './types.js'
 import { positiveHeight, positiveWidth } from './validation.js'
 
 export const defaultChartHeight = 320
 export const defaultChartInitialWidth = 640
+
+function validateMotionNumber(value: number | undefined, minimum: number, message: string, minimumAllowed = true) {
+  if (value === undefined) return
+  if (!Number.isFinite(value) || (minimumAllowed ? value < minimum : value <= minimum)) {
+    throw new RangeError(message)
+  }
+}
+
+export function useMotionRenderer<
+  TDatum,
+  TXValue extends ChartValue,
+  TYValue extends ChartValue,
+>(rendering: ChartRendering) {
+  const kind: string = rendering.kind
+  if (kind !== 'svg' && kind !== 'canvas' && kind !== 'motion') {
+    throw new RangeError(`Unknown chart rendering kind: ${kind}`)
+  }
+  const options = rendering.kind === 'motion' ? rendering.options : undefined
+  if (options !== undefined && (typeof options !== 'object' || options === null || Array.isArray(options))) {
+    throw new TypeError('Motion options must be an object.')
+  }
+  const initial = options?.initial
+  const resize = options?.resize
+  const transition = options?.transition
+  for (const [value, name] of [
+    [initial, 'initial'],
+    [resize, 'resize'],
+  ] as const) {
+    if (value !== undefined && typeof value !== 'boolean') {
+      throw new TypeError(`Motion ${name} must be a boolean.`)
+    }
+  }
+  if (transition !== undefined && (typeof transition !== 'object' || transition === null || Array.isArray(transition))) {
+    throw new TypeError('Motion transition must be an object.')
+  }
+  const transitionType = transition?.type
+  if (transition !== undefined && transitionType === undefined) {
+    throw new TypeError('Motion transition type is required.')
+  }
+  if (transitionType !== undefined && transitionType !== 'tween' && transitionType !== 'spring') {
+    throw new RangeError(`Unknown motion transition type: ${String(transitionType)}`)
+  }
+  if (transition !== undefined) {
+    const fields = transition as unknown as Readonly<Record<string, unknown>>
+    const invalidFields = transitionType === 'tween'
+      ? ['stiffness', 'damping', 'mass', 'restSpeed', 'restDelta']
+      : ['duration', 'easing']
+    const invalidField = invalidFields.find((field) => fields[field] !== undefined)
+    if (invalidField !== undefined) {
+      throw new TypeError(`Motion ${transitionType} transition does not accept ${invalidField}.`)
+    }
+  }
+  const duration = transitionType === 'tween' ? transition?.duration : undefined
+  const easing = transitionType === 'tween' ? transition?.easing : undefined
+  const stiffness = transitionType === 'spring' ? transition?.stiffness : undefined
+  const damping = transitionType === 'spring' ? transition?.damping : undefined
+  const mass = transitionType === 'spring' ? transition?.mass : undefined
+  const restSpeed = transitionType === 'spring' ? transition?.restSpeed : undefined
+  const restDelta = transitionType === 'spring' ? transition?.restDelta : undefined
+  if (easing !== undefined && !['linear', 'ease', 'ease-in', 'ease-out', 'ease-in-out'].includes(easing)) {
+    throw new RangeError(`Unknown motion easing: ${String(easing)}`)
+  }
+  validateMotionNumber(duration, 0, 'Motion tween duration must be a nonnegative finite number.')
+  validateMotionNumber(stiffness, 0, 'Motion spring stiffness must be a positive finite number.', false)
+  validateMotionNumber(damping, 0, 'Motion spring damping must be a nonnegative finite number.')
+  validateMotionNumber(mass, 0, 'Motion spring mass must be a positive finite number.', false)
+  validateMotionNumber(restSpeed, 0, 'Motion spring rest speed must be a positive finite number.', false)
+  validateMotionNumber(restDelta, 0, 'Motion spring rest delta must be a positive finite number.', false)
+
+  return useMemo(() => {
+    if (kind !== 'motion') return undefined
+    const stableTransition = transitionType === 'tween'
+      ? { type: transitionType, duration, easing } as const
+      : transitionType === 'spring'
+        ? { type: transitionType, stiffness, damping, mass, restSpeed, restDelta } as const
+        : undefined
+    return motion<TDatum, TXValue, TYValue>({
+      initial,
+      transition: stableTransition,
+      respectReducedMotion: true,
+      resize,
+    })
+  }, [
+    kind,
+    initial,
+    resize,
+    transitionType,
+    duration,
+    easing,
+    stiffness,
+    damping,
+    mass,
+    restSpeed,
+    restDelta,
+  ])
+}
 
 interface ChartSurfaceProps<
   TDatum,
@@ -26,7 +122,7 @@ export function ChartSurface<
   TYValue extends ChartValue,
 >({
   definition,
-  renderer = 'svg',
+  rendering = { kind: 'svg' },
   ariaLabel,
   ariaDescription,
   height = defaultChartHeight,
@@ -37,21 +133,32 @@ export function ChartSurface<
   formatters,
   exactValues,
   legend = [],
+  tooltip,
 }: ChartSurfaceProps<TDatum, TXValue, TYValue>) {
   const { messages } = useChartConfiguration()
   positiveHeight(height, messages.errors.invalidHeight)
   if (width !== undefined) positiveWidth(width, messages.errors.invalidWidth)
   positiveWidth(initialWidth, messages.errors.invalidWidth)
   const chartProps = { definition, ariaLabel, ariaDescription, height, width, initialWidth }
+  const motionRenderer = useMotionRenderer<TDatum, TXValue, TYValue>(rendering)
+  const customTooltipBody = typeof tooltip === 'object' ? tooltip.renderBody : undefined
+  const renderTooltipBody = customTooltipBody === undefined
+    ? undefined
+    : (context: Parameters<NonNullable<ChartTooltipOptions['renderBody']>>[0] & { readonly defaultBody: ReactNode }) =>
+        customTooltipBody(context)
 
   return (
     <div
       data-aperture-root=""
-      data-aperture-renderer={renderer}
+      data-aperture-renderer={rendering.kind}
       className={['aperture-chart', className].filter(Boolean).join(' ')}
       style={{ ...style, ...(width === undefined ? {} : { width }) }}
     >
-      {renderer === 'svg' ? <SvgChart {...chartProps} /> : <CanvasChart {...chartProps} />}
+      {rendering.kind === 'svg'
+        ? <SvgChart {...chartProps} renderTooltipBody={renderTooltipBody} />
+        : rendering.kind === 'canvas'
+          ? <CanvasChart {...chartProps} renderTooltipBody={renderTooltipBody} />
+          : <RendererChart {...chartProps} renderer={motionRenderer!} renderTooltipBody={renderTooltipBody} />}
       <SemanticLegend items={legend} />
       <ExactValues model={exactValues} formatters={formatters} />
     </div>

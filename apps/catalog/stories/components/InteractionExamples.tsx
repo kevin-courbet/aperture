@@ -15,6 +15,7 @@ import {
   defineChart,
   lineY,
   scaleLinear,
+  tooltip as chartTooltip,
   type ZoomXChange,
   type ZoomXWindow,
 } from '@kevin-courbet/aperture/tanstack'
@@ -44,7 +45,23 @@ function FocusExample() {
       <section className="catalog-interaction">
         <div className="catalog-callout"><h2>Focus a point with Tab and arrow keys, or point at the plot.</h2><p>The package tooltip and crosshair use the nearest monthly value. The exact-value disclosure remains available below the plot.</p></div>
         <div className="catalog-interaction-chart">
-          <LineChart ariaLabel="Completed work focus example" ariaDescription="Monthly completed items with nearest-point focus, tooltip, and crosshair." state={chartData(completedSeries)} xLabel="Month" yLabel="Completed items" tooltip crosshair reference={{ value: 55, label: 'Goal: 55 items' }} />
+          <LineChart
+            ariaLabel="Completed work focus example"
+            ariaDescription="Monthly completed items with nearest-point focus, tooltip, and crosshair."
+            state={chartData(completedSeries)}
+            xLabel="Month"
+            yLabel="Completed items"
+            tooltip={{
+              renderBody: ({ defaultBody, points }) => (
+                <div>
+                  {defaultBody}
+                  <strong>Selected records: {points.length}</strong>
+                </div>
+              ),
+            }}
+            crosshair
+            reference={{ value: 55, label: 'Goal: 55 items' }}
+          />
         </div>
       </section>
     </ChartProvider>
@@ -74,7 +91,25 @@ function LegendExample() {
         </div>
         <p className="catalog-legend-summary" role="status">Visible series: {visibleNames.join(', ')}</p>
         <div className="catalog-interaction-chart">
-          <StackedAreaChart ariaLabel="Filtered work composition" ariaDescription={`Visible series: ${visibleNames.join(', ')}.`} state={chartData(rows)} seriesOrder={visibleNames} xLabel="Month" yLabel="Items" />
+          <StackedAreaChart
+            ariaLabel="Filtered work composition"
+            ariaDescription={`Visible series: ${visibleNames.join(', ')}.`}
+            state={chartData(rows)}
+            seriesOrder={visibleNames}
+            xLabel="Month"
+            yLabel="Items"
+            tooltip={{
+              groupedTotal: (points) => {
+                const total = points.reduce((sum, point) => {
+                  if (typeof point.yValue !== 'number') {
+                    throw new TypeError('Stacked-area totals require numeric y values.')
+                  }
+                  return sum + point.yValue
+                }, 0)
+                return { label: 'Total', value: `${total} items` }
+              },
+            }}
+          />
         </div>
       </section>
     </ChartProvider>
@@ -82,6 +117,32 @@ function LegendExample() {
 }
 
 const numericRows = throughputByMonth.map((row, index) => ({ month: index + 1, completed: row.completed }))
+const advancedTooltipDefinition = defineChart({
+  marks: [lineY(numericRows, { x: 'month', y: 'completed', points: true, stroke: 'var(--aperture-chart-1)', strokeWidth: 2.25 })],
+  x: { scale: scaleLinear, axis: { label: 'Month' } },
+  y: { scale: scaleLinear, nice: true, grid: true, axis: { label: 'Completed items' } },
+  tooltip: {
+    use: chartTooltip,
+    format: (point) => `Month ${point.xValue}: ${point.yValue} items`,
+  },
+})
+
+export function AdvancedTooltipExample() {
+  return (
+    <AdvancedChart
+      definition={advancedTooltipDefinition}
+      ariaLabel="Advanced completed work"
+      ariaDescription="Monthly completed work with a custom React tooltip body."
+      renderTooltipBody={({ defaultBody, points }) => (
+        <div>
+          {defaultBody}
+          <strong>Advanced selected records: {points.length}</strong>
+        </div>
+      )}
+    />
+  )
+}
+
 const fullRange: DateRange = {
   start: stackedRows[0]!.date,
   end: stackedRows.at(-1)!.date,
@@ -156,7 +217,7 @@ function ZoomExample() {
         <p role="status">Visible months: {window.start.toFixed(1)} to {window.end.toFixed(1)}; {visibleRows.length} values</p>
         <div><button type="button" onClick={() => setWindow(zoomedWindow)}>Zoom to months 3 to 5</button> <button type="button" disabled={window.start === 1 && window.end === 6} onClick={() => setWindow(fullWindow)}>Reset zoom</button></div>
       </div>
-      <div className="catalog-interaction-chart"><AdvancedChart definition={definition} renderer="svg" ariaLabel="Completed work with zoom and pan" ariaDescription={`Visible months ${window.start.toFixed(1)} to ${window.end.toFixed(1)}.`} /></div>
+      <div className="catalog-interaction-chart"><AdvancedChart definition={definition} rendering={{ kind: 'svg' }} ariaLabel="Completed work with zoom and pan" ariaDescription={`Visible months ${window.start.toFixed(1)} to ${window.end.toFixed(1)}.`} /></div>
     </section>
   )
 }
