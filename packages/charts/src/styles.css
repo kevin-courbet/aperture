@@ -277,6 +277,12 @@
   min-width: 0;
 }
 
+/* TanStack positions the tooltip with left/top. Short transitions smooth
+   pointer updates while keeping the displayed value immediate. */
+[data-aperture-root] .ts-chart-tooltip {
+  transition: left 120ms ease-out, top 120ms ease-out;
+}
+
 [data-aperture-root] .aperture-controls.aperture-toolbar {
   justify-content: flex-end;
   gap: var(--aperture-space-2);
@@ -408,6 +414,10 @@
 @media (prefers-reduced-motion: reduce) {
   [data-aperture-root] {
     --aperture-motion-duration: 0ms;
+  }
+
+  [data-aperture-root] .ts-chart-tooltip {
+    transition: none;
   }
 }
 
