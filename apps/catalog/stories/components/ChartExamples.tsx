@@ -464,6 +464,7 @@ export function FullscreenTimeRangeExample() {
       <ChartWidget.Root ref={targetRef} exactValues="available" className="catalog-sheet catalog-interaction">
         <ChartWidget.Controls className="catalog-toolbar">
           <TimeRangeControl value={range} options={timeRangeOptions} onChange={setRange} />
+          <DataTableControl />
           <FullscreenControl targetRef={targetRef} />
         </ChartWidget.Controls>
         <ChartWidget.Header><p className="catalog-selection" role="status">Showing {visibleRows.length} monthly values</p></ChartWidget.Header>
