@@ -1,4 +1,4 @@
-import { useEffect, useState, type RefObject } from 'react'
+import { useEffect, useRef, useState, type RefObject } from 'react'
 import {
   Button,
   Label,
@@ -8,7 +8,25 @@ import {
 } from 'react-aria-components'
 import { useChartConfiguration } from './provider.js'
 import type { ApertureIcon } from './types.js'
-import { useChartWidget } from './widget.js'
+import { ChartWidget, useChartWidget } from './widget.js'
+
+export interface ChartToolbarProps {
+  readonly targetRef: RefObject<HTMLElement | null>
+  /** Show the exact-value toggle. This does not change table visibility. */
+  readonly dataTableControl?: 'hidden' | 'visible'
+}
+
+export function ChartToolbar({ targetRef, dataTableControl = 'hidden' }: ChartToolbarProps) {
+  if (dataTableControl !== 'hidden' && dataTableControl !== 'visible') {
+    throw new RangeError('ChartToolbar dataTableControl must be "hidden" or "visible".')
+  }
+  return (
+    <ChartWidget.Controls className="aperture-toolbar">
+      {dataTableControl === 'visible' ? <DataTableControl /> : null}
+      <FullscreenControl targetRef={targetRef} />
+    </ChartWidget.Controls>
+  )
+}
 
 export function DataTableControl() {
   const { messages, icons } = useChartConfiguration()
@@ -103,11 +121,17 @@ export function FullscreenControl({ targetRef }: FullscreenControlProps) {
   const { messages, icons } = useChartConfiguration()
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [failure, setFailure] = useState<string | null>(null)
+  const buttonRef = useRef<HTMLButtonElement>(null)
 
   useEffect(() => {
+    let wasFullscreen = false
     function update() {
-      setIsFullscreen(document.fullscreenElement === targetRef.current)
+      const active = document.fullscreenElement === targetRef.current
+      setIsFullscreen(active)
+      if (wasFullscreen && !active) buttonRef.current?.focus({ preventScroll: true })
+      wasFullscreen = active
     }
+    update()
     document.addEventListener('fullscreenchange', update)
     return () => document.removeEventListener('fullscreenchange', update)
   }, [targetRef])
@@ -134,7 +158,7 @@ export function FullscreenControl({ targetRef }: FullscreenControlProps) {
 
   return (
     <span className="aperture-control-status">
-      <Button className="aperture-control aperture-icon-control" aria-label={label} onPress={toggle}>
+      <Button ref={buttonRef} className="aperture-control aperture-icon-control" aria-label={label} onPress={toggle}>
         <Icon aria-hidden="true" />
       </Button>
       {failure ? <span role="alert" className="aperture-control-error">{failure}</span> : null}

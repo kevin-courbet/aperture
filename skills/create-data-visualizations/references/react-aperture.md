@@ -32,6 +32,7 @@ Remove an unused slot. Do not add feature flags to one all-purpose widget.
 
 Available controls include:
 
+- `ChartToolbar`: full screen and an optional exact-value button in one controls slot.
 - `DataTableControl`.
 - `FullscreenControl`.
 - `TimeRangeControl`.
@@ -46,6 +47,22 @@ chart and `exactValues="unavailable"` for loading, empty, or error states.
 `DataTableControl` is disabled when values are unavailable. A widget supports
 exactly one chart-owned table. Do not add a separate table region for chart
 values. A controlled `tableVisible` value requires `onTableVisibleChange`.
+
+Standalone charts have one toolbar above the plot. The exact-value button is
+hidden by default; use `dataTableControl="visible"` to show it next to full screen.
+The table is independently collapsed by default; `defaultTableVisible` opens it.
+Exact values remain accessible when visually collapsed.
+
+In a widget, add `<ChartToolbar targetRef={targetRef} dataTableControl="visible" />`
+instead of a `ChartWidget.Controls` slot, or compose the individual controls in
+that slot. Pass the same ref to `ChartWidget.Root`. The toolbar default is
+`dataTableControl="hidden"`. An explicit `DataTableControl` remains visible.
+Widget table state takes precedence over standalone chart props. Do not add
+both toolbar forms to the same widget.
+
+Legends use compact solid or outline markers and text, without striped fills.
+Keep labels and exact-value access. Legend swatch shapes are not shape encodings
+for bar marks. Line and point symbols continue to match their chart marks.
 
 ## Provider
 

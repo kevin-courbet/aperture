@@ -214,6 +214,7 @@ function singletonStateFor<TDatum>(state: DataState, datum: TDatum): SingletonCh
 
 function commonProps(controls: ExampleControls, title: string, description: string) {
   return {
+    dataTableControl: 'visible' as const,
     ariaLabel: title,
     ariaDescription: description,
     rendering: controls.renderer === 'motion'
@@ -460,16 +461,16 @@ export function FullscreenTimeRangeExample() {
   const visibleRows = queuedSeries.slice(-count)
   return (
     <ChartProvider locale="en-GB" timeZone="UTC">
-      <section ref={targetRef} className="catalog-sheet catalog-interaction" style={{ maxWidth: 900 }}>
-        <div className="catalog-toolbar">
+      <ChartWidget.Root ref={targetRef} exactValues="available" className="catalog-sheet catalog-interaction">
+        <ChartWidget.Controls className="catalog-toolbar">
           <TimeRangeControl value={range} options={timeRangeOptions} onChange={setRange} />
           <FullscreenControl targetRef={targetRef} />
-        </div>
-        <p className="catalog-selection" role="status">Showing {visibleRows.length} monthly values</p>
-        <div className="catalog-plot">
+        </ChartWidget.Controls>
+        <ChartWidget.Header><p className="catalog-selection" role="status">Showing {visibleRows.length} monthly values</p></ChartWidget.Header>
+        <ChartWidget.Plot className="catalog-plot">
           <AreaChart ariaLabel="Queued work by selected time range" ariaDescription={`${visibleRows.length} monthly queued-work values.`} state={chartData(visibleRows)} xLabel="Month" yLabel="Queued items" />
-        </div>
-      </section>
+        </ChartWidget.Plot>
+      </ChartWidget.Root>
     </ChartProvider>
   )
 }

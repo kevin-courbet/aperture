@@ -3,6 +3,7 @@ import {
   use,
   useId,
   useState,
+  type Ref,
 } from 'react'
 import type {
   ChartSlot,
@@ -37,6 +38,7 @@ export function useOptionalChartWidget(): InternalWidgetContextValue | null {
 }
 
 interface ChartWidgetRootBaseProps extends ChartWidgetSlotProps {
+  readonly ref?: Ref<HTMLElement>
   readonly slotClassNames?: ChartSlotClassNames
 }
 
@@ -68,6 +70,7 @@ function slotClass(
 }
 
 function Root({
+  ref,
   children,
   className,
   style,
@@ -106,6 +109,7 @@ function Root({
       value={{ tableId, tableAvailable: exactValues === 'available', tableVisible: visible, setTableVisible: setVisible, slotClassNames }}
     >
       <section
+        ref={ref}
         data-aperture-root=""
         data-aperture-slot="root"
         className={slotClass('root', className, slotClassNames)}

@@ -89,19 +89,9 @@
   margin-top: var(--aperture-space-2);
 }
 
-[data-aperture-root] .aperture-exact-toggle {
-  padding: var(--aperture-space-1) var(--aperture-space-2);
-  color: var(--aperture-color-text);
-  background: var(--aperture-color-surface);
-  border: 1px solid var(--aperture-color-border);
-  border-radius: var(--aperture-radius-small);
-  font: inherit;
-  cursor: pointer;
-}
-
 [data-aperture-root] .aperture-legend {
   display: flex;
-  gap: var(--aperture-space-2) var(--aperture-space-3);
+  gap: var(--aperture-space-2) var(--aperture-space-4);
   flex-wrap: wrap;
   padding: 0;
   margin: var(--aperture-space-2) 0 0;
@@ -111,14 +101,18 @@
 [data-aperture-root] .aperture-legend li {
   display: inline-flex;
   align-items: center;
-  gap: var(--aperture-space-1);
+  gap: var(--aperture-space-2);
+  min-width: 0;
+  color: var(--aperture-color-muted);
 }
 
 [data-aperture-root] .aperture-legend-swatch {
-  width: 1rem;
-  height: 0.65rem;
-  border: 2px solid currentColor;
-  background: repeating-linear-gradient(45deg, transparent 0 2px, currentColor 2px 3px);
+  width: 0.625rem;
+  height: 0.625rem;
+  flex: none;
+  border: 1.5px solid currentColor;
+  border-radius: 2px;
+  background: currentColor;
 }
 
 [data-aperture-root] .aperture-legend-line {
@@ -188,12 +182,12 @@
 [data-aperture-root] .aperture-legend-swatch[data-series='7'] { color: var(--aperture-chart-8); }
 
 [data-aperture-root] .aperture-legend-swatch[data-symbol='1'] { border-radius: 999px; }
-[data-aperture-root] .aperture-legend-swatch[data-symbol='2'] { transform: skewX(-20deg); }
-[data-aperture-root] .aperture-legend-swatch[data-symbol='3'] { background: currentColor; }
-[data-aperture-root] .aperture-legend-swatch[data-symbol='4'] { border-style: dashed; }
-[data-aperture-root] .aperture-legend-swatch[data-symbol='5'] { border-radius: 0 999px 999px 0; }
-[data-aperture-root] .aperture-legend-swatch[data-symbol='6'] { transform: rotate(45deg) scale(0.75); }
-[data-aperture-root] .aperture-legend-swatch[data-symbol='7'] { background: currentColor; border-radius: 999px; }
+[data-aperture-root] .aperture-legend-swatch[data-symbol='2'] { transform: rotate(45deg) scale(0.85); }
+[data-aperture-root] .aperture-legend-swatch[data-symbol='3'] { background: none; }
+[data-aperture-root] .aperture-legend-swatch[data-symbol='4'] { border-radius: 999px; background: none; }
+[data-aperture-root] .aperture-legend-swatch[data-symbol='5'] { transform: rotate(45deg) scale(0.85); background: none; }
+[data-aperture-root] .aperture-legend-swatch[data-symbol='6'] { width: 0.875rem; height: 0.375rem; }
+[data-aperture-root] .aperture-legend-swatch[data-symbol='7'] { width: 0.875rem; height: 0.375rem; background: none; }
 [data-aperture-root] .aperture-legend-swatch[data-kind='reference'] { border-style: dashed; background: none; }
 [data-aperture-root] .aperture-legend-swatch[data-kind='missing'] { color: var(--aperture-chart-missing); border-style: dotted; background: none; }
 
@@ -214,6 +208,61 @@
   border-radius: var(--aperture-radius-medium);
 }
 
+[data-aperture-root].aperture-standalone {
+  width: 100%;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+}
+
+[data-aperture-root].aperture-standalone > .aperture-controls {
+  justify-content: flex-end;
+}
+
+[data-aperture-root].aperture-standalone:fullscreen {
+  padding: var(--aperture-space-4);
+  overflow: auto;
+}
+
+/* A fullscreen widget allocates remaining height to its plot. Keep the plot
+   box independent from the rendered SVG/canvas size for stable observation. */
+.aperture-root:fullscreen,
+:fullscreen > .aperture-root {
+  display: flex;
+  flex-direction: column;
+  width: 100% !important;
+  height: 100%;
+  min-height: 0;
+  border-radius: 0;
+  overflow: auto;
+}
+:is(.aperture-root:fullscreen, :fullscreen > .aperture-root) > :is(.aperture-header, .aperture-controls, .aperture-footer) {
+  flex: none;
+}
+:is(.aperture-root:fullscreen, :fullscreen > .aperture-root) .aperture-plot,
+:is(.aperture-root:fullscreen, :fullscreen > .aperture-root) .aperture-chart {
+  display: flex;
+  flex-direction: column;
+  flex: 1 0 160px;
+  min-width: 0;
+  width: 100% !important;
+}
+:is(.aperture-root:fullscreen, :fullscreen > .aperture-root) .aperture-canvas {
+  flex: 1 0 160px;
+  min-height: 160px;
+  height: auto !important;
+  position: relative;
+}
+:is(.aperture-root:fullscreen, :fullscreen > .aperture-root) .aperture-canvas > * {
+  position: absolute;
+  inset: 0;
+}
+:is(.aperture-root:fullscreen, :fullscreen > .aperture-root) .aperture-legend,
+:is(.aperture-root:fullscreen, :fullscreen > .aperture-root) .aperture-exact-values {
+  flex: none;
+}
+
 [data-aperture-root] .aperture-header,
 [data-aperture-root] .aperture-controls,
 [data-aperture-root] .aperture-footer {
@@ -226,6 +275,11 @@
 
 [data-aperture-root] .aperture-plot {
   min-width: 0;
+}
+
+[data-aperture-root] .aperture-controls.aperture-toolbar {
+  justify-content: flex-end;
+  gap: var(--aperture-space-2);
 }
 
 [data-aperture-root].aperture-brush-low-emphasis .ts-chart__brush-x-fallback .selection,

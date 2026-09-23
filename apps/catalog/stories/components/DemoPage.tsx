@@ -111,12 +111,11 @@ function CodeSample() {
 function ProductWidget() {
   const [range, setRange] = useState<DemoRange>('6M')
   const [goalVisible, setGoalVisible] = useState(true)
-  const frameRef = useRef<HTMLDivElement>(null)
+  const frameRef = useRef<HTMLElement>(null)
   const rows = range === 'All' ? teamSeries : teamSeries.slice(range === '3M' ? -3 : -6)
 
   return (
-    <ChartWidget.Root className="demo-widget" exactValues="available">
-      <div ref={frameRef} className="demo-widget-frame">
+    <ChartWidget.Root ref={frameRef} className="demo-widget demo-widget-frame" exactValues="available">
         <ChartWidget.Header className="demo-widget-header">
           <div>
             <p className="demo-eyebrow">React application example</p>
@@ -147,7 +146,6 @@ function ProductWidget() {
           {goalVisible ? <span className="demo-goal-key"><i aria-hidden="true" />Goal: 80 teams</span> : null}
           <span>Source: example data</span>
         </ChartWidget.Footer>
-      </div>
     </ChartWidget.Root>
   )
 }

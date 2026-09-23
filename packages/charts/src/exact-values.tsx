@@ -1,4 +1,4 @@
-import { useId, useState, type ReactNode } from 'react'
+import { type ReactNode } from 'react'
 import { useChartFormatters, type ChartFormatters } from './formatting.js'
 import { useChartConfiguration } from './provider.js'
 import type { NumericPoint } from './types.js'
@@ -148,37 +148,23 @@ export function ExactValues({
   const { messages } = useChartConfiguration()
   const formatters = useChartFormatters(formatterOverrides)
   const widget = useOptionalChartWidget()
-  const [visible, setVisible] = useState(false)
-  const localId = useId()
-  const id = widget?.tableId ?? localId
-  const tableVisible = widget?.tableVisible ?? visible
-
   if (widget !== null) {
     if (!widget.tableAvailable) throw new Error('A ready chart requires ChartWidget.Root exactValues="available".')
     return (
       <section className="aperture-exact-values" aria-label={model.caption ?? messages.table.caption}>
-        <div id={id} className={tableVisible ? 'aperture-table-scroll' : 'aperture-visually-hidden'}>
+        <div
+          id={widget.tableId}
+          className={widget.tableVisible ? 'aperture-table-scroll' : 'aperture-visually-hidden'}
+          role={widget.tableVisible ? 'region' : undefined}
+          aria-label={widget.tableVisible ? model.caption ?? messages.table.caption : undefined}
+          tabIndex={widget.tableVisible ? 0 : undefined}
+        >
           <ExactValueTable model={model} formatters={formatters} />
         </div>
       </section>
     )
   }
-  return (
-    <section className="aperture-exact-values">
-      <button
-        type="button"
-        className="aperture-exact-toggle"
-        aria-pressed={tableVisible}
-        aria-controls={id}
-        onClick={() => setVisible((current) => !current)}
-      >
-        {tableVisible ? messages.controls.hideTable : messages.controls.showTable}
-      </button>
-      <div id={id} className={tableVisible ? 'aperture-table-scroll' : 'aperture-visually-hidden'}>
-        <ExactValueTable model={model} formatters={formatters} />
-      </div>
-    </section>
-  )
+  throw new Error('Exact values require a chart widget context.')
 }
 
 export function SemanticLegend({ items }: { readonly items: readonly SemanticLegendItem[] }) {
@@ -217,7 +203,7 @@ export function SemanticLegend({ items }: { readonly items: readonly SemanticLeg
                 ? item.symbol?.seriesIndex ?? index % 8
                 : undefined}
               data-symbol={(item.kind === undefined || item.kind === 'series') && item.symbol?.kind !== 'missing'
-                ? index % 8
+                ? item.symbol?.seriesIndex ?? index % 8
                 : undefined}
               aria-hidden="true"
             />

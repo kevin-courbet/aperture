@@ -139,6 +139,10 @@ export interface GroupedChartTooltipOptions extends ChartTooltipOptions {
 }
 
 export interface CommonChartProps {
+  /** Standalone charts only. Widget controls are composed by the host. */
+  readonly dataTableControl?: 'hidden' | 'visible'
+  /** Standalone charts only. Exact values stay accessible when collapsed. */
+  readonly defaultTableVisible?: boolean
   readonly ariaLabel: string
   readonly ariaDescription: string
   readonly rendering?: ChartRendering

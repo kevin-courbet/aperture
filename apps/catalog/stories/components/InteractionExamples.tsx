@@ -43,9 +43,10 @@ function FocusExample() {
   return (
     <ChartProvider locale="en-GB" timeZone="UTC">
       <section className="catalog-interaction">
-        <div className="catalog-callout"><h2>Focus a point with Tab and arrow keys, or point at the plot.</h2><p>The package tooltip and crosshair use the nearest monthly value. The exact-value disclosure remains available below the plot.</p></div>
+        <div className="catalog-callout"><h2>Focus a point with Tab and arrow keys, or point at the plot.</h2><p>The package tooltip and crosshair use the nearest monthly value. The exact-value button is next to full screen above the plot.</p></div>
         <div className="catalog-interaction-chart">
           <LineChart
+            dataTableControl="visible"
             ariaLabel="Completed work focus example"
             ariaDescription="Monthly completed items with nearest-point focus, tooltip, and crosshair."
             state={chartData(completedSeries)}
@@ -92,6 +93,7 @@ function LegendExample() {
         <p className="catalog-legend-summary" role="status">Visible series: {visibleNames.join(', ')}</p>
         <div className="catalog-interaction-chart">
           <StackedAreaChart
+            dataTableControl="visible"
             ariaLabel="Filtered work composition"
             ariaDescription={`Visible series: ${visibleNames.join(', ')}.`}
             state={chartData(rows)}

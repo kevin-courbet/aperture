@@ -115,12 +115,14 @@ export type { ChartStateBoundaryProps, SingletonChartStateBoundaryProps } from '
 export { ChartWidget, useChartWidget } from './widget.js'
 export type { ChartWidgetRootProps } from './widget.js'
 export {
+  ChartToolbar,
   DataTableControl,
   FullscreenControl,
   TimeRangeControl,
   ToggleControl,
 } from './controls.js'
 export type {
+  ChartToolbarProps,
   FullscreenControlProps,
   TimeRangeControlProps,
   TimeRangeOption,

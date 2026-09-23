@@ -1,4 +1,4 @@
-import { useMemo, type ReactNode } from 'react'
+import { useMemo, useRef, type ReactNode } from 'react'
 import type { ChartValue, DomChartDefinition } from '@tanstack/charts'
 import { motion } from '@tanstack/charts/motion'
 import { Chart as SvgChart, CanvasChart, RendererChart } from '@tanstack/charts/react/tooltip'
@@ -6,6 +6,9 @@ import { useChartConfiguration } from './provider.js'
 import { ExactValues, SemanticLegend, type ExactValueModel, type SemanticLegendItem } from './exact-values.js'
 import type { ChartDataState, ChartRendering, ChartTooltipOptions, CommonChartProps, SingletonChartDataState } from './types.js'
 import { positiveHeight, positiveWidth } from './validation.js'
+import { ChartToolbar } from './controls.js'
+import { ChartWidget, useOptionalChartWidget } from './widget.js'
+import { useFullscreenSize } from './fullscreen-size.js'
 
 export const defaultChartHeight = 320
 export const defaultChartInitialWidth = 640
@@ -134,12 +137,22 @@ export function ChartSurface<
   exactValues,
   legend = [],
   tooltip,
+  dataTableControl = 'hidden',
+  defaultTableVisible = false,
 }: ChartSurfaceProps<TDatum, TXValue, TYValue>) {
+  const widget = useOptionalChartWidget()
+  const standaloneRef = useRef<HTMLElement>(null)
+  const fullscreen = useFullscreenSize()
+  if (typeof defaultTableVisible !== 'boolean') {
+    throw new TypeError('Chart defaultTableVisible must be a boolean.')
+  }
   const { messages } = useChartConfiguration()
   positiveHeight(height, messages.errors.invalidHeight)
   if (width !== undefined) positiveWidth(width, messages.errors.invalidWidth)
   positiveWidth(initialWidth, messages.errors.invalidWidth)
-  const chartProps = { definition, ariaLabel, ariaDescription, height, width, initialWidth }
+  const chartProps = { definition, ariaLabel, ariaDescription,
+    height: fullscreen.size?.height ?? height,
+    width: fullscreen.size?.width ?? width, initialWidth }
   const motionRenderer = useMotionRenderer<TDatum, TXValue, TYValue>(rendering)
   const customTooltipBody = typeof tooltip === 'object' ? tooltip.renderBody : undefined
   const renderTooltipBody = customTooltipBody === undefined
@@ -147,21 +160,36 @@ export function ChartSurface<
     : (context: Parameters<NonNullable<ChartTooltipOptions['renderBody']>>[0] & { readonly defaultBody: ReactNode }) =>
         customTooltipBody(context)
 
-  return (
+  const content = (
     <div
-      data-aperture-root=""
+      data-aperture-root={widget === null ? undefined : ''}
       data-aperture-renderer={rendering.kind}
       className={['aperture-chart', className].filter(Boolean).join(' ')}
-      style={{ ...style, ...(width === undefined ? {} : { width }) }}
+      style={widget === null ? undefined : { ...style, ...(width === undefined ? {} : { width }) }}
     >
+      <div ref={fullscreen.ref} className="aperture-canvas" style={{ height }}>
       {rendering.kind === 'svg'
         ? <SvgChart {...chartProps} renderTooltipBody={renderTooltipBody} />
         : rendering.kind === 'canvas'
           ? <CanvasChart {...chartProps} renderTooltipBody={renderTooltipBody} />
           : <RendererChart {...chartProps} renderer={motionRenderer!} renderTooltipBody={renderTooltipBody} />}
+      </div>
       <SemanticLegend items={legend} />
       <ExactValues model={exactValues} formatters={formatters} />
     </div>
+  )
+  if (widget !== null) return content
+  return (
+    <ChartWidget.Root
+      ref={standaloneRef}
+      exactValues="available"
+      defaultTableVisible={defaultTableVisible}
+      className="aperture-standalone"
+      style={{ ...style, ...(width === undefined ? {} : { width }) }}
+    >
+      <ChartToolbar targetRef={standaloneRef} dataTableControl={dataTableControl} />
+      {content}
+    </ChartWidget.Root>
   )
 }
 

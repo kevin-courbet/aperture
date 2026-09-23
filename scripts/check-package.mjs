@@ -116,7 +116,7 @@ try {
       include: ['consumer.tsx'],
     }),
   )
-  execFileSync(resolve(root, 'node_modules/.bin/tsc'), ['-p', 'tsconfig.json'], {
+  execFileSync(process.execPath, [resolve(root, 'node_modules/typescript/bin/tsc'), '-p', 'tsconfig.json'], {
     cwd: consumerDirectory,
     stdio: 'inherit',
   })
