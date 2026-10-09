@@ -160,7 +160,7 @@ function BrushExample() {
   return (
     <ChartProvider locale="en-GB" timeZone="UTC">
       <section className="catalog-interaction">
-        <div className="catalog-callout"><h2>Drag the range or use its two keyboard sliders.</h2><p>Arrow keys adjust a focused handle. The summary reports the accepted semantic range.</p></div>
+        <div className="catalog-callout"><h2>Drag horizontally to select a range.</h2><p>Pointer hover shows only a crosshair. Keyboard sliders show focus and support arrow keys.</p></div>
         <div className="catalog-toolbar">
           <p role="status">Selected months: {month.format(range.start)} to {month.format(range.end)}</p>
           <div><button type="button" onClick={() => setRange(focusedRange)}>Select last two months</button> <button type="button" disabled={range.start.getTime() === fullRange.start.getTime() && range.end.getTime() === fullRange.end.getTime()} onClick={() => setRange(fullRange)}>Reset range</button></div>
@@ -184,6 +184,7 @@ function BrushExample() {
               startAriaLabel: 'Range start',
               endAriaLabel: 'Range end',
               appearance: 'low-emphasis',
+              interaction: 'select',
             }}
           />
         </div>

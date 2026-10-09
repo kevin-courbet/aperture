@@ -128,6 +128,12 @@ a vertical gradient. An optional outline uses the color of each series.
 Set `DateBrush.appearance` to `low-emphasis` to hide the selection at rest. The
 selection appears during pointer or keyboard interaction.
 
+Set `DateBrush.interaction="select"` for drag-to-select zoom. Pointer hover shows
+only a crosshair cursor. Each drag starts a new horizontal selection, including
+inside the current range. The selection appears during the drag and disappears
+on release or cancellation. A click without a range does not commit a selection.
+Keyboard range controls retain visible focus. The host applies the committed range.
+
 Set `DonutChart.labelPlacement` to `inline` to show each label, value, and
 percentage around the donut. This option also shows the total in the center.
 

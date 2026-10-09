@@ -288,26 +288,26 @@
   gap: var(--aperture-space-2);
 }
 
-[data-aperture-root].aperture-brush-low-emphasis .ts-chart__brush-x-fallback .selection,
-[data-aperture-root].aperture-brush-low-emphasis .ts-chart__brush-x-fallback .handle,
-[data-aperture-root].aperture-brush-low-emphasis svg[data-chart-brush] [data-chart-brush-selection],
-[data-aperture-root].aperture-brush-low-emphasis svg[data-chart-brush] [data-chart-brush-handle] {
+.aperture-brush-low-emphasis .ts-chart__brush-x-fallback .selection,
+.aperture-brush-low-emphasis .ts-chart__brush-x-fallback .handle,
+.aperture-brush-low-emphasis svg[data-chart-brush] [data-chart-brush-selection],
+.aperture-brush-low-emphasis svg[data-chart-brush] [data-chart-brush-handle] {
   opacity: 0;
   transition: opacity var(--aperture-motion-duration);
 }
 
-[data-aperture-root].aperture-brush-low-emphasis .ts-chart__brush-x-fallback:hover .selection,
-[data-aperture-root].aperture-brush-low-emphasis .ts-chart__brush-x-fallback:focus-within .selection,
-[data-aperture-root].aperture-brush-low-emphasis svg[data-chart-brush]:hover [data-chart-brush-selection],
-[data-aperture-root].aperture-brush-low-emphasis svg[data-chart-brush]:focus-within [data-chart-brush-selection] {
+.aperture-brush-low-emphasis .ts-chart__brush-x-fallback:hover .selection,
+.aperture-brush-low-emphasis .ts-chart__brush-x-fallback:focus-within .selection,
+.aperture-brush-low-emphasis svg[data-chart-brush]:hover [data-chart-brush-selection],
+.aperture-brush-low-emphasis svg[data-chart-brush]:focus-within [data-chart-brush-selection] {
   opacity: 1;
 }
 
-[data-aperture-root].aperture-brush-low-emphasis .ts-chart__brush-x-fallback:hover .handle,
-[data-aperture-root].aperture-brush-low-emphasis .ts-chart__brush-x-fallback:focus-within .handle,
-[data-aperture-root].aperture-brush-low-emphasis svg[data-chart-brush] [data-chart-brush-selection]:hover ~ [data-chart-brush-handle],
-[data-aperture-root].aperture-brush-low-emphasis svg[data-chart-brush] [data-chart-brush-handle]:hover,
-[data-aperture-root].aperture-brush-low-emphasis svg[data-chart-brush] [data-chart-brush-handle]:focus {
+.aperture-brush-low-emphasis .ts-chart__brush-x-fallback:hover .handle,
+.aperture-brush-low-emphasis .ts-chart__brush-x-fallback:focus-within .handle,
+.aperture-brush-low-emphasis svg[data-chart-brush] [data-chart-brush-selection]:hover ~ [data-chart-brush-handle],
+.aperture-brush-low-emphasis svg[data-chart-brush] [data-chart-brush-handle]:hover,
+.aperture-brush-low-emphasis svg[data-chart-brush] [data-chart-brush-handle]:focus {
   opacity: 0.9;
 }
 
@@ -419,6 +419,27 @@
   [data-aperture-root] .ts-chart-tooltip {
     transition: none;
   }
+}
+
+.aperture-selection-host {
+  display: contents;
+}
+
+.aperture-brush-select .ts-chart__brush-x-fallback,
+.aperture-brush-select svg[data-chart-brush] [data-chart-brush-selection],
+.aperture-brush-select svg[data-chart-brush] [data-chart-brush-handle] {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.aperture-brush-select svg[data-chart-brush] .overlay {
+  cursor: crosshair;
+}
+
+[data-aperture-selecting] .aperture-brush-select svg[data-chart-brush] [data-chart-brush-selection],
+.aperture-brush-select svg[data-chart-brush]:focus-within [data-chart-brush-selection],
+.aperture-brush-select svg[data-chart-brush] [data-chart-brush-handle]:focus-visible {
+  opacity: 1;
 }
 
 @media (forced-colors: active) {

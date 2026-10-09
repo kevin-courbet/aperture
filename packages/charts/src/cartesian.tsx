@@ -27,7 +27,7 @@ import { scaleLinear } from '@tanstack/charts/scales/linear'
 import { scalePoint } from '@tanstack/charts/scales/point'
 import { scaleLinear as scaleLinearColor, scaleUtc } from 'd3-scale'
 import { curveMonotoneX } from 'd3-shape'
-import { useId } from 'react'
+import { useId, useRef } from 'react'
 import { exactRow, exactValues, lineSeriesDasharrays, pointSeriesStyles, seriesLegend, type SemanticLegendItem } from './exact-values.js'
 import { localizedHorizontalTooltip, localizedTooltip, numberAxis, useChartFormatters } from './formatting.js'
 import { chartColors } from './palette.js'
@@ -51,6 +51,7 @@ export interface DateBrush {
   readonly startAriaLabel: string
   readonly endAriaLabel: string
   readonly appearance?: 'standard' | 'low-emphasis'
+  readonly interaction?: 'adjust' | 'select'
 }
 
 export type AreaFillAppearance =
@@ -769,6 +770,10 @@ function StackedAreaPlot({
   const { messages, locale, timeZone } = useChartConfiguration()
   const formatters = useChartFormatters(common.formatters)
   const gradientIdPrefix = `aperture-area-${useId().replaceAll(':', '')}`
+  const selectionHost = useRef<HTMLDivElement>(null)
+  if (brush?.interaction !== undefined && brush.interaction !== 'adjust' && brush.interaction !== 'select') {
+    throw new RangeError('DateBrush interaction must be adjust or select.')
+  }
   if (interpolation !== 'linear' && interpolation !== 'monotone-x') {
     throw new RangeError('Cartesian interpolation must be linear or monotone-x.')
   }
@@ -809,6 +814,10 @@ function StackedAreaPlot({
             range: controlledSignal<DateRange, BrushXChange<Date>>(
               { start, end },
               (next, { reason }) => {
+                if (brush.interaction === 'select') {
+                  selectionHost.current?.toggleAttribute('data-aperture-selecting', reason.type === 'preview')
+                  if (reason.type === 'commit' && reason.source === 'pointer' && next.start.getTime() === next.end.getTime()) return
+                }
                 if (reason.type === 'commit') brush.onChange(next)
               },
             ),
@@ -818,7 +827,7 @@ function StackedAreaPlot({
             ariaLabel: brush.ariaLabel,
             startAriaLabel: brush.startAriaLabel,
             endAriaLabel: brush.endAriaLabel,
-            ...(brush.appearance === 'low-emphasis'
+            ...(brush.appearance === 'low-emphasis' || brush.interaction === 'select'
               ? {
                   selectionStyle: { fillOpacity: 0.12, strokeOpacity: 0.35, strokeWidth: 1 },
                   handleStyle: { opacity: 0 },
@@ -840,12 +849,16 @@ function StackedAreaPlot({
             }
           },
         })
-        const surfaceClassName = brush?.appearance === 'low-emphasis'
-          ? [common.className, 'aperture-brush-low-emphasis'].filter(Boolean).join(' ')
-          : common.className
-        return <ChartSurface {...common} className={surfaceClassName} definition={definition} legend={seriesLegend(seriesOrder)} exactValues={exactValues(
+        let brushClass: string | undefined
+        if (brush?.interaction === 'select') brushClass = 'aperture-brush-select'
+        else if (brush?.appearance === 'low-emphasis') brushClass = 'aperture-brush-low-emphasis'
+        const surfaceClassName = [common.className, brushClass].filter(Boolean).join(' ')
+        const surface = <ChartSurface {...common} className={surfaceClassName} definition={definition} legend={seriesLegend(seriesOrder)} exactValues={exactValues(
           ['Date', 'Series', 'Value'], rows.map((row) => exactRow(row.id, row.date, row.series, row.value)),
         )} />
+        return brush?.interaction === 'select'
+          ? <div ref={selectionHost} className="aperture-selection-host">{surface}</div>
+          : surface
       }}
     </ChartStateBoundary>
   )
