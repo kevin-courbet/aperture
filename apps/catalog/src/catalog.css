@@ -92,3 +92,11 @@ button:focus-visible, [tabindex]:focus-visible { outline: 3px solid var(--catalo
 @media (forced-colors: active) {
   .catalog-guidance aside, .catalog-comparison aside, .catalog-selection { border: 2px solid CanvasText; }
 }
+
+.catalog-annotation-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr)); gap: 1.5rem; width: 100%; max-width: 1280px; margin-inline: auto; }
+.catalog-annotation { min-width: 0; padding: 1.25rem; background: var(--catalog-paper); border: 1px solid var(--catalog-rule); }
+.catalog-annotation h2 { margin: 0 0 .75rem; font-size: 1.05rem; letter-spacing: -.02em; }
+.catalog-cross-filter { display: grid; gap: 1rem; width: 100%; max-width: 1100px; margin-inline: auto; }
+.catalog-cross-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr)); gap: 1rem; }
+.catalog-cross-widget h2 { margin: 0; font-size: 1.05rem; letter-spacing: -.02em; }
+.catalog-stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr)); gap: 1rem; width: 100%; max-width: 1100px; margin-inline: auto; }

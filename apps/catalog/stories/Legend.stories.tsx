@@ -11,10 +11,10 @@ export const SeriesIsolation: StoryObj<typeof meta> = {
     await userEvent.click(reactive)
     await expect(reactive).toHaveAttribute('aria-pressed', 'false')
     await expect(canvas.getByRole('status')).toHaveTextContent('Visible series: planned, research')
-    await userEvent.click(canvas.getByRole('button', { name: 'Show exact values' }))
+    await expect(canvas.queryByRole('button', { name: 'Show exact values' })).toBeNull()
     const table = canvas.getByRole('table', { name: 'Exact chart values' })
     await expect(within(table).queryByText('reactive')).toBeNull()
-    await expect(within(table).getByRole('row', { name: /planned 31/ })).toBeVisible()
+    await expect(within(table).getByRole('row', { name: /planned 31/ })).toBeInTheDocument()
     const chart = canvas.getByRole('img', { name: 'Filtered work composition' })
     const bounds = chart.getBoundingClientRect()
     const clientX = bounds.left + bounds.width / 3

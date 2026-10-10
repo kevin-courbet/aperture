@@ -44,8 +44,10 @@ export type ApertureIcon = ComponentType<SVGProps<SVGSVGElement>>
 
 export interface ApertureIcons {
   readonly calendar: ApertureIcon
+  readonly chevron: ApertureIcon
   readonly collapse: ApertureIcon
   readonly expand: ApertureIcon
+  readonly remove: ApertureIcon
   readonly table: ApertureIcon
 }
 
@@ -67,6 +69,30 @@ export interface ApertureMessages {
   readonly legend: {
     readonly missing: string
   }
+  readonly annotations: {
+    readonly highlights: string
+  }
+  readonly selection: {
+    readonly instructions: string
+    readonly selected: string
+  }
+  readonly stat: {
+    readonly increase: string
+    readonly decrease: string
+    readonly noChange: string
+    readonly better: string
+    readonly worse: string
+  }
+  readonly sparkline: {
+    readonly summary: string
+  }
+  readonly filters: {
+    readonly group: string
+    readonly active: string
+    readonly none: string
+    readonly remove: string
+    readonly clearAll: string
+  }
   readonly errors: {
     readonly invalidDate: string
     readonly invalidHeight: string
@@ -82,6 +108,11 @@ export interface PartialApertureMessages {
   readonly states?: Partial<ApertureMessages['states']>
   readonly table?: Partial<ApertureMessages['table']>
   readonly legend?: Partial<ApertureMessages['legend']>
+  readonly annotations?: Partial<ApertureMessages['annotations']>
+  readonly selection?: Partial<ApertureMessages['selection']>
+  readonly filters?: Partial<ApertureMessages['filters']>
+  readonly stat?: Partial<ApertureMessages['stat']>
+  readonly sparkline?: Partial<ApertureMessages['sparkline']>
   readonly errors?: Partial<ApertureMessages['errors']>
 }
 
@@ -104,6 +135,46 @@ export type NumericPoint =
   | { readonly kind: 'missing'; readonly reason: string }
 
 export type ChartTooltipValue = Date | number | string
+
+/** A labeled time interval or instant drawn behind the data of a time chart. */
+export type TimeHighlight =
+  | { readonly kind: 'range'; readonly start: Date; readonly end: Date; readonly label: string }
+  | { readonly kind: 'event'; readonly date: Date; readonly label: string }
+
+/** A labeled band behind one category of a categorical chart. */
+export interface CategoryHighlight {
+  readonly category: string
+  readonly label: string
+}
+
+/** A labeled outline around one cell of a matrix chart. */
+export interface CellHighlight {
+  readonly x: string
+  readonly y: string
+  readonly label: string
+}
+
+/** Controlled single selection of one category. Selecting the current category clears it. */
+export interface CategorySelection {
+  readonly value: string | null
+  readonly onChange: (value: string | null) => void
+}
+
+export interface CellKey {
+  readonly x: string
+  readonly y: string
+}
+
+/** Controlled single selection of one matrix cell. Selecting the current cell clears it. */
+export interface CellSelection {
+  readonly value: CellKey | null
+  readonly onChange: (value: CellKey | null) => void
+}
+
+/** Maps a quantity to color. A diverging scale has a neutral midpoint. */
+export type ContinuousColorScale =
+  | { readonly kind: 'sequential'; readonly domain: readonly [number, number] }
+  | { readonly kind: 'diverging'; readonly domain: readonly [number, number, number] }
 
 export interface ChartTooltipPoint {
   readonly key: string

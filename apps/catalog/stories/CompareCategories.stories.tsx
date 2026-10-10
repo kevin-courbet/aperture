@@ -30,4 +30,5 @@ export const HorizontalGroupedBars: StoryObj<typeof BarVariantExample> = {
     await expect(total).toHaveTextContent('Total: 277 items')
   },
 }
+export const Dumbbell: ChartStory = { args: { name: 'DumbbellChart' } }
 export const StackedBars: StoryObj<typeof BarVariantExample> = { render: () => <BarVariantExample layout="stacked" orientation="vertical" /> }

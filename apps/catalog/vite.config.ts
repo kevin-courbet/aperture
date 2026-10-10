@@ -7,6 +7,6 @@ export default defineConfig({
     dedupe: ['react', 'react-dom'],
   },
   optimizeDeps: {
-    exclude: ['@tanstack/charts/focus', '@tanstack/charts/mark/decorative'],
+    exclude: ['@tanstack/charts/mark/decorative'],
   },
 })

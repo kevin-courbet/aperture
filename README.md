@@ -74,7 +74,7 @@ The repository contains:
 - `apps/catalog`: the Storybook design and behavior catalog.
 - `skills/create-data-visualizations`: the public agent workflow and validation tools.
 
-TanStack Charts is pinned to `0.11.1`. Its API is pre-alpha. Common Aperture
+TanStack Charts is pinned to `1.1.0`. Common Aperture
 exports do not expose TanStack types. Use `@kevin-courbet/aperture/tanstack`
 only for advanced TanStack integration.
 

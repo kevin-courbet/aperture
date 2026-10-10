@@ -23,8 +23,7 @@ Import `@kevin-courbet/aperture/styles.css` when the build does not use package
 browser exports.
 
 Use `@kevin-courbet/aperture/tanstack` only when the common API does not meet
-an advanced chart requirement. TanStack Charts is pre-alpha and pinned by
-Aperture.
+an advanced chart requirement. Aperture pins TanStack Charts to `1.1.0`.
 
 ## Exact Values
 
@@ -35,9 +34,10 @@ controlled `tableVisible` value requires `onTableVisibleChange`.
 ### Use one toolbar
 
 Standalone charts show a full-screen button above the plot. The exact-value
-button is hidden by default. Set `dataTableControl="visible"` to put it next to
-the full-screen button. The table is collapsed by default. Set
-`defaultTableVisible` to start with the table open. These options are independent.
+button is hidden by default. Show it only when the product requires a visible
+data control. Set `dataTableControl="visible"` to put it next to the full-screen
+button. The table is collapsed by default. Set `defaultTableVisible` to start
+with the table open. These options are independent.
 
 ```tsx
 <BarChart {...props} dataTableControl="visible" defaultTableVisible={false} />
@@ -55,7 +55,7 @@ const targetRef = useRef<HTMLElement>(null)
 
 <ChartWidget.Root ref={targetRef} exactValues="available">
   <ChartWidget.Header>Monthly sales</ChartWidget.Header>
-  <ChartToolbar targetRef={targetRef} dataTableControl="visible" />
+  <ChartToolbar targetRef={targetRef} />
   <ChartWidget.Plot><BarChart {...props} /></ChartWidget.Plot>
 </ChartWidget.Root>
 ```
@@ -65,6 +65,13 @@ another controls slot. Its `dataTableControl` default is `hidden`. For a custom
 toolbar, put `DataTableControl` and `FullscreenControl` in one
 `ChartWidget.Controls` slot. An explicit `DataTableControl` stays visible.
 One widget contains one toolbar and one exact-value table.
+
+### Place the toolbar
+
+The header and the controls share the first row of a widget when both fit.
+The controls align to the end of the row. In a narrow widget the controls wrap
+below the header. Put the title and its note in `ChartWidget.Header`, and the
+time range and full-screen controls in one controls slot.
 
 ### Full-screen sizing
 
@@ -81,11 +88,153 @@ API handles entry and Escape; exit returns focus to the full-screen button.
 
 ### Read legends
 
-Legends use compact solid or outline markers with text labels. Swatches have no
-striped fill. Line legends retain their dash patterns; point legends retain
-their point size and fill. Swatch shapes separate legend entries, but do not
-claim to encode matching shapes in bar marks. Labels and exact-value tables
-provide the non-color route to series and values.
+Each legend symbol matches its mark. Bars, areas, and cells use one square
+swatch shape. Lines keep their dash pattern. Points keep their size and fill.
+A chart with one series shows no series entry, because the title names it.
+References, missing values, highlights, and color scales have their own symbols.
+Labels and exact-value tables provide the non-color route to series and values.
+
+## Chart Chrome
+
+Axis titles use the muted text token at weight 500. Tick labels, grid lines,
+and axis lines stay below the data in contrast. Data marks, direct value labels,
+and references use full strength. Keep host titles and notes in the same order:
+a strong title, then a muted note.
+
+## Highlights
+
+Highlights draw a labeled region behind the data. Each highlight appears in
+the legend and in the accessible description.
+
+- `LineChart`, `AreaChart`, and `StackedAreaChart` accept time highlights.
+  A `range` highlight shades an interval. An `event` highlight draws a dashed
+  rule. Labels sit in headroom above the data. A highlight outside the plotted
+  dates is not drawn. Time highlights require an elapsed time axis.
+- `BarChart` and `DumbbellChart` accept category highlights. Each draws a band
+  behind its category.
+- `HeatmapChart` accepts cell highlights. Each draws an outline.
+
+```tsx
+<LineChart
+  {...props}
+  highlights={[
+    { kind: 'range', start: new Date('2026-09-08T00:00:00Z'), end: new Date('2026-09-21T00:00:00Z'), label: 'Incident window' },
+    { kind: 'event', date: new Date('2026-09-08T00:00:00Z'), label: 'web-checkout 4.12.0' },
+  ]}
+/>
+<BarChart {...barProps} highlights={[{ category: '4.12.0', label: 'Released on EU mobile web' }]} />
+<HeatmapChart {...matrixProps} highlights={[{ x: 'Mobile web', y: 'EU', label: 'Largest drop' }]} />
+```
+
+A highlight that names an unknown category or cell throws a `RangeError`.
+
+## Cross-Filtering
+
+A chart selection can filter every other chart on the page. Aperture owns the
+selection interaction. The host owns the filter state, filtering, and
+aggregation.
+
+- `BarChart` and `DumbbellChart` accept `selection: { value, onChange }` for
+  one category. `HeatmapChart` accepts a selection of one cell.
+- A click, Enter, or Space selects the focused mark. Activating the selected
+  mark, or a click on an empty plot area, clears the selection.
+- While a selection exists, the other marks are dimmed, a band marks the
+  selected category, and the description names the selection.
+- `useCrossFilter` holds one value per dimension. `selection(dimension)`
+  returns the props for a chart that filters that dimension. `update` sets
+  several dimensions in one change.
+- `FilterBar` scopes page-level controls. `SelectControl` is a dropdown for one
+  dimension. `ActiveFilters` shows removable chips and a clear-all control.
+
+### Choose where the filter state lives
+
+- One component holds every chart: call `useCrossFilter({ defaultValues })`.
+- Charts are in separate components: create a typed group once with
+  `createCrossFilter<Dimension>()`. Wrap the page in its `Provider` and call its
+  `useFilters()` in each component. Each group is independent.
+- The URL or an application store owns the state: pass `values` and
+  `onChange` to `useCrossFilter` or to the `Provider`. Aperture reports each
+  change with the complete next values.
+
+```tsx
+type Dimension = 'region' | 'device'
+const pageFilters = createCrossFilter<Dimension>('PageFilters')
+
+function RegionChart() {
+  const filters = pageFilters.useFilters()
+  const rows = useRegionTotals({ ...filters.values, region: null })
+  return <BarChart {...props} state={chartData(rows)} selection={filters.selection('region')} />
+}
+
+<pageFilters.Provider values={valuesFromUrl} onChange={writeValuesToUrl}>
+  <PageFilterBar />
+  <RegionChart />
+</pageFilters.Provider>
+```
+
+A chart usually ignores its own dimension when the host filters its rows. The
+reader can then see every category and change the selection in place.
+Aperture does not filter or aggregate data. The application chooses the
+method that fits where its data lives.
+
+## Color Scales
+
+`HeatmapChart` and `ChoroplethChart` take a `colorScale`:
+
+- `{ kind: 'sequential', domain: [min, max] }` mixes `--aperture-chart-1` into
+  the surface color.
+- `{ kind: 'diverging', domain: [min, mid, max] }` uses
+  `--aperture-chart-diverging-low` below the midpoint and
+  `--aperture-chart-diverging-high` above it. The midpoint is the surface color.
+
+The legend shows the scale as a gradient with its domain values. Set
+`valueLabels` on `HeatmapChart` to print each value in its cell. Text on strong
+fills uses `--aperture-color-on-strong-fill`.
+
+## Dumbbell Charts
+
+`DumbbellChart` compares two states per category on one scale, such as a
+baseline period and an incident period. The start point uses
+`--aperture-chart-context`. The end point uses `--aperture-chart-1`. Each row
+shows the signed change at the right edge. Set the same `domain` on charts that
+the reader compares side by side.
+
+```tsx
+<DumbbellChart
+  state={chartData(rows)}
+  startLabel="17 Aug – 7 Sep"
+  endLabel="8–21 Sep"
+  domain={[45, 75]}
+  formatChange={(change) => `${change > 0 ? '+' : ''}${change.toFixed(1)} pp`}
+  {...accessibleProps}
+/>
+```
+
+## Headline Figures
+
+`StatTile` shows one number, its change from an earlier period, an optional
+trend, and a note. Set `goodDirection` so the change uses the positive or danger
+color. The arrow, the sign, and screen-reader text carry the direction, so color
+is not the only signal. Loading, empty, and error states use the typed
+singleton state.
+
+`Sparkline` is a line chart without axes, legend, or controls. Put it in a
+`StatTile` `trend` slot or next to a number it explains. Points from
+`accentFrom` onward use the accent color; earlier points use the context color.
+Range and event highlights are drawn without labels. The description states the
+first, last, lowest, and highest values, and a hidden table holds every value.
+
+```tsx
+<StatTile
+  label="Checkout conversion · 8–21 Sep"
+  state={{ status: 'ready', datum: { value: 61.6, comparison: { value: 64.8, label: 'vs 17 Aug – 7 Sep' } } }}
+  format={(value) => value.toFixed(1)}
+  unit="%"
+  goodDirection="increase"
+  formatDelta={(delta) => `${delta.toFixed(1)} pp`}
+  trend={<Sparkline state={chartData(dailyConversion)} ariaLabel="Daily checkout conversion" accentFrom={incidentStart} />}
+/>
+```
 
 ## Time Axes
 
@@ -176,6 +325,9 @@ API cannot express the required chart. This entry exposes pinned TanStack types.
 
 `AdvancedChart` supports all three rendering variants, dimension validation,
 theme-root styling, and custom React tooltip bodies.
+
+TanStack chart definitions use `scales.x` and `scales.y`. Set an unused scale
+to `null`. Polar marks use `scales.angle` and `scales.radius`.
 
 ## Candlesticks
 

@@ -1,0 +1,60 @@
+/* Darker page surface with lighter cards keeps chart cards distinct without heavy borders. */
+.case-surface {
+  min-height: 100vh;
+  background: #eef1f5;
+}
+
+.case-page {
+  --case-ink: #172033;
+  --case-muted: #5d6879;
+  --case-rule: #dbe1ea;
+  --case-surface: #ffffff;
+  --case-accent: #2457d6;
+  --case-good: #067647;
+  --case-bad: #b42318;
+  max-width: 1280px;
+  margin-inline: auto;
+  padding: clamp(1rem, 3vw, 2.5rem) clamp(1rem, 4vw, 3rem) 4rem;
+  display: grid;
+  gap: 1.25rem;
+  color: var(--case-ink);
+  font-family: 'IBM Plex Sans Variable', 'IBM Plex Sans', sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+
+.case-page h1,
+.case-page h2,
+.case-page p { margin: 0; }
+
+.case-header { display: grid; gap: .6rem; max-width: 84ch; }
+.case-eyebrow { color: var(--case-accent); font-size: .72rem; font-weight: 700; letter-spacing: .13em; text-transform: uppercase; }
+.case-header h1 { font-size: clamp(1.8rem, 3vw, 2.4rem); font-weight: 620; letter-spacing: -.03em; line-height: 1.1; text-wrap: balance; }
+.case-takeaway { font-size: 1rem; line-height: 1.55; }
+.case-scope, .case-note { color: var(--case-muted); font-size: .8rem; line-height: 1.45; }
+
+/* The filter bar sits on the darker page surface, so its muted text uses a darker step for AA contrast. */
+.case-filters { --aperture-color-muted: #4f5b6d; padding-block: .25rem; }
+
+.case-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr)); gap: 1rem; }
+.case-tiles .aperture-stat-tile { --aperture-color-border: var(--case-rule); background: var(--case-surface); }
+
+.case-section { display: grid; gap: .75rem; }
+.case-section-heading { display: grid; gap: .25rem; }
+.case-section-heading h2 { font-size: 1.15rem; letter-spacing: -.02em; }
+.case-grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 26rem), 1fr)); gap: 1rem; }
+.case-grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 19rem), 1fr)); gap: 1rem; }
+
+.case-widget { --aperture-color-border: var(--case-rule); background: var(--case-surface); }
+[data-aperture-root] .case-widget-header { display: grid; justify-content: stretch; gap: .25rem; }
+.case-widget-header h2 { font-size: 1rem; font-weight: 600; letter-spacing: -.01em; }
+.case-widget-controls { gap: .5rem; }
+.case-widget-footer { display: grid; gap: .3rem; justify-content: start; color: var(--case-muted); font-size: .78rem; line-height: 1.45; }
+
+.case-findings { display: grid; gap: .75rem; padding: 1.25rem; background: var(--case-surface); border: 1px solid var(--case-rule); border-radius: .75rem; }
+.case-findings h2 { font-size: 1.05rem; letter-spacing: -.02em; }
+.case-findings ol { margin: 0; padding-left: 1.2rem; display: grid; gap: .5rem; line-height: 1.5; max-width: 96ch; }
+.case-definitions { display: grid; gap: .3rem; color: var(--case-muted); font-size: .78rem; line-height: 1.5; max-width: 110ch; }
+
+@media (forced-colors: active) {
+  .case-tile, .case-findings { border: 1px solid CanvasText; }
+}

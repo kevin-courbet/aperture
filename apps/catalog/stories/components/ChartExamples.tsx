@@ -11,6 +11,7 @@ import {
   DataTableControl,
   DensityChart,
   DonutChart,
+  DumbbellChart,
   EcdfChart,
   ErrorBarChart,
   FacetChart,
@@ -96,7 +97,7 @@ export type ChartName =
   | 'FacetChart' | 'DonutChart' | 'GaugeChart' | 'RadarChart' | 'WaterfallChart'
   | 'CandlestickChart' | 'TreemapChart' | 'SunburstChart' | 'SankeyChart'
   | 'NetworkChart' | 'ChoroplethChart' | 'RouteMapChart' | 'ViolinChart'
-  | 'RidgelineChart' | 'BeeswarmChart' | 'DensityChart' | 'EcdfChart'
+  | 'RidgelineChart' | 'BeeswarmChart' | 'DensityChart' | 'EcdfChart' | 'DumbbellChart'
 
 const metadata: Record<ChartName, { title: string; description: string }> = {
   LineChart: { title: 'Completed work by month', description: 'Monthly completed items. The optional reference shows the 55-item goal.' },
@@ -126,6 +127,7 @@ const metadata: Record<ChartName, { title: string; description: string }> = {
   BeeswarmChart: { title: 'Individual cohort outcomes', description: 'Each observed outcome remains visible within its cohort.' },
   DensityChart: { title: 'Effort and outcome density', description: 'Deterministic two-dimensional observations show density by study group.' },
   EcdfChart: { title: 'Cumulative response times', description: 'Share of responses at or below each duration.' },
+  DumbbellChart: { title: 'Volume change by channel', description: 'Completed items per channel in the previous and current period, with the signed change.' },
 }
 
 const completedSeries = throughputByMonth.map((row): TimeSeriesDatum => ({
@@ -195,6 +197,7 @@ const donutData = allocation.map((row, index) => ({ id: `slice-${index}`, label:
 const gaugeDatum = { value: 81, minimum: 0, maximum: 100, label: '81 of 100' }
 const radarData = radarMeasures.map((row, index) => ({ id: `radar-${index}`, dimension: row.dimension, value: row.value, series: 'Current' }))
 const candleData = marketSeries.map((row, index) => ({ id: `candle-${index}`, date: new Date(`${row.period}T00:00:00Z`), open: row.open, high: row.high, low: row.low, close: row.close }))
+const dumbbellData = channelVolume.map((row) => ({ id: row.category.toLowerCase(), category: row.category, start: row.previous, end: row.value }))
 const beeswarmData = cohortDistributions.map((row, index) => ({ id: `bee-${index}`, category: row.cohort, value: row.value }))
 const ecdfData = responseTimes.map((value, index) => ({ id: `ecdf-${index}`, value, proportion: (index + 1) / responseTimes.length }))
 
@@ -214,7 +217,6 @@ function singletonStateFor<TDatum>(state: DataState, datum: TDatum): SingletonCh
 
 function commonProps(controls: ExampleControls, title: string, description: string) {
   return {
-    dataTableControl: 'visible' as const,
     ariaLabel: title,
     ariaDescription: description,
     rendering: controls.renderer === 'motion'
@@ -250,7 +252,7 @@ function ConcreteChart({
     case 'BoxPlotChart':
       return <BoxPlotChart {...common} state={stateFor(controls.state, boxData)} categoryLabel="Cohort" valueLabel="Outcome" />
     case 'HeatmapChart':
-      return <HeatmapChart {...common} state={stateFor(controls.state, heatmapData)} colorDomain={[0, 100]} xLabel="Weekday" yLabel="Service" />
+      return <HeatmapChart {...common} state={stateFor(controls.state, heatmapData)} colorScale={{ kind: 'sequential', domain: [0, 100] }} valueLabels xLabel="Weekday" yLabel="Service" valueLabel="Service score (0 to 100)" />
     case 'RangeChart':
       return <RangeChart {...common} state={stateFor(controls.state, rangeData)} xLabel="Month" yLabel="Duration (days)" />
     case 'ErrorBarChart':
@@ -278,7 +280,7 @@ function ConcreteChart({
     case 'NetworkChart':
       return <NetworkChart {...common} state={singletonStateFor(controls.state, network)} />
     case 'ChoroplethChart':
-      return <ChoroplethChart {...common} state={stateFor(controls.state, schematicRegions)} projection="identity" colorDomain={[0, 100]} />
+      return <ChoroplethChart {...common} state={stateFor(controls.state, schematicRegions)} projection="identity" colorScale={{ kind: 'sequential', domain: [0, 100] }} valueLabel="Service score (0 to 100)" />
     case 'RouteMapChart':
       return <RouteMapChart {...common} state={stateFor(controls.state, [deliveryRouteFeature])} projection="mercator" />
     case 'ViolinChart':
@@ -289,6 +291,8 @@ function ConcreteChart({
       return <BeeswarmChart {...common} state={stateFor(controls.state, beeswarmData)} valueLabel="Outcome" />
     case 'DensityChart':
       return <DensityChart {...common} state={stateFor(controls.state, outcomeDensityStudy)} xLabel="Effort" yLabel="Outcome" bandwidth={16} thresholds={8} />
+    case 'DumbbellChart':
+      return <DumbbellChart {...common} state={stateFor(controls.state, dumbbellData)} startLabel="Previous period" endLabel="Current period" categoryLabel="Channel" valueLabel="Completed items" />
     case 'EcdfChart':
       return <EcdfChart {...common} state={stateFor(controls.state, ecdfData)} valueLabel="Response time (ms)" proportionLabel="Cumulative share" />
   }
@@ -462,12 +466,12 @@ export function FullscreenTimeRangeExample() {
   return (
     <ChartProvider locale="en-GB" timeZone="UTC">
       <ChartWidget.Root ref={targetRef} exactValues="available" className="catalog-sheet catalog-interaction">
+        <ChartWidget.Header><p className="catalog-selection" role="status">Showing {visibleRows.length} monthly values</p></ChartWidget.Header>
         <ChartWidget.Controls className="catalog-toolbar">
           <TimeRangeControl value={range} options={timeRangeOptions} onChange={setRange} />
           <DataTableControl />
           <FullscreenControl targetRef={targetRef} />
         </ChartWidget.Controls>
-        <ChartWidget.Header><p className="catalog-selection" role="status">Showing {visibleRows.length} monthly values</p></ChartWidget.Header>
         <ChartWidget.Plot className="catalog-plot">
           <AreaChart ariaLabel="Queued work by selected time range" ariaDescription={`${visibleRows.length} monthly queued-work values.`} state={chartData(visibleRows)} xLabel="Month" yLabel="Queued items" />
         </ChartWidget.Plot>

@@ -37,6 +37,26 @@ Available controls include:
 - `FullscreenControl`.
 - `TimeRangeControl`.
 - `ToggleControl`.
+- `SelectControl`: a dropdown for one filter dimension.
+
+Headline figures:
+
+- `StatTile`: one number with its change from an earlier period. Use it for
+  KPI rows instead of host markup. Set `goodDirection`.
+- `Sparkline`: a trend without axes for a tile or table row. Do not use it as
+  the only view of a trend that the reader must analyze.
+
+Page-level filter components:
+
+- `FilterBar`: one row of filters above the charts it scopes. Put
+  `SelectControl` and `ActiveFilters` in it.
+- `ActiveFilters`: removable chips for active filters and a clear-all control.
+- `useCrossFilter`: one value per filter dimension. `selection(dimension)`
+  returns the `selection` props for a chart that sets that dimension.
+
+The header and the controls share the first widget row when both fit. Put the
+title and note in `ChartWidget.Header` and the time range and full-screen
+controls in the controls slot. Do not add a separate toolbar row.
 
 The host owns selected ranges, toggles, filtering, data access, and business
 aggregation. Aperture owns presentation, accessible interaction, focus, and
@@ -49,16 +69,44 @@ exactly one chart-owned table. Do not add a separate table region for chart
 values. A controlled `tableVisible` value requires `onTableVisibleChange`.
 
 Standalone charts have one toolbar above the plot. The exact-value button is
-hidden by default; use `dataTableControl="visible"` to show it next to full screen.
-The table is independently collapsed by default; `defaultTableVisible` opens it.
+hidden by default. Keep it hidden. Set `dataTableControl="visible"` or add
+`DataTableControl` only when the user asks for a visible data control. The
+table is independently collapsed by default; `defaultTableVisible` opens it.
 Exact values remain accessible when visually collapsed.
 
-In a widget, add `<ChartToolbar targetRef={targetRef} dataTableControl="visible" />`
-instead of a `ChartWidget.Controls` slot, or compose the individual controls in
-that slot. Pass the same ref to `ChartWidget.Root`. The toolbar default is
-`dataTableControl="hidden"`. An explicit `DataTableControl` remains visible.
-Widget table state takes precedence over standalone chart props. Do not add
-both toolbar forms to the same widget.
+In a widget, add `<ChartToolbar targetRef={targetRef} />` instead of a
+`ChartWidget.Controls` slot, or compose the individual controls in that slot.
+Pass the same ref to `ChartWidget.Root`. Widget table state takes precedence
+over standalone chart props. Do not add both toolbar forms to the same widget.
+
+## Highlights And Cross-Filtering
+
+- Use `highlights` to explain evidence: a time range or event on a time chart,
+  a category band on a bar or dumbbell chart, or a cell outline on a heatmap.
+  Each highlight needs a label. Select highlights by a documented rule in the
+  host, such as a logged release or the largest change.
+- Use `selection` on `BarChart`, `DumbbellChart`, or `HeatmapChart` when a
+  click on a mark must filter the other charts. Bind it to `useCrossFilter`.
+- Filter each chart by every dimension except the one it selects. The chart
+  then shows every category and dims the unselected ones.
+- Use `SelectControl` in a `FilterBar` for dimension filters. Do not build
+  filter rows from groups of `ToggleControl` buttons.
+- Choose where filter state lives: `useCrossFilter({ defaultValues })` in one
+  component, `createCrossFilter<Dimension>()` with its `Provider` and
+  `useFilters()` when charts are in separate components, or `values` with
+  `onChange` when the URL or a store owns the state.
+- Use `update` to set several dimensions in one change, such as a matrix cell.
+
+### Filter the data where it lives
+
+| Data location | Pattern |
+|---|---|
+| All rows in the browser, few dimensions and values | Pre-aggregate once into totals keyed by every filter combination, including "All". Store numerators and denominators, not rates. |
+| All rows in the browser, many dimensions or high cardinality | Filter on demand from memoized rows, or use a columnar engine such as DuckDB-Wasm. Do not build a combination table. |
+| Rows on a server | Send filter values as query parameters. Keep the previous chart data while the next query loads. Show a loading or error state when no data exists. |
+
+Do not rescan source rows in every chart on every filter change. Memoize each
+chart's rows on the filter values it uses.
 
 Legends use compact solid or outline markers and text, without striped fills.
 Keep labels and exact-value access. Legend swatch shapes are not shape encodings

@@ -188,7 +188,7 @@ function ChartGallery() {
         <DonutChart {...common} state={chartData(galleryDonut)} ariaLabel="Allocation share" ariaDescription="Percentage allocation share by work category." />
       </GalleryItem>
       <GalleryItem index="05" title="Heatmap" question="Where are values high or low?">
-        <HeatmapChart {...common} state={chartData(galleryHeatmap)} colorDomain={[0, 100]} xLabel="Weekday" yLabel="Service" ariaLabel="Service matrix" ariaDescription="Service scores out of 100 by weekday." />
+        <HeatmapChart {...common} state={chartData(galleryHeatmap)} colorScale={{ kind: 'sequential', domain: [0, 100] }} valueLabels xLabel="Weekday" yLabel="Service" valueLabel="Score" ariaLabel="Service matrix" ariaDescription="Service scores out of 100 by weekday." />
       </GalleryItem>
       <GalleryItem index="06" title="Error bar" question="How uncertain is the estimate?">
         <ErrorBarChart {...common} state={chartData(galleryIntervals)} categoryLabel="Region" valueLabel="Duration (days)" ariaLabel="Delivery intervals" ariaDescription="Estimated delivery duration and its low and high values by region, in days." />

@@ -5,7 +5,7 @@ import { sankeyDiagram } from '@tanstack/charts/network/sankey'
 import { scaleLinear } from '@tanstack/charts/scales/linear'
 import { d3Curve } from '@tanstack/charts/d3/shape'
 import { curveBumpX } from 'd3-shape'
-import { exactRow, exactValues, seriesLegend } from './exact-values.js'
+import { dotSymbol, exactRow, exactValues, seriesLegend } from './exact-values.js'
 import { localizedTooltip, useChartFormatters } from './formatting.js'
 import { chartColors } from './palette.js'
 import { useChartConfiguration } from './provider.js'
@@ -34,6 +34,7 @@ export function TreemapChart({ state, ...common }: TreemapChartProps) {
           })],
           guides: false,
           margin: 0,
+          scales: { x: null, y: null },
           color: { range: chartColors },
           tooltip: localizedTooltip(common.tooltip, formatters),
         })
@@ -174,6 +175,7 @@ export function SankeyChart({ state, appearance, ...common }: SankeyChartProps) 
           })],
           guides: false,
           margin: 0,
+          scales: { x: null, y: null },
           color: { domain: graph.nodes.map((node) => node.id), range: chartColors },
           tooltip: localizedTooltip(common.tooltip, formatters),
         })
@@ -231,14 +233,16 @@ export function NetworkChart({ state, iterations = 300, ...common }: NetworkChar
             dot(graph.nodes, { x: 'x', y: 'y', color: (node) => node.group ?? 'Value', key: 'id', r: 5 }),
             text(graph.nodes, { x: 'x', y: 'y', text: 'label', key: 'id', fill: 'currentColor', dx: 8, fontSize: 11 }),
           ],
-          x: { scale: scaleLinear().domain(graph.xDomain) },
-          y: { scale: scaleLinear().domain(graph.yDomain) },
+          scales: {
+            x: { scale: scaleLinear().domain(graph.xDomain) },
+            y: { scale: scaleLinear().domain(graph.yDomain) },
+          },
           guides: false,
           color: { range: chartColors },
           tooltip: localizedTooltip(common.tooltip, formatters),
         })
         const nodeLabels = new Map(input.nodes.map((node) => [node.id, node.label]))
-        return <ChartSurface {...common} definition={definition} legend={seriesLegend(input.nodes.map((node) => node.group ?? 'Value'))} exactValues={exactValues(
+        return <ChartSurface {...common} definition={definition} legend={seriesLegend(input.nodes.map((node) => node.group ?? 'Value'), dotSymbol(5))} exactValues={exactValues(
           ['Entity', 'Label', 'Source', 'Target', 'Weight'], [
             ...input.nodes.map((node) => exactRow(`node-${node.id}`, 'Node', node.label, null, null, null)),
             ...input.links.map((edge) => exactRow(edge.id, 'Link', edge.id, nodeLabels.get(edge.source) ?? edge.source, nodeLabels.get(edge.target) ?? edge.target, edge.weight ?? 1)),

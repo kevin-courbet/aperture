@@ -6,7 +6,7 @@ allowBuilds:
   esbuild: true
 
 minimumReleaseAgeExclude:
-  - '@tanstack/charts@0.11.1'
+  - '@tanstack/charts@1.1.0'
 
 overrides:
   valibot: 1.4.2

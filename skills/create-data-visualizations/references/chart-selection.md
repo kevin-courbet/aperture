@@ -15,12 +15,15 @@ Select by analytical question, not by visual novelty.
 | Distribution | Violin/density | Shape and modes matter | Sample is small or precision is primary |
 | Relationship | Scatter | Two quantitative measures | Time order or category rank is primary |
 | Uncertainty | Range/error bar | Estimate and interval must stay together | Interval meaning is undefined |
+| Before and after | Dumbbell | Two states per category on one scale, such as two periods | More than two states or a time trend |
 | Matrix | Heatmap | Two categorical dimensions form a matrix | Exact values cannot be disclosed |
+| Signed change matrix | Diverging heatmap | Values above and below a meaningful midpoint, such as change | No meaningful midpoint |
 | Geography | Choropleth | Normalized regional rate | Raw totals reflect population size |
 | Route | Route map | Paths and geography both matter | Geography adds no analytical value |
 | Hierarchy | Treemap | Part-to-whole hierarchy | Precise comparison or deep hierarchy |
 | Flow | Sankey | Transfer between stages matters | Flow values or direction are uncertain |
 | One result | Result marker/text | One observation or status | A trend is implied by one point |
+| Headline figure | StatTile with optional Sparkline | A key number and its change from an earlier period | The reader must compare many categories |
 | Exact lookup | Table | Values and labels are the task | Pattern recognition is primary |
 
 ## Accuracy Rules
@@ -35,6 +38,10 @@ Select by analytical question, not by visual novelty.
 - Limit line series when identification becomes difficult. Use facets or direct
   selection instead.
 - Sort categorical bars by analytical order, not alphabetically by default.
+- Use a diverging color scale only around a meaningful midpoint, such as zero
+  change. Use a sequential scale for magnitude.
+- Use highlights for evidence the reader must connect to the data: an incident
+  window, a release, the largest change. Name each highlight.
 
 ## Escalate To Advanced TanStack
 

@@ -10,15 +10,14 @@ import {
 import { scaleBand } from '@tanstack/charts/scales/band'
 import { scaleLinear } from '@tanstack/charts/scales/linear'
 import { densityContour } from '@tanstack/charts/spatial/density'
-import { exactRow, exactValues, seriesLegend } from './exact-values.js'
-import { localizedTooltip, numberAxis, useChartFormatters } from './formatting.js'
+import { dotSymbol, exactRow, exactValues, lineSeriesDasharrays, lineSymbol, seriesLegend } from './exact-values.js'
+import { categoryAxis, localizedTooltip, numberAxis, useChartFormatters } from './formatting.js'
 import { chartColors } from './palette.js'
 import { useChartConfiguration } from './provider.js'
 import { ChartStateBoundary, ChartSurface } from './surface.js'
 import type { ChartDataState, CommonChartProps } from './types.js'
 import { bounded, finite } from './validation.js'
 
-const seriesDasharrays = ['', '8 3', '2 3', '10 3 2 3', '1 3', '12 4', '4 2 1 2', '2 2 8 2'] as const
 
 export interface BoxPlotDatum {
   readonly id: string
@@ -41,8 +40,10 @@ export function BoxPlotChart({ state, categoryLabel, valueLabel, ...common }: Bo
         const rows = data.map((datum) => ({ ...datum, value: finite(datum.value, messages.errors.invalidNumber) }))
         const definition = defineChart({
           marks: [boxY(rows, { x: 'category', y: 'value', key: 'id', fill: 'var(--aperture-color-accent-soft)', stroke: 'var(--aperture-chart-1)' })],
-          x: { scale: () => scaleBand<string>().padding(0.24), axis: categoryLabel ? { label: categoryLabel } : undefined },
-          y: { scale: scaleLinear, nice: true, grid: true, axis: numberAxis(valueLabel, formatters) },
+          scales: {
+            x: { scale: () => scaleBand<string>().padding(0.24), axis: categoryAxis(categoryLabel) },
+            y: { scale: scaleLinear, nice: true, grid: true, axis: numberAxis(valueLabel, formatters) },
+          },
           tooltip: localizedTooltip(common.tooltip, formatters),
         })
         return <ChartSurface {...common} definition={definition} exactValues={exactValues(
@@ -79,8 +80,10 @@ export function ViolinChart({ state, categoryLabel, valueLabel, ...common }: Vio
         }))
         const definition = defineChart({
           marks: [violinY(rows, { x: 'category', y: 'position', width: 'density', color: 'category', key: 'id', fillOpacity: 0.56, stroke: 'var(--aperture-color-text)' })],
-          x: { scale: () => scaleBand<string>().padding(0.2), axis: categoryLabel ? { label: categoryLabel } : undefined },
-          y: { scale: scaleLinear, nice: true, grid: true, axis: numberAxis(valueLabel, formatters) },
+          scales: {
+            x: { scale: () => scaleBand<string>().padding(0.2), axis: categoryAxis(categoryLabel) },
+            y: { scale: scaleLinear, nice: true, grid: true, axis: numberAxis(valueLabel, formatters) },
+          },
           color: { range: chartColors },
           tooltip: localizedTooltip(common.tooltip, formatters),
         })
@@ -113,8 +116,10 @@ export function RidgelineChart({ state, categoryLabel, valueLabel, overlap = 0.7
         }))
         const definition = defineChart({
           marks: [ridgelineY(rows, { x: 'position', y: 'category', height: 'density', color: 'category', key: 'id', overlap, fillOpacity: 0.5, stroke: 'var(--aperture-color-text)' })],
-          x: { scale: scaleLinear, nice: true, grid: true, axis: numberAxis(valueLabel, formatters) },
-          y: { scale: () => scaleBand<string>().padding(0.1), axis: categoryLabel ? { label: categoryLabel } : undefined },
+          scales: {
+            x: { scale: scaleLinear, nice: true, grid: true, axis: numberAxis(valueLabel, formatters) },
+            y: { scale: () => scaleBand<string>().padding(0.1), axis: categoryAxis(categoryLabel) },
+          },
           color: { range: chartColors },
           tooltip: localizedTooltip(common.tooltip, formatters),
         })
@@ -146,11 +151,14 @@ export function BeeswarmChart({ state, valueLabel, ...common }: BeeswarmChartPro
         const rows = data.map((datum) => ({ ...datum, value: finite(datum.value, messages.errors.invalidNumber), category: datum.category ?? 'Value' }))
         const definition = defineChart({
           marks: [dot(rows, { x: 'value', color: 'category', key: 'id', r: 4, layout: dodgeY({ anchor: 'middle', padding: 1 }), fillOpacity: 0.78 })],
-          x: { scale: scaleLinear, nice: true, grid: true, axis: numberAxis(valueLabel, formatters) },
+          scales: {
+            x: { scale: scaleLinear, nice: true, grid: true, axis: numberAxis(valueLabel, formatters) },
+            y: null,
+          },
           color: { range: chartColors },
           tooltip: localizedTooltip(common.tooltip, formatters),
         })
-        return <ChartSurface {...common} definition={definition} legend={seriesLegend(rows.map((row) => row.category))} exactValues={exactValues(
+        return <ChartSurface {...common} definition={definition} legend={seriesLegend(rows.map((row) => row.category), dotSymbol(4))} exactValues={exactValues(
           ['Category', 'Value'], rows.map((row) => exactRow(row.id, row.category, row.value)),
         )} />
       }}
@@ -197,8 +205,10 @@ export function DensityChart({ state, xLabel, yLabel, bandwidth = 20, thresholds
             }),
             dot(rows, { x: 'x', y: 'y', color: 'series', key: 'id', r: 2.5, fillOpacity: 0.35 }),
           ],
-          x: { scale: scaleLinear, nice: true, grid: true, axis: numberAxis(xLabel, formatters) },
-          y: { scale: scaleLinear, nice: true, grid: true, axis: numberAxis(yLabel, formatters) },
+          scales: {
+            x: { scale: scaleLinear, nice: true, grid: true, axis: numberAxis(xLabel, formatters) },
+            y: { scale: scaleLinear, nice: true, grid: true, axis: numberAxis(yLabel, formatters) },
+          },
           color: { range: chartColors },
           tooltip: localizedTooltip(common.tooltip, formatters),
         })
@@ -248,15 +258,17 @@ export function EcdfChart({ state, valueLabel, proportionLabel, ...common }: Ecd
         const definition = defineChart({
           marks: series.map((name, index) => lineY(rows.filter((row) => row.series === name), {
             x: 'value', y: 'proportion', color: 'series', key: 'id', points: true,
-            strokeWidth: 2, strokeDasharray: seriesDasharrays[index],
+            strokeWidth: 2, strokeDasharray: lineSeriesDasharrays[index],
           })),
-          x: { scale: scaleLinear, nice: true, grid: true, axis: numberAxis(valueLabel, formatters) },
-          y: { scale: scaleLinear().domain([0, 1]), grid: true, axis: numberAxis(proportionLabel, formatters) },
+          scales: {
+            x: { scale: scaleLinear, nice: true, grid: true, axis: numberAxis(valueLabel, formatters) },
+            y: { scale: scaleLinear().domain([0, 1]), grid: true, axis: numberAxis(proportionLabel, formatters) },
+          },
           color: { domain: series, range: chartColors },
           focus: 'nearest-x',
           tooltip: localizedTooltip(common.tooltip, formatters),
         })
-        return <ChartSurface {...common} definition={definition} legend={seriesLegend(rows.map((row) => row.series))} exactValues={exactValues(
+        return <ChartSurface {...common} definition={definition} legend={seriesLegend(rows.map((row) => row.series), lineSymbol)} exactValues={exactValues(
           ['Series', 'Value', 'Proportion'], rows.map((row) => exactRow(row.id, row.series, row.value, row.proportion)),
         )} />
       }}

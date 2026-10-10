@@ -1,6 +1,7 @@
 import { type ReactNode } from 'react'
 import { useChartFormatters, type ChartFormatters } from './formatting.js'
 import { useChartConfiguration } from './provider.js'
+import { chartColors } from './palette.js'
 import type { NumericPoint } from './types.js'
 import { useOptionalChartWidget } from './widget.js'
 
@@ -23,15 +24,22 @@ export interface ExactValueModel {
   readonly rows: readonly ExactValueRow[]
 }
 
+/** Legend symbols mirror the mark they describe. Paint values are CSS colors. */
+export type LegendSymbol =
+  | { readonly kind: 'swatch'; readonly paint: string }
+  | { readonly kind: 'line'; readonly paint: string; readonly dasharray: string }
+  | { readonly kind: 'point'; readonly paint: string; readonly radius: number; readonly hollow: boolean }
+  | { readonly kind: 'reference' }
+  | { readonly kind: 'missing' }
+  | { readonly kind: 'band' }
+  | { readonly kind: 'event' }
+  | { readonly kind: 'outline' }
+  | { readonly kind: 'ramp'; readonly stops: readonly [string, string, ...string[]]; readonly ticks: readonly [string, string, ...string[]] }
+
 export interface SemanticLegendItem {
   readonly label: string
-  readonly kind?: 'series' | 'reference' | 'missing'
   readonly detail?: string
-  readonly symbol?:
-    | { readonly kind: 'swatch'; readonly seriesIndex: number }
-    | { readonly kind: 'line'; readonly seriesIndex: number; readonly dasharray: string }
-    | { readonly kind: 'point'; readonly seriesIndex: number; readonly radius: number; readonly hollow: boolean }
-    | { readonly kind: 'missing' }
+  readonly symbol: LegendSymbol
 }
 
 export const lineSeriesDasharrays = [
@@ -54,7 +62,23 @@ export const pointSeriesStyles = [
   { radius: 5.25, hollow: false },
   { radius: 5.25, hollow: true },
 ] as const
-type SeriesLegendSymbolKind = 'swatch' | 'line' | 'point' | 'missing'
+
+export function seriesPaint(index: number): string {
+  const paint = chartColors[index]
+  if (paint === undefined) throw new RangeError('Series charts support at most 8 series.')
+  return paint
+}
+
+export type SeriesLegendSymbol = (index: number, label: string) => LegendSymbol
+
+export const swatchSymbol: SeriesLegendSymbol = (index) => ({ kind: 'swatch', paint: seriesPaint(index) })
+export const lineSymbol: SeriesLegendSymbol = (index) => ({ kind: 'line', paint: seriesPaint(index), dasharray: lineSeriesDasharrays[index] ?? '' })
+export const solidLineSymbol: SeriesLegendSymbol = (index) => ({ kind: 'line', paint: seriesPaint(index), dasharray: '' })
+export const pointSymbol: SeriesLegendSymbol = (index) => ({ kind: 'point', paint: seriesPaint(index), ...(pointSeriesStyles[index] ?? pointSeriesStyles[0]) })
+
+export function dotSymbol(radius: number): SeriesLegendSymbol {
+  return (index) => ({ kind: 'point', paint: seriesPaint(index), radius, hollow: false })
+}
 
 export function exactValues(
   columns: readonly [string, ...string[]],
@@ -76,27 +100,20 @@ export function exactRow(key: string, ...values: readonly ExactValue[]): ExactVa
   return { key, values }
 }
 
+/**
+ * One legend entry per distinct series, in first-appearance order. A single
+ * series returns no entries because the chart title already names it.
+ */
 export function seriesLegend(
   series: readonly string[],
-  symbolKind: SeriesLegendSymbolKind | ((label: string) => SeriesLegendSymbolKind) = 'swatch',
+  symbol: SeriesLegendSymbol = swatchSymbol,
 ): readonly SemanticLegendItem[] {
   const unique = [...new Set(series)]
   if (unique.length > 8) {
     throw new RangeError('Series charts support at most 8 series.')
   }
-  return unique.map((label, seriesIndex) => {
-    const kind = typeof symbolKind === 'function' ? symbolKind(label) : symbolKind
-    return {
-      label,
-      symbol: kind === 'line'
-        ? { kind: 'line', seriesIndex, dasharray: lineSeriesDasharrays[seriesIndex] ?? '' }
-        : kind === 'point'
-          ? { kind: 'point', seriesIndex, ...(pointSeriesStyles[seriesIndex] ?? pointSeriesStyles[0]) }
-          : kind === 'missing'
-            ? { kind: 'missing' }
-            : { kind: 'swatch', seriesIndex },
-    }
-  })
+  if (unique.length === 1) return []
+  return unique.map((label, index) => ({ label, symbol: symbol(index, label) }))
 }
 
 function ExactValueTable({
@@ -138,6 +155,22 @@ function ExactValueTable({
   )
 }
 
+/** Exact values for a chart that has no widget table, such as a sparkline. Screen readers read it. It is not visible. */
+export function HiddenExactValues({
+  model,
+  formatters: formatterOverrides,
+}: {
+  readonly model: ExactValueModel
+  readonly formatters?: import('./types.js').ChartFormatters
+}) {
+  const formatters = useChartFormatters(formatterOverrides)
+  return (
+    <div className="aperture-visually-hidden">
+      <ExactValueTable model={model} formatters={formatters} />
+    </div>
+  )
+}
+
 export function ExactValues({
   model,
   formatters: formatterOverrides,
@@ -167,48 +200,63 @@ export function ExactValues({
   throw new Error('Exact values require a chart widget context.')
 }
 
+function LegendGlyph({ symbol }: { readonly symbol: LegendSymbol }) {
+  switch (symbol.kind) {
+    case 'swatch':
+      return <span className="aperture-legend-swatch" style={{ color: symbol.paint }} aria-hidden="true" />
+    case 'line':
+      return (
+        <svg className="aperture-legend-line" style={{ color: symbol.paint }} viewBox="0 0 24 8" aria-hidden="true">
+          <line x1="1" x2="23" y1="4" y2="4" strokeDasharray={symbol.dasharray || undefined} />
+        </svg>
+      )
+    case 'point':
+      return (
+        <svg className="aperture-legend-point" style={{ color: symbol.paint }} viewBox="0 0 14 14" aria-hidden="true">
+          <circle cx="7" cy="7" r={symbol.radius} data-hollow={symbol.hollow || undefined} />
+        </svg>
+      )
+    case 'reference':
+      return (
+        <svg className="aperture-legend-reference" viewBox="0 0 24 8" aria-hidden="true">
+          <line x1="1" x2="23" y1="4" y2="4" />
+        </svg>
+      )
+    case 'missing':
+      return <span className="aperture-legend-missing" aria-hidden="true" />
+    case 'band':
+      return <span className="aperture-legend-band" aria-hidden="true" />
+    case 'event':
+      return (
+        <svg className="aperture-legend-event" viewBox="0 0 8 14" aria-hidden="true">
+          <line x1="4" x2="4" y1="1" y2="13" />
+        </svg>
+      )
+    case 'outline':
+      return <span className="aperture-legend-outline" aria-hidden="true" />
+    case 'ramp':
+      return (
+        <span className="aperture-legend-ramp" aria-hidden="true">
+          <span className="aperture-legend-ramp-bar" style={{ background: `linear-gradient(to right, ${symbol.stops.join(', ')})` }} />
+          <span className="aperture-legend-ramp-ticks">
+            {symbol.ticks.map((tick, index) => <span key={`${index}-${tick}`}>{tick}</span>)}
+          </span>
+        </span>
+      )
+  }
+}
+
 export function SemanticLegend({ items }: { readonly items: readonly SemanticLegendItem[] }) {
   if (items.length === 0) return null
   return (
     <ul className="aperture-legend" aria-label="Chart legend">
-      {items.map((item, index) => (
-        <li key={`${item.kind ?? 'series'}-${item.label}`}>
-          {item.kind === 'reference' ? (
-            <svg className="aperture-legend-reference" viewBox="0 0 24 8" aria-hidden="true">
-              <line x1="1" x2="23" y1="4" y2="4" />
-            </svg>
-          ) : item.symbol?.kind === 'line' ? (
-            <svg
-              className="aperture-legend-line"
-              data-series={item.symbol.seriesIndex}
-              viewBox="0 0 24 8"
-              aria-hidden="true"
-            >
-              <line x1="1" x2="23" y1="4" y2="4" strokeDasharray={item.symbol.dasharray || undefined} />
-            </svg>
-          ) : item.symbol?.kind === 'point' ? (
-            <svg
-              className="aperture-legend-point"
-              data-series={item.symbol.seriesIndex}
-              viewBox="0 0 12 12"
-              aria-hidden="true"
-            >
-              <circle cx="6" cy="6" r={item.symbol.radius} data-hollow={item.symbol.hollow || undefined} />
-            </svg>
-          ) : (
-            <span
-              className="aperture-legend-swatch"
-              data-kind={item.symbol?.kind === 'missing' ? 'missing' : item.kind ?? 'series'}
-              data-series={(item.kind === undefined || item.kind === 'series') && item.symbol?.kind !== 'missing'
-                ? item.symbol?.seriesIndex ?? index % 8
-                : undefined}
-              data-symbol={(item.kind === undefined || item.kind === 'series') && item.symbol?.kind !== 'missing'
-                ? item.symbol?.seriesIndex ?? index % 8
-                : undefined}
-              aria-hidden="true"
-            />
-          )}
+      {items.map((item) => (
+        <li key={`${item.symbol.kind}-${item.label}`} data-symbol={item.symbol.kind}>
+          <LegendGlyph symbol={item.symbol} />
           <span>{item.label}{item.detail === undefined ? null : `: ${item.detail}`}</span>
+          {item.symbol.kind === 'ramp'
+            ? <span className="aperture-visually-hidden">{`, from ${item.symbol.ticks[0]} to ${item.symbol.ticks[item.symbol.ticks.length - 1]}`}</span>
+            : null}
         </li>
       ))}
     </ul>

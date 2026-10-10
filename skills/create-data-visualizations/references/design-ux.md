@@ -17,6 +17,27 @@ Use a restrained visual hierarchy:
 Avoid generic card grids, excessive shadows, glass effects, decorative
 gradients, glowing dark themes, and chart marks that encode no data.
 
+## Emphasis Hierarchy
+
+Give full text and mark strength only to what the reader must see first. Use
+the muted text token for everything else.
+
+| Element | Strength |
+|---|---|
+| Data marks, direct value labels, headline numbers, widget titles | Full |
+| Axis titles, tick labels, legend text, notes, sources, descriptions | Muted |
+| Grid lines, axis lines | Faint |
+| Context series and comparison periods | `--aperture-chart-context` |
+| Highlight bands and event rules | Annotation tokens |
+
+Aperture applies the muted and faint levels to chart chrome. Apply the same
+order to host titles and notes. Keep muted text at 4.5:1 contrast on its actual
+surface. Darken `--aperture-color-muted` when the surface behind it is darker
+than the chart background.
+
+Place chart cards on a page surface one step darker than the cards. The card
+edge then separates charts without heavy borders or shadows.
+
 ## Semantic Tokens
 
 Provide tokens for:

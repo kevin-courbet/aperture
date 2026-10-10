@@ -46,7 +46,6 @@ function FocusExample() {
         <div className="catalog-callout"><h2>Focus a point with Tab and arrow keys, or point at the plot.</h2><p>The package tooltip and crosshair use the nearest monthly value. The exact-value button is next to full screen above the plot.</p></div>
         <div className="catalog-interaction-chart">
           <LineChart
-            dataTableControl="visible"
             ariaLabel="Completed work focus example"
             ariaDescription="Monthly completed items with nearest-point focus, tooltip, and crosshair."
             state={chartData(completedSeries)}
@@ -93,7 +92,6 @@ function LegendExample() {
         <p className="catalog-legend-summary" role="status">Visible series: {visibleNames.join(', ')}</p>
         <div className="catalog-interaction-chart">
           <StackedAreaChart
-            dataTableControl="visible"
             ariaLabel="Filtered work composition"
             ariaDescription={`Visible series: ${visibleNames.join(', ')}.`}
             state={chartData(rows)}
@@ -121,8 +119,10 @@ function LegendExample() {
 const numericRows = throughputByMonth.map((row, index) => ({ month: index + 1, completed: row.completed }))
 const advancedTooltipDefinition = defineChart({
   marks: [lineY(numericRows, { x: 'month', y: 'completed', points: true, stroke: 'var(--aperture-chart-1)', strokeWidth: 2.25 })],
-  x: { scale: scaleLinear, axis: { label: 'Month' } },
-  y: { scale: scaleLinear, nice: true, grid: true, axis: { label: 'Completed items' } },
+  scales: {
+    x: { scale: scaleLinear, axis: { label: 'Month' } },
+    y: { scale: scaleLinear, nice: true, grid: true, axis: { label: 'Completed items' } },
+  },
   tooltip: {
     use: chartTooltip,
     format: (point) => `Month ${point.xValue}: ${point.yValue} items`,
@@ -201,8 +201,10 @@ function ZoomExample() {
   const visibleRows = numericRows.filter((row) => row.month >= window.start && row.month <= window.end)
   const definition = defineChart({
     marks: [lineY(visibleRows, { x: 'month', y: 'completed', points: true, stroke: 'var(--aperture-chart-1)', strokeWidth: 2.25 })],
-    x: { scale: scaleLinear().domain([window.start, window.end]), axis: { label: 'Month' } },
-    y: { scale: scaleLinear, nice: true, grid: true, axis: { label: 'Completed items' } },
+    scales: {
+      x: { scale: scaleLinear().domain([window.start, window.end]), axis: { label: 'Month' } },
+      y: { scale: scaleLinear, nice: true, grid: true, axis: { label: 'Completed items' } },
+    },
     controls: [ZoomX({
       window: controlledSignal<ZoomXWindow<number>, ZoomXChange<number>>(window, setWindow),
       extent: [1, 6],

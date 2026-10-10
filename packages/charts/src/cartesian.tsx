@@ -20,22 +20,78 @@ import {
 import { d3Curve } from '@tanstack/charts/d3/shape'
 import { brushX, type BrushXChange } from '@tanstack/charts/interaction/brush'
 import { controlledSignal } from '@tanstack/charts/interaction/signal'
-import { focusGroupY } from '@tanstack/charts/focus'
 import { decorative } from '@tanstack/charts/mark/decorative'
 import { scaleBand } from '@tanstack/charts/scales/band'
 import { scaleLinear } from '@tanstack/charts/scales/linear'
 import { scalePoint } from '@tanstack/charts/scales/point'
-import { scaleLinear as scaleLinearColor, scaleUtc } from 'd3-scale'
+import { scaleUtc } from 'd3-scale'
 import { curveMonotoneX } from 'd3-shape'
 import { useId, useRef } from 'react'
-import { exactRow, exactValues, lineSeriesDasharrays, pointSeriesStyles, seriesLegend, type SemanticLegendItem } from './exact-values.js'
-import { localizedHorizontalTooltip, localizedTooltip, numberAxis, useChartFormatters } from './formatting.js'
+import {
+  annotatedDomain,
+  categoryBandMarksX,
+  categoryBandMarksY,
+  categorySelectionController,
+  cellKey,
+  cellOutlineMarks,
+  cellSelectionController,
+  contextPaint,
+  continuousLegend,
+  continuousPaint,
+  dimPaint,
+  layoutTimeHighlightLabels,
+  prepareCategoryHighlights,
+  prepareCellHighlights,
+  prepareTimeHighlights,
+  selectionDescription,
+  textOnFill,
+  timeHighlightBackground,
+  timeHighlightLabelMarks,
+  validContinuousScale,
+  type PreparedTimeHighlights,
+} from './annotations.js'
+import {
+  dotSymbol,
+  exactRow,
+  exactValues,
+  lineSeriesDasharrays,
+  lineSymbol,
+  pointSeriesStyles,
+  pointSymbol,
+  seriesLegend,
+  seriesPaint,
+  type SemanticLegendItem,
+} from './exact-values.js'
+import {
+  axisTitle,
+  categoryAxis,
+  datumTooltip,
+  groupedDatumTooltip,
+  localizedHorizontalTooltip,
+  localizedTooltip,
+  numberAxis,
+  preciseDifference,
+  useChartFormatters,
+  useDayFormatter,
+} from './formatting.js'
 import { chartColors } from './palette.js'
 import { useChartConfiguration } from './provider.js'
 import { ChartStateBoundary, ChartSurface } from './surface.js'
 import { observationTickFormatter, planTimeAxis, timeIntervalNeighbors, type CalendarTickInterval, type ElapsedTimeAxisOptions, type TimeAxisOptions } from './time-axis.js'
-import type { ChartDataState, CommonChartProps, CrosshairChartProps, GroupedCommonChartProps, NumericPoint } from './types.js'
-import { bounded, finite, increasingDomain, numericPoint, positiveRadius, validCandlestick, validDate, validErrorInterval, validHistogramBin, validRange } from './validation.js'
+import type {
+  CategoryHighlight,
+  CategorySelection,
+  CellHighlight,
+  CellSelection,
+  ChartDataState,
+  CommonChartProps,
+  ContinuousColorScale,
+  CrosshairChartProps,
+  GroupedCommonChartProps,
+  NumericPoint,
+  TimeHighlight,
+} from './types.js'
+import { bounded, finite, numericPoint, positiveRadius, validCandlestick, validDate, validErrorInterval, validHistogramBin, validRange } from './validation.js'
 
 export type CartesianInterpolation = 'linear' | 'monotone-x'
 
@@ -105,11 +161,6 @@ function areaPaint(
 
 const monotoneXCurve = d3Curve(curveMonotoneX)
 
-const horizontalGroupedFocus: typeof focusGroupY = {
-  ...focusGroupY,
-  navigation: (points) => [...focusGroupY.navigation(points)].sort((left, right) => left.y - right.y || left.x - right.x),
-}
-
 function cartesianCurve(interpolation: CartesianInterpolation | undefined) {
   if (interpolation === undefined || interpolation === 'linear') return undefined
   if (interpolation === 'monotone-x') return monotoneXCurve
@@ -147,6 +198,8 @@ export interface LineChartProps extends CommonChartProps, CrosshairChartProps {
   readonly appearance?: LineAppearance
   readonly reference?: { readonly value: number; readonly label: string }
   readonly timeAxis?: TimeAxisOptions
+  /** Labeled time ranges and events drawn behind the lines. */
+  readonly highlights?: readonly TimeHighlight[]
 }
 
 function timeRows(
@@ -215,7 +268,7 @@ function timeXAxis(
         ? observationFormat === undefined ? {} : { format: observationFormat }
         : { format }),
     },
-    ...(label === undefined ? {} : { label }),
+    ...(label === undefined ? {} : { label: axisTitle(label) }),
   }
   return {
     scale: position === 'observations'
@@ -231,9 +284,55 @@ function selectEvenly<TValue>(values: readonly TValue[], count: number): readonl
     values[Math.round(index * (values.length - 1) / (count - 1))]!)
 }
 
-export function LineChart({ state, xLabel, yLabel, appearance, reference, timeAxis, ...common }: LineChartProps) {
+function timeExtent(dates: readonly Date[]): readonly [Date, Date] {
+  let minimum = Number.POSITIVE_INFINITY
+  let maximum = Number.NEGATIVE_INFINITY
+  for (const date of dates) {
+    minimum = Math.min(minimum, date.getTime())
+    maximum = Math.max(maximum, date.getTime())
+  }
+  return [new Date(minimum), new Date(maximum)]
+}
+
+function hasTimeHighlights(prepared: PreparedTimeHighlights): boolean {
+  return prepared.ranges.length > 0 || prepared.events.length > 0
+}
+
+function requireElapsedHighlightAxis(highlights: readonly TimeHighlight[] | undefined, timeAxis: TimeAxisOptions | undefined) {
+  if (highlights !== undefined && highlights.length > 0 && timeAxis?.position === 'observations') {
+    throw new RangeError('Time highlights require an elapsed time axis.')
+  }
+}
+
+/**
+ * Wraps time-chart marks with highlight geometry. Highlights need an explicit
+ * y domain so range bands span the plot and labels sit in reserved headroom.
+ */
+function annotatedTimeLayer<TMark>(
+  prepared: PreparedTimeHighlights,
+  dates: readonly Date[],
+  width: number,
+  values: readonly number[],
+  includeZero: boolean,
+  marks: readonly TMark[],
+) {
+  const layout = layoutTimeHighlightLabels(prepared, timeExtent(dates), width)
+  const yDomain = annotatedDomain(values, layout.rows, includeZero)
+  return {
+    yDomain,
+    marks: [
+      ...timeHighlightBackground(prepared, yDomain),
+      ...marks,
+      ...timeHighlightLabelMarks(layout.labels, yDomain[1]),
+    ],
+  }
+}
+
+export function LineChart({ state, xLabel, yLabel, appearance, reference, timeAxis, highlights, ...common }: LineChartProps) {
   const { messages, locale, timeZone } = useChartConfiguration()
   const formatters = useChartFormatters(common.formatters)
+  const formatDay = useDayFormatter()
+  requireElapsedHighlightAxis(highlights, timeAxis)
   const referenceValue = reference === undefined ? undefined : finite(reference.value, 'LineChart reference value must be finite.')
   const gradientIdPrefix = `aperture-line-area-${useId().replaceAll(':', '')}`
   return (
@@ -295,29 +394,48 @@ export function LineChart({ state, xLabel, yLabel, appearance, reference, timeAx
         const dates = rows.map((row) => row.date)
         const marks = [
           ...lineMarks,
-          ...(referenceValue === undefined ? [] : [ruleY([referenceValue], { stroke: 'var(--aperture-color-text)', strokeDasharray: '6 4', strokeWidth: 1.5 })]),
+          ...(referenceValue === undefined ? [] : [ruleY([referenceValue], { stroke: 'var(--aperture-color-text)', strokeOpacity: 0.72, strokeDasharray: '6 4', strokeWidth: 1.25 })]),
           ...(common.crosshair ? [crosshairMark({ x: true, y: false, marker: true })] : []),
+        ]
+        const prepared = prepareTimeHighlights(highlights, dates, messages, formatDay)
+        const yValues = [
+          ...rows.flatMap((row) => row.value === null ? [] : [row.value]),
+          ...(referenceValue === undefined ? [] : [referenceValue]),
         ]
         const definition = defineChart({
           focus: 'nearest-x',
           tooltip: localizedTooltip(common.tooltip, formatters),
           chart: ({ width }) => {
+            const x = timeXAxis(dates, width, locale, timeZone, timeAxis, xLabel, common.formatters?.date)
+            const color = { domain: series, range: chartColors }
+            if (!hasTimeHighlights(prepared) || yValues.length === 0) {
+              return {
+                marks,
+                gradients,
+                scales: { x, y: { scale: scaleLinear, nice: true, grid: true, axis: numberAxis(yLabel, formatters) } },
+                color,
+              }
+            }
+            const annotated = annotatedTimeLayer(prepared, dates, width, yValues, false, marks)
             return {
-              marks,
+              marks: annotated.marks,
               gradients,
-              x: timeXAxis(dates, width, locale, timeZone, timeAxis, xLabel, common.formatters?.date),
-              y: { scale: scaleLinear, nice: true, grid: true, axis: numberAxis(yLabel, formatters) },
-              color: { domain: series, range: chartColors },
+              scales: { x, y: { scale: scaleLinear().domain(annotated.yDomain), grid: true, axis: numberAxis(yLabel, formatters) } },
+              color,
             }
           },
         })
         const legend: SemanticLegendItem[] = [...seriesLegend(
           series,
-          (name) => seriesPresentation.get(name) ?? 'missing',
+          (index, name) => {
+            const presentation = seriesPresentation.get(name)
+            return presentation === 'line' ? lineSymbol(index, name) : presentation === 'point' ? pointSymbol(index, name) : { kind: 'missing' }
+          },
         )]
-        if (reference !== undefined && referenceValue !== undefined) legend.push({ kind: 'reference', label: reference.label, detail: formatters.number(referenceValue) })
-        if (data.some((datum) => datum.value.kind === 'missing')) legend.push({ kind: 'missing', label: messages.legend.missing })
-        return <ChartSurface {...common} definition={definition} legend={legend} exactValues={exactValues(
+        if (reference !== undefined && referenceValue !== undefined) legend.push({ label: reference.label, detail: formatters.number(referenceValue), symbol: { kind: 'reference' } })
+        if (data.some((datum) => datum.value.kind === 'missing')) legend.push({ label: messages.legend.missing, symbol: { kind: 'missing' } })
+        legend.push(...prepared.legend)
+        return <ChartSurface {...common} definition={definition} legend={legend} descriptionDetails={[prepared.description]} exactValues={exactValues(
           ['Date', 'Series', 'Value'],
           data.map((datum) => exactRow(datum.id, datum.date, datum.series ?? 'Value', datum.value)),
         )} />
@@ -338,11 +456,15 @@ export interface AreaChartProps extends CommonChartProps, CrosshairChartProps {
   readonly yLabel?: string
   readonly timeAxis?: TimeAxisOptions
   readonly appearance?: AreaAppearance
+  /** Labeled time ranges and events drawn behind the area. */
+  readonly highlights?: readonly TimeHighlight[]
 }
 
-export function AreaChart({ state, xLabel, yLabel, timeAxis, appearance, ...common }: AreaChartProps) {
+export function AreaChart({ state, xLabel, yLabel, timeAxis, appearance, highlights, ...common }: AreaChartProps) {
   const { messages, locale, timeZone } = useChartConfiguration()
   const formatters = useChartFormatters(common.formatters)
+  const formatDay = useDayFormatter()
+  requireElapsedHighlightAxis(highlights, timeAxis)
   const gradientIdPrefix = `aperture-area-${useId().replaceAll(':', '')}`
   return (
     <ChartStateBoundary state={state} rootProps={common}>
@@ -360,21 +482,32 @@ export function AreaChart({ state, xLabel, yLabel, timeAxis, appearance, ...comm
           ...(common.crosshair ? [crosshairMark({ x: true, y: false })] : []),
         ]
         const dates = rows.map((row) => row.date)
+        const prepared = prepareTimeHighlights(highlights, dates, messages, formatDay)
+        const yValues = rows.flatMap((row) => row.value === null ? [] : [row.value])
         const definition = defineChart({
           focus: 'nearest-x',
           tooltip: localizedTooltip(common.tooltip, formatters),
           chart: ({ width }) => {
+            const x = timeXAxis(dates, width, locale, timeZone, timeAxis, xLabel, common.formatters?.date)
+            if (!hasTimeHighlights(prepared) || yValues.length === 0) {
+              return {
+                marks,
+                gradients: paint.gradients,
+                scales: { x, y: { scale: scaleLinear, nice: true, grid: true, axis: numberAxis(yLabel, formatters) } },
+              }
+            }
+            const annotated = annotatedTimeLayer(prepared, dates, width, yValues, true, marks)
             return {
-              marks,
+              marks: annotated.marks,
               gradients: paint.gradients,
-              x: timeXAxis(dates, width, locale, timeZone, timeAxis, xLabel, common.formatters?.date),
-              y: { scale: scaleLinear, nice: true, grid: true, axis: numberAxis(yLabel, formatters) },
+              scales: { x, y: { scale: scaleLinear().domain(annotated.yDomain), grid: true, axis: numberAxis(yLabel, formatters) } },
             }
           },
         })
-        const legend: SemanticLegendItem[] = [{ label: 'Value' }]
-        if (data.some((datum) => datum.value.kind === 'missing')) legend.push({ kind: 'missing', label: messages.legend.missing })
-        return <ChartSurface {...common} definition={definition} legend={legend} exactValues={exactValues(
+        const legend: SemanticLegendItem[] = []
+        if (data.some((datum) => datum.value.kind === 'missing')) legend.push({ label: messages.legend.missing, symbol: { kind: 'missing' } })
+        legend.push(...prepared.legend)
+        return <ChartSurface {...common} definition={definition} legend={legend} descriptionDetails={[prepared.description]} exactValues={exactValues(
           ['Date', 'Value'], data.map((datum) => exactRow(datum.id, datum.date, datum.value)),
         )} />
       }}
@@ -420,6 +553,10 @@ export interface BarAppearance {
 
 interface BarAppearanceProps {
   readonly appearance?: BarAppearance
+  /** Labeled bands behind categories. */
+  readonly highlights?: readonly CategoryHighlight[]
+  /** Controlled category selection. Other categories are dimmed while a category is selected. */
+  readonly selection?: CategorySelection
 }
 
 export type BarChartProps =
@@ -462,9 +599,12 @@ function barRows(data: readonly (VerticalBarDatum | HorizontalBarDatum | SeriesB
   }))
 }
 
+// Thin bars keep few-category charts readable. The band keeps its full width for focus and highlights.
+const maximumBarThickness = 32
+
 export function BarChart(props: BarChartProps) {
   const { messages } = useChartConfiguration()
-  const { state, orientation, layout, categoryLabel, valueLabel, valueLabelPlacement, appearance, ...rest } = props
+  const { state, orientation, layout, categoryLabel, valueLabel, valueLabelPlacement, appearance, highlights, selection, ...rest } = props
   const { seriesOrder, ...common } = 'seriesOrder' in rest ? rest : { ...rest, seriesOrder: ['Value'] as const }
   const formatters = useChartFormatters(common.formatters)
   const cornerRadius = appearance?.cornerRadius ?? 0
@@ -482,38 +622,61 @@ export function BarChart(props: BarChartProps) {
           }
         }
         const exact = exactValues(['Category', 'Series', 'Value'], rows.map((row) => exactRow(row.id, row.category, row.series, row.value)))
-        const legend = seriesLegend(layout === 'single' ? ['Value'] : seriesOrder)
+        const categories = [...new Set(rows.map((row) => row.category))]
+        const preparedHighlights = prepareCategoryHighlights(highlights, categories, messages)
+        const selected = selection?.value ?? null
+        const controller = selection === undefined
+          ? undefined
+          : categorySelectionController<BarRow>(selection, (row) => row.category, categories)
+        const seriesIndex = new Map((layout === 'single' ? ['Value'] : seriesOrder).map((name, index) => [name, index] as const))
+        const barFill = (row: BarRow) => {
+          const paint = seriesPaint(seriesIndex.get(row.series) ?? 0)
+          return selected !== null && row.category !== selected ? dimPaint(paint) : paint
+        }
+        const legend = [...seriesLegend(layout === 'single' ? ['Value'] : seriesOrder), ...preparedHighlights.legend]
+        const details = [preparedHighlights.description, selection === undefined ? undefined : selectionDescription(messages, selected)]
         const barLayout = layout === 'grouped' ? group({ padding: 0.12 }) : layout === 'stacked' ? stack({ order: seriesOrder }) : undefined
         if (orientation === 'vertical') {
           const definition = defineChart({
             focus: layout === 'single' ? undefined : 'group-x',
-            marks: [barY(rows, { x: 'category', y: 'value', z: 'series', color: 'series', key: 'id', inset: 2, radius: cornerRadius, layout: barLayout })],
-            x: { scale: () => scaleBand<string>().padding(0.12), axis: categoryLabel ? { label: categoryLabel } : undefined },
-            y: { scale: scaleLinear, nice: true, grid: true, axis: numberAxis(valueLabel, formatters) },
+            selection: controller,
+            marks: [
+              ...categoryBandMarksX(preparedHighlights.rows, selected),
+              barY(rows, { x: 'category', y: 'value', z: 'series', color: 'series', fill: barFill, key: 'id', inset: 2, maxThickness: maximumBarThickness, radius: cornerRadius, layout: barLayout }),
+            ],
+            scales: {
+              x: { scale: scaleBand<string>().domain(categories).padding(0.12), axis: categoryAxis(categoryLabel) },
+              y: { scale: scaleLinear, nice: true, grid: true, axis: numberAxis(valueLabel, formatters) },
+            },
             color: { domain: layout === 'single' ? ['Value'] : seriesOrder, range: chartColors },
             tooltip: localizedTooltip(common.tooltip, formatters, undefined, layout !== 'single'),
           })
-          return <ChartSurface {...common} definition={definition} exactValues={exact} legend={legend} />
+          return <ChartSurface {...common} definition={definition} exactValues={exact} legend={legend} descriptionDetails={details} selectable={selection !== undefined} />
         }
         const marks = [
-          barX(rows, { x: 'value', y: 'category', z: 'series', color: 'series', key: 'id', inset: 2, radius: cornerRadius, layout: barLayout }),
+          ...categoryBandMarksY(preparedHighlights.rows, selected),
+          barX(rows, { x: 'value', y: 'category', z: 'series', color: 'series', fill: barFill, key: 'id', inset: 2, maxThickness: maximumBarThickness, radius: cornerRadius, layout: barLayout }),
           ...(valueLabelPlacement === 'outside-end'
-            ? [text(rows, {
+            ? [decorative(text(rows, {
                 x: 'value', y: 'category', text: (row) => formatters.number(row.value), key: 'id',
-                fill: 'var(--aperture-color-text)', anchor: (row) => row.value < 0 ? 'end' : 'start',
-                dx: (row) => row.value < 0 ? -8 : 8, fontSize: 12, fontWeight: 650,
-              })]
+                fill: (row) => selected !== null && row.category !== selected ? 'var(--aperture-color-muted)' : 'var(--aperture-color-text)',
+                anchor: (row) => row.value < 0 ? 'end' : 'start',
+                dx: (row) => row.value < 0 ? -8 : 8, fontSize: 12, fontWeight: 600,
+              }))]
             : []),
         ]
         const definition = defineChart({
-          focus: layout === 'single' ? undefined : horizontalGroupedFocus,
+          focus: layout === 'single' ? undefined : 'group-y',
+          selection: controller,
           marks,
-          x: { scale: scaleLinear, nice: true, grid: true, axis: numberAxis(valueLabel, formatters) },
-          y: { scale: () => scaleBand<string>().padding(0.12), axis: categoryLabel ? { label: categoryLabel } : undefined },
+          scales: {
+            x: { scale: scaleLinear, nice: true, grid: true, axis: numberAxis(valueLabel, formatters) },
+            y: { scale: scaleBand<string>().domain(categories).padding(0.12), axis: categoryAxis(categoryLabel) },
+          },
           color: { domain: layout === 'single' ? ['Value'] : seriesOrder, range: chartColors },
           tooltip: localizedHorizontalTooltip(common.tooltip, formatters, layout !== 'single'),
         })
-        return <ChartSurface {...common} definition={definition} exactValues={exact} legend={valueLabelPlacement === 'outside-end' ? [] : legend} />
+        return <ChartSurface {...common} definition={definition} exactValues={exact} legend={legend} descriptionDetails={details} selectable={selection !== undefined} />
       }}
     </ChartStateBoundary>
   )
@@ -551,12 +714,14 @@ export function ScatterChart({ state, xLabel, yLabel, ...common }: ScatterChartP
             dot(rows, { x: 'x', y: 'y', r: 'radius', color: 'series', key: 'id', fillOpacity: 0.75 }),
             ...(common.crosshair ? [crosshairMark({ marker: true })] : []),
           ],
-          x: { scale: scaleLinear, nice: true, grid: true, axis: numberAxis(xLabel, formatters) },
-          y: { scale: scaleLinear, nice: true, grid: true, axis: numberAxis(yLabel, formatters) },
+          scales: {
+            x: { scale: scaleLinear, nice: true, grid: true, axis: numberAxis(xLabel, formatters) },
+            y: { scale: scaleLinear, nice: true, grid: true, axis: numberAxis(yLabel, formatters) },
+          },
           color: { range: chartColors },
           tooltip: localizedTooltip(common.tooltip, formatters),
         })
-        return <ChartSurface {...common} definition={definition} legend={seriesLegend(rows.map((row) => row.series))} exactValues={exactValues(
+        return <ChartSurface {...common} definition={definition} legend={seriesLegend(rows.map((row) => row.series), dotSymbol(4.5))} exactValues={exactValues(
           ['Series', xLabel ?? 'X', yLabel ?? 'Y', 'Radius'],
           rows.map((row) => exactRow(row.id, row.series, row.x, row.y, row.radius)),
         )} />
@@ -590,8 +755,10 @@ export function HistogramChart({ state, valueLabel, countLabel, ...common }: His
         })
         const definition = defineChart({
           marks: [rect(rows, { x1: 'start', x2: 'end', y1: () => 0, y2: 'count', key: 'id', inset: 1, fill: 'var(--aperture-chart-1)' })],
-          x: { scale: scaleLinear, axis: numberAxis(valueLabel, formatters) },
-          y: { scale: scaleLinear, nice: true, grid: true, axis: numberAxis(countLabel, formatters) },
+          scales: {
+            x: { scale: scaleLinear, axis: numberAxis(valueLabel, formatters) },
+            y: { scale: scaleLinear, nice: true, grid: true, axis: numberAxis(countLabel, formatters) },
+          },
           tooltip: localizedTooltip(common.tooltip, formatters),
         })
         return <ChartSurface {...common} definition={definition} exactValues={exactValues(
@@ -613,27 +780,73 @@ export interface HeatmapChartProps extends CommonChartProps {
   readonly state: ChartDataState<HeatmapDatum>
   readonly xLabel?: string
   readonly yLabel?: string
-  readonly colorDomain: readonly [number, number]
+  /** Legend name for the color scale, including the unit. */
+  readonly valueLabel?: string
+  readonly colorScale: ContinuousColorScale
+  /** Shows each cell value inside the cell. */
+  readonly valueLabels?: boolean
+  /** Labeled outlines around cells. */
+  readonly highlights?: readonly CellHighlight[]
+  /** Controlled cell selection. Other cells are dimmed while a cell is selected. */
+  readonly selection?: CellSelection
 }
 
-export function HeatmapChart({ state, xLabel, yLabel, colorDomain, ...common }: HeatmapChartProps) {
+export function HeatmapChart({ state, xLabel, yLabel, valueLabel, colorScale, valueLabels = false, highlights, selection, ...common }: HeatmapChartProps) {
   const { messages } = useChartConfiguration()
   const formatters = useChartFormatters(common.formatters)
-  increasingDomain(colorDomain, 'Heatmap color')
+  validContinuousScale(colorScale, 'Heatmap')
   return (
     <ChartStateBoundary state={state} rootProps={common}>
       {(data) => {
-        const rows = data.map((datum) => ({ ...datum, value: finite(datum.value, messages.errors.invalidNumber) }))
-        const definition = defineChart({
-          marks: [cell(rows, { x: 'x', y: 'y', color: 'value', key: 'id', inset: 1 })],
-          x: { scale: () => scaleBand<string>().padding(0.02), axis: xLabel ? { label: xLabel } : undefined },
-          y: { scale: () => scaleBand<string>().padding(0.02), axis: yLabel ? { label: yLabel } : undefined },
-          color: { scale: () => scaleLinearColor<string>().domain(colorDomain).range(['var(--aperture-color-accent-soft)', 'var(--aperture-chart-1)']) },
-          tooltip: localizedTooltip(common.tooltip, formatters),
+        const ids = new Set<string>()
+        const keys = new Set<string>()
+        const selected = selection?.value ?? null
+        const selectedKey = selected === null ? null : cellKey(selected)
+        const rows = data.map((datum) => {
+          const value = finite(datum.value, messages.errors.invalidNumber)
+          if (ids.has(datum.id)) throw new RangeError(`Heatmap cell ids must be unique: ${datum.id}`)
+          ids.add(datum.id)
+          const key = cellKey(datum)
+          if (keys.has(key)) throw new RangeError(`Heatmap cells must be unique: ${datum.x}, ${datum.y}`)
+          keys.add(key)
+          const paint = continuousPaint(colorScale, value)
+          const dimmed = selectedKey !== null && key !== selectedKey
+          return { ...datum, value, fill: dimmed ? dimPaint(paint.fill) : paint.fill, strength: dimmed ? 0 : paint.strength }
         })
-        return <ChartSurface {...common} definition={definition} exactValues={exactValues(
-          [xLabel ?? 'X', yLabel ?? 'Y', 'Value'], rows.map((row) => exactRow(row.id, row.x, row.y, row.value)),
-        )} />
+        const preparedHighlights = prepareCellHighlights(highlights, rows, messages)
+        const controller = selection === undefined ? undefined : cellSelectionController<(typeof rows)[number]>(selection, rows)
+        const definition = defineChart({
+          selection: controller,
+          marks: [
+            cell(rows, { x: 'x', y: 'y', color: 'id', key: 'id', inset: 1, radius: 2 }),
+            ...(valueLabels
+              ? [decorative(text(rows, {
+                  x: 'x', y: 'y', key: 'id', text: (row) => formatters.number(row.value),
+                  fill: (row) => textOnFill(row.strength), fontSize: 12, fontWeight: 600,
+                }))]
+              : []),
+            ...cellOutlineMarks(preparedHighlights.rows, selected),
+          ],
+          scales: {
+            x: { scale: scaleBand<string>().domain([...new Set(rows.map((row) => row.x))]).padding(0.02), axis: categoryAxis(xLabel) },
+            y: { scale: scaleBand<string>().domain([...new Set(rows.map((row) => row.y))]).padding(0.02), axis: categoryAxis(yLabel) },
+          },
+          color: { domain: rows.map((row) => row.id), range: rows.map((row) => row.fill) },
+          tooltip: datumTooltip<(typeof rows)[number]>(common.tooltip, (row) => `${row.y} · ${row.x}: ${formatters.number(row.value)}`),
+        })
+        return <ChartSurface
+          {...common}
+          definition={definition}
+          legend={[continuousLegend(colorScale, valueLabel ?? 'Value', formatters.number), ...preparedHighlights.legend]}
+          descriptionDetails={[
+            preparedHighlights.description,
+            selection === undefined ? undefined : selectionDescription(messages, selected === null ? null : `${selected.y} · ${selected.x}`),
+          ]}
+          selectable={selection !== undefined}
+          exactValues={exactValues(
+            [xLabel ?? 'X', yLabel ?? 'Y', valueLabel ?? 'Value'], rows.map((row) => exactRow(row.id, row.x, row.y, row.value)),
+          )}
+        />
       }}
     </ChartStateBoundary>
   )
@@ -676,8 +889,10 @@ export function RangeChart({ state, xLabel, yLabel, timeAxis, ...common }: Range
           chart: ({ width }) => {
             return {
               marks,
-              x: timeXAxis(dates, width, locale, timeZone, timeAxis, xLabel, common.formatters?.date),
-              y: { scale: scaleLinear, nice: true, grid: true, axis: numberAxis(yLabel, formatters) },
+              scales: {
+                x: timeXAxis(dates, width, locale, timeZone, timeAxis, xLabel, common.formatters?.date),
+                y: { scale: scaleLinear, nice: true, grid: true, axis: numberAxis(yLabel, formatters) },
+              },
               color: { range: chartColors },
             }
           },
@@ -721,8 +936,10 @@ export function ErrorBarChart({ state, categoryLabel, valueLabel, ...common }: E
             tickY(rows, { x: 'category', y: 'high', key: 'id', stroke: 'var(--aperture-chart-1)', strokeWidth: 1.5 }),
             dot(rows, { x: 'category', y: 'estimate', key: 'id', fill: 'var(--aperture-chart-1)', r: 4 }),
           ],
-          x: { scale: () => scaleBand<string>().padding(0.3), axis: categoryLabel ? { label: categoryLabel } : undefined },
-          y: { scale: scaleLinear, nice: true, grid: true, axis: numberAxis(valueLabel, formatters) },
+          scales: {
+            x: { scale: () => scaleBand<string>().padding(0.3), axis: categoryAxis(categoryLabel) },
+            y: { scale: scaleLinear, nice: true, grid: true, axis: numberAxis(valueLabel, formatters) },
+          },
           tooltip: localizedTooltip(common.tooltip, formatters),
         })
         return <ChartSurface {...common} definition={definition} exactValues={exactValues(
@@ -749,6 +966,8 @@ export interface StackedAreaChartProps extends GroupedCommonChartProps, Crosshai
   readonly timeAxis?: TimeAxisOptions
   readonly interpolation?: CartesianInterpolation
   readonly appearance?: AreaAppearance
+  /** Labeled time ranges and events drawn behind the stack. */
+  readonly highlights?: readonly TimeHighlight[]
 }
 
 export interface BrushableStackedAreaChartProps extends StackedAreaChartProps {
@@ -765,10 +984,13 @@ function StackedAreaPlot({
   interpolation = 'linear',
   appearance,
   brush,
+  highlights,
   ...common
 }: StackedAreaChartProps & { readonly brush?: DateBrush }) {
   const { messages, locale, timeZone } = useChartConfiguration()
   const formatters = useChartFormatters(common.formatters)
+  const formatDay = useDayFormatter()
+  requireElapsedHighlightAxis(highlights, timeAxis)
   const gradientIdPrefix = `aperture-area-${useId().replaceAll(':', '')}`
   const selectionHost = useRef<HTMLDivElement>(null)
   if (brush?.interaction !== undefined && brush.interaction !== 'adjust' && brush.interaction !== 'select') {
@@ -835,17 +1057,31 @@ function StackedAreaPlot({
               : {}),
           })]
         }
+        const prepared = prepareTimeHighlights(highlights, dates, messages, formatDay)
+        const stackTotals = new Map<number, number>()
+        for (const row of rows) stackTotals.set(row.date.getTime(), (stackTotals.get(row.date.getTime()) ?? 0) + row.value)
+        const stackValues = normalization === 'percent' ? [0, 1] : [...stackTotals.values()]
         const definition = defineChart({
           focus: 'group-x',
           tooltip: localizedTooltip(common.tooltip, formatters, undefined, true),
           controls,
           chart: ({ width }) => {
+            const x = timeXAxis(dates, width, locale, timeZone, timeAxis, xLabel, common.formatters?.date)
+            const color = { domain: seriesOrder, range: chartColors }
+            if (!hasTimeHighlights(prepared)) {
+              return {
+                marks,
+                gradients: paint.gradients,
+                scales: { x, y: { scale: scaleLinear, grid: true, axis: numberAxis(yLabel, formatters) } },
+                color,
+              }
+            }
+            const annotated = annotatedTimeLayer(prepared, dates, width, stackValues, true, marks)
             return {
-              marks,
+              marks: annotated.marks,
               gradients: paint.gradients,
-              x: timeXAxis(dates, width, locale, timeZone, timeAxis, xLabel, common.formatters?.date),
-              y: { scale: scaleLinear, grid: true, axis: numberAxis(yLabel, formatters) },
-              color: { domain: seriesOrder, range: chartColors },
+              scales: { x, y: { scale: scaleLinear().domain(annotated.yDomain), grid: true, axis: numberAxis(yLabel, formatters) } },
+              color,
             }
           },
         })
@@ -853,7 +1089,7 @@ function StackedAreaPlot({
         if (brush?.interaction === 'select') brushClass = 'aperture-brush-select'
         else if (brush?.appearance === 'low-emphasis') brushClass = 'aperture-brush-low-emphasis'
         const surfaceClassName = [common.className, brushClass].filter(Boolean).join(' ')
-        const surface = <ChartSurface {...common} className={surfaceClassName} definition={definition} legend={seriesLegend(seriesOrder)} exactValues={exactValues(
+        const surface = <ChartSurface {...common} className={surfaceClassName} definition={definition} legend={[...seriesLegend(seriesOrder), ...prepared.legend]} descriptionDetails={[prepared.description]} exactValues={exactValues(
           ['Date', 'Series', 'Value'], rows.map((row) => exactRow(row.id, row.date, row.series, row.value)),
         )} />
         return brush?.interaction === 'select'
@@ -905,13 +1141,15 @@ export function FacetChart({ state, columns = 2, xLabel, yLabel, ...common }: Fa
           axes: 'outer',
           chart: (facetRows) => defineChart({
             marks: [dot(facetRows, { x: 'x', y: 'y', color: 'series', key: 'id' })],
-            x: { scale: scaleLinear().domain(xDomain), nice: true, axis: numberAxis(xLabel, formatters) },
-            y: { scale: scaleLinear().domain(yDomain), nice: true, axis: numberAxis(yLabel, formatters) },
+            scales: {
+              x: { scale: scaleLinear().domain(xDomain), nice: true, axis: numberAxis(xLabel, formatters) },
+              y: { scale: scaleLinear().domain(yDomain), nice: true, axis: numberAxis(yLabel, formatters) },
+            },
             color: { range: chartColors },
           }),
         })
         const interactive = defineChart(definition, { tooltip: localizedTooltip(common.tooltip, formatters) })
-        return <ChartSurface {...common} definition={interactive} legend={seriesLegend(rows.map((row) => row.series))} exactValues={exactValues(
+        return <ChartSurface {...common} definition={interactive} legend={seriesLegend(rows.map((row) => row.series), dotSymbol(3))} exactValues={exactValues(
           ['Facet', 'Series', xLabel ?? 'X', yLabel ?? 'Y'], rows.map((row) => exactRow(row.id, row.facet, row.series, row.x, row.y)),
         )} />
       }}
@@ -941,12 +1179,19 @@ export function WaterfallChart({ state, includeTotal = true, valueLabel, ...comm
         const rows = waterfall(source, { value: 'delta', total: includeTotal })
         const definition = defineChart({
           marks: [barY(rows, { x: (row) => row.kind === 'total' ? 'Total' : row.label, y1: 'start', y2: 'end', color: 'kind', inset: 2 })],
-          x: { scale: () => scaleBand<string>().padding(0.12) },
-          y: { scale: scaleLinear, nice: true, grid: true, axis: numberAxis(valueLabel, formatters) },
+          scales: {
+            x: { scale: () => scaleBand<string>().padding(0.12) },
+            y: { scale: scaleLinear, nice: true, grid: true, axis: numberAxis(valueLabel, formatters) },
+          },
           color: { domain: ['increase', 'decrease', 'total'], range: ['var(--aperture-chart-2)', 'var(--aperture-color-danger)', 'var(--aperture-chart-1)'] },
           tooltip: localizedTooltip(common.tooltip, formatters),
         })
-        return <ChartSurface {...common} definition={definition} exactValues={exactValues(
+        const legend: SemanticLegendItem[] = [
+          { label: 'Increase', symbol: { kind: 'swatch', paint: 'var(--aperture-chart-2)' } },
+          { label: 'Decrease', symbol: { kind: 'swatch', paint: 'var(--aperture-color-danger)' } },
+          ...(includeTotal ? [{ label: 'Total', symbol: { kind: 'swatch', paint: 'var(--aperture-chart-1)' } } as const] : []),
+        ]
+        return <ChartSurface {...common} definition={definition} legend={legend} exactValues={exactValues(
           ['Step', 'Change'], source.map((row) => exactRow(row.id, row.label, row.delta)),
         )} />
       }}
@@ -1036,17 +1281,196 @@ export function CandlestickChart({ state, candleInterval, priceLabel, timeAxis, 
               : { ...time.axis, ticks: { ...time.axis.ticks, format: dateFormat } }
             return {
               marks,
-              x: { scale: scaleUtc().domain(time.domain), axis },
-              y: { scale: scaleLinear, nice: true, grid: true, axis: numberAxis(priceLabel, formatters) },
+              scales: {
+                x: { scale: scaleUtc().domain(time.domain), axis },
+                y: { scale: scaleLinear, nice: true, grid: true, axis: numberAxis(priceLabel, formatters) },
+              },
               color: { domain: ['increase', 'decrease'], range: ['var(--aperture-chart-2)', 'var(--aperture-color-danger)'] },
             }
           },
         })
         return <ChartSurface {...common} definition={definition} legend={[
-          { label: 'Increase' }, { label: 'Decrease' },
+          { label: 'Increase', symbol: { kind: 'swatch', paint: 'var(--aperture-chart-2)' } },
+          { label: 'Decrease', symbol: { kind: 'swatch', paint: 'var(--aperture-color-danger)' } },
         ]} exactValues={exactValues(
           ['Date', 'Open', 'High', 'Low', 'Close'], rows.map((row) => exactRow(row.id, row.date, row.open, row.high, row.low, row.close)),
         )} />
+      }}
+    </ChartStateBoundary>
+  )
+}
+
+export interface DumbbellDatum {
+  readonly id: string
+  readonly category: string
+  readonly start: number
+  readonly end: number
+}
+
+export interface DumbbellChartProps extends CommonChartProps {
+  readonly state: ChartDataState<DumbbellDatum>
+  /** Name of the earlier state, such as a baseline period. It uses the context color. */
+  readonly startLabel: string
+  /** Name of the later state. It uses the accent color. */
+  readonly endLabel: string
+  readonly categoryLabel?: string
+  readonly valueLabel?: string
+  /** Shared value domain. Use one domain for every chart in a comparison. */
+  readonly domain?: readonly [number, number]
+  /** Shows the signed change at the end of each row. */
+  readonly changeLabels?: boolean
+  /** Formats the signed change. The default uses the number formatter with a sign. */
+  readonly formatChange?: (change: number) => string
+  /** Labeled bands behind categories. */
+  readonly highlights?: readonly CategoryHighlight[]
+  /** Controlled category selection. Other rows are dimmed while a category is selected. */
+  readonly selection?: CategorySelection
+}
+
+interface DumbbellRow {
+  readonly id: string
+  readonly category: string
+  readonly start: number
+  readonly end: number
+  readonly change: number
+}
+
+interface DumbbellPoint {
+  readonly id: string
+  readonly category: string
+  readonly value: number
+  readonly role: 'start' | 'end'
+}
+
+const dumbbellPaints = {
+  start: contextPaint,
+  end: 'var(--aperture-chart-1)',
+} as const
+
+// Pixels reserved at the right edge of the plot for the change column.
+const dumbbellChangeGutter = 64
+
+export function DumbbellChart({
+  state,
+  startLabel,
+  endLabel,
+  categoryLabel,
+  valueLabel,
+  domain,
+  changeLabels = true,
+  formatChange,
+  highlights,
+  selection,
+  ...common
+}: DumbbellChartProps) {
+  const { messages } = useChartConfiguration()
+  const formatters = useChartFormatters(common.formatters)
+  if (startLabel.trim() === '' || endLabel.trim() === '') throw new TypeError('DumbbellChart requires start and end labels.')
+  if (startLabel === endLabel) throw new RangeError('DumbbellChart start and end labels must differ.')
+  if (domain !== undefined) {
+    finite(domain[0], messages.errors.invalidNumber)
+    finite(domain[1], messages.errors.invalidNumber)
+    if (domain[0] >= domain[1]) throw new RangeError('DumbbellChart domain minimum must be less than its maximum.')
+  }
+  const signedChange = formatChange ?? ((change: number) => `${change > 0 ? '+' : ''}${formatters.number(change)}`)
+  return (
+    <ChartStateBoundary state={state} rootProps={common}>
+      {(data) => {
+        const categories: string[] = []
+        const rows: DumbbellRow[] = data.map((datum) => {
+          const start = finite(datum.start, messages.errors.invalidNumber)
+          const end = finite(datum.end, messages.errors.invalidNumber)
+          if (categories.includes(datum.category)) throw new RangeError(`DumbbellChart categories must be unique: ${datum.category}`)
+          categories.push(datum.category)
+          return { id: datum.id, category: datum.category, start, end, change: preciseDifference(end, start) }
+        })
+        const values = rows.flatMap((row) => [row.start, row.end])
+        if (domain !== undefined && values.some((value) => value < domain[0] || value > domain[1])) {
+          throw new RangeError('DumbbellChart values must be inside the supplied domain.')
+        }
+        const selected = selection?.value ?? null
+        const dimmed = (category: string) => selected !== null && category !== selected
+        const points: DumbbellPoint[] = rows.flatMap((row) => [
+          { id: `${row.id}-start`, category: row.category, value: row.start, role: 'start' as const },
+          { id: `${row.id}-end`, category: row.category, value: row.end, role: 'end' as const },
+        ])
+        const changeByCategory = new Map(rows.map((row) => [row.category, row] as const))
+        const preparedHighlights = prepareCategoryHighlights(highlights, categories, messages)
+        const controller = selection === undefined
+          ? undefined
+          : categorySelectionController<DumbbellPoint>(selection, (point) => point.category, categories)
+        const dataDomain = domain ?? scaleLinear().domain([Math.min(...values), Math.max(...values)]).nice().domain()
+        const definition = defineChart({
+          focus: 'group-y',
+          selection: controller,
+          tooltip: groupedDatumTooltip<DumbbellPoint>(common.tooltip, (focused) => {
+            const first = focused[0]
+            if (first === undefined) return ''
+            const row = changeByCategory.get(first.category)
+            if (row === undefined) return first.category
+            return [
+              row.category,
+              `${startLabel}: ${formatters.number(row.start)}`,
+              `${endLabel}: ${formatters.number(row.end)}`,
+              `Change: ${signedChange(row.change)}`,
+            ].join('\n')
+          }),
+          chart: ({ width }) => {
+            const span = dataDomain[1] - dataDomain[0]
+            const gutterShare = changeLabels ? Math.min(0.4, dumbbellChangeGutter / Math.max(120, width * 0.6)) : 0
+            const top = dataDomain[1] + span * gutterShare
+            const ticks = scaleLinear().domain(dataDomain).ticks(width < 360 ? 3 : 5)
+            return {
+              marks: [
+                ...categoryBandMarksY(preparedHighlights.rows, selected),
+                decorative(link(rows, {
+                  x1: 'start', x2: 'end', y1: 'category', y2: 'category', key: 'id',
+                  stroke: (row) => dimmed(row.category) ? dimPaint(contextPaint) : contextPaint, strokeWidth: 2, lineCap: 'round',
+                })),
+                dot(points, {
+                  x: 'value', y: 'category', key: 'id', r: 5.5,
+                  color: (point) => `${point.role}${dimmed(point.category) ? '-dimmed' : ''}`,
+                  stroke: 'var(--aperture-color-background)', strokeWidth: 2,
+                }),
+                ...(changeLabels
+                  ? [decorative(text(rows, {
+                      x: () => top, y: 'category', key: 'id', text: (row) => signedChange(row.change), anchor: 'end',
+                      fill: (row) => dimmed(row.category) ? 'var(--aperture-color-muted)' : 'var(--aperture-color-text)',
+                      fontSize: 12, fontWeight: 600,
+                    }))]
+                  : []),
+              ],
+              scales: {
+                x: {
+                  scale: scaleLinear().domain([dataDomain[0], top]),
+                  grid: true,
+                  axis: { ...numberAxis(valueLabel, formatters), ticks: { values: ticks, format: formatters.axisNumber } },
+                },
+                y: { scale: scaleBand<string>().domain(categories).padding(0.2), axis: categoryAxis(categoryLabel) },
+              },
+              color: {
+                domain: ['start', 'end', 'start-dimmed', 'end-dimmed'],
+                range: [dumbbellPaints.start, dumbbellPaints.end, dimPaint(dumbbellPaints.start), dimPaint(dumbbellPaints.end)],
+              },
+            }
+          },
+        })
+        const legend: SemanticLegendItem[] = [
+          { label: startLabel, symbol: { kind: 'point', paint: dumbbellPaints.start, radius: 4.5, hollow: false } },
+          { label: endLabel, symbol: { kind: 'point', paint: dumbbellPaints.end, radius: 4.5, hollow: false } },
+          ...preparedHighlights.legend,
+        ]
+        return <ChartSurface
+          {...common}
+          definition={definition}
+          legend={legend}
+          descriptionDetails={[preparedHighlights.description, selection === undefined ? undefined : selectionDescription(messages, selected)]}
+          selectable={selection !== undefined}
+          exactValues={exactValues(
+            [categoryLabel ?? 'Category', startLabel, endLabel, 'Change'],
+            rows.map((row) => exactRow(row.id, row.category, row.start, row.end, row.change)),
+          )}
+        />
       }}
     </ChartStateBoundary>
   )

@@ -12,7 +12,7 @@ export default defineConfig({
   },
   optimizeDeps: {
     include: ['react/jsx-runtime', 'react/jsx-dev-runtime'],
-    exclude: ['@tanstack/charts/focus', '@tanstack/charts/mark/decorative'],
+    exclude: ['@tanstack/charts/mark/decorative'],
   },
   test: {
     projects: [

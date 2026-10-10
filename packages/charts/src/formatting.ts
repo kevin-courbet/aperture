@@ -1,7 +1,7 @@
 import type { ChartTooltipInput, ChartValue } from '@tanstack/charts'
 import { tooltip as tooltipExtension } from '@tanstack/charts/tooltip'
 import { useChartConfiguration } from './provider.js'
-import type { ChartFormatters as ChartFormatterOverrides, GroupedChartTooltipOptions } from './types.js'
+import type { ChartFormatters as ChartFormatterOverrides, ChartTooltipOptions, GroupedChartTooltipOptions } from './types.js'
 
 export interface ChartFormatters {
   readonly date: (value: Date) => string
@@ -62,8 +62,27 @@ export function useChartFormatters(overrides?: ChartFormatterOverrides): ChartFo
   return { date, axisNumber, number, percentage, value }
 }
 
+/**
+ * Axis titles are chart chrome. They use the muted text token at full opacity
+ * so they stay readable but do not compete with marks and headline values.
+ */
+export function axisTitle(text: string) {
+  return { text, fontWeight: 500, fill: 'var(--aperture-color-muted)', opacity: 1 }
+}
+
 export function numberAxis(label: string | undefined, formatters: ChartFormatters) {
-  return { ticks: { format: formatters.axisNumber }, ...(label === undefined ? {} : { label }) }
+  return { ticks: { format: formatters.axisNumber }, ...(label === undefined ? {} : { label: axisTitle(label) }) }
+}
+
+export function categoryAxis(label: string | undefined) {
+  return label === undefined ? undefined : { label: axisTitle(label) }
+}
+
+/** Calendar dates without clock time, for annotation text and descriptions. */
+export function useDayFormatter(): (value: Date) => string {
+  const { locale, timeZone } = useChartConfiguration()
+  const formatter = new Intl.DateTimeFormat(locale, { calendar: 'gregory', day: 'numeric', month: 'short', year: 'numeric', timeZone })
+  return (value: Date) => formatter.format(value)
 }
 
 export function localizedTooltip(
@@ -117,4 +136,40 @@ export function localizedHorizontalTooltip(
         }
       : {}),
   }
+}
+
+/** A tooltip whose readout is built from the focused datum. */
+export function datumTooltip<TDatum>(
+  tooltip: boolean | ChartTooltipOptions | undefined,
+  format: (datum: TDatum) => string,
+): ChartTooltipInput<any, any, any, 'dom'> | undefined {
+  if (tooltip === false) return undefined
+  return { use: tooltipExtension, format: (point) => format(point.datum) }
+}
+
+/** A grouped tooltip whose readout is built from every focused datum. */
+export function groupedDatumTooltip<TDatum>(
+  tooltip: boolean | ChartTooltipOptions | undefined,
+  format: (data: readonly TDatum[]) => string,
+): ChartTooltipInput<any, any, any, 'dom'> | undefined {
+  if (tooltip === false) return undefined
+  return {
+    use: tooltipExtension,
+    format: (point) => format([point.datum]),
+    formatGroup: (points) => format(points.map((point) => point.datum)),
+  }
+}
+
+/** Rounds a difference to the decimal precision of its operands to remove binary floating-point noise. */
+export function preciseDifference(end: number, start: number): number {
+  const decimals = Math.max(decimalPlaces(end), decimalPlaces(start))
+  const factor = 10 ** Math.min(decimals, 12)
+  return Math.round((end - start) * factor) / factor
+}
+
+function decimalPlaces(value: number): number {
+  const text = String(value)
+  if (text.includes('e-')) return Number(text.split('e-')[1] ?? 0)
+  const fraction = text.split('.')[1]
+  return fraction === undefined ? 0 : fraction.length
 }

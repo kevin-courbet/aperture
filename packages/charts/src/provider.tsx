@@ -1,5 +1,5 @@
 import { createContext, use, type ReactNode } from 'react'
-import { CalendarDays, Expand, Minimize2, Table2 } from 'lucide-react'
+import { CalendarDays, ChevronDown, Expand, Minimize2, Table2, X } from 'lucide-react'
 import type {
   ApertureIcons,
   ApertureMessages,
@@ -20,6 +20,28 @@ export const englishMessages: ApertureMessages = {
   },
   table: { caption: 'Exact chart values' },
   legend: { missing: 'Missing value' },
+  annotations: { highlights: 'Highlights' },
+  selection: {
+    instructions: 'Select a mark with a click, Enter, or Space. Select it again to clear the selection.',
+    selected: 'Selected',
+  },
+  stat: {
+    increase: 'Increase',
+    decrease: 'Decrease',
+    noChange: 'No change',
+    better: 'better',
+    worse: 'worse',
+  },
+  sparkline: {
+    summary: 'From {first} on {firstDate} to {last} on {lastDate}. Lowest {minimum}. Highest {maximum}.',
+  },
+  filters: {
+    group: 'Filters',
+    active: 'Active filters',
+    none: 'No filters applied.',
+    remove: 'Remove filter',
+    clearAll: 'Clear all filters',
+  },
   errors: {
     invalidDate: 'Chart dates must be valid Date values.',
     invalidHeight: 'Chart height must be a positive finite number.',
@@ -32,8 +54,10 @@ export const englishMessages: ApertureMessages = {
 
 export const defaultIcons: ApertureIcons = {
   calendar: CalendarDays,
+  chevron: ChevronDown,
   collapse: Minimize2,
   expand: Expand,
+  remove: X,
   table: Table2,
 }
 
@@ -74,6 +98,11 @@ export function ChartProvider({
     states: { ...englishMessages.states, ...messages?.states },
     table: { ...englishMessages.table, ...messages?.table },
     legend: { ...englishMessages.legend, ...messages?.legend },
+    annotations: { ...englishMessages.annotations, ...messages?.annotations },
+    selection: { ...englishMessages.selection, ...messages?.selection },
+    filters: { ...englishMessages.filters, ...messages?.filters },
+    stat: { ...englishMessages.stat, ...messages?.stat },
+    sparkline: { ...englishMessages.sparkline, ...messages?.sparkline },
     errors: { ...englishMessages.errors, ...messages?.errors },
   }
 

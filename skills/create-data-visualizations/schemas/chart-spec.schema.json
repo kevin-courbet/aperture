@@ -177,6 +177,7 @@
             "scatter",
             "range",
             "error-bar",
+            "dumbbell",
             "heatmap",
             "choropleth",
             "route-map",
@@ -195,6 +196,19 @@
           "properties": {
             "label": { "type": "string", "minLength": 1 },
             "value": { "type": "number" }
+          }
+        },
+        "highlights": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["kind", "label", "reason"],
+            "properties": {
+              "kind": { "enum": ["time-range", "event", "category", "cell"] },
+              "label": { "type": "string", "minLength": 1 },
+              "reason": { "type": "string", "minLength": 1 }
+            }
           }
         }
       }
@@ -224,7 +238,7 @@
         "additionalProperties": false,
         "required": ["type", "purpose", "controlled"],
         "properties": {
-          "type": { "enum": ["time-range", "series", "exact-values", "fullscreen", "brush", "zoom", "toggle"] },
+          "type": { "enum": ["time-range", "series", "exact-values", "fullscreen", "brush", "zoom", "toggle", "filter", "selection"] },
           "purpose": { "type": "string", "minLength": 1 },
           "controlled": { "const": true }
         }

@@ -117,6 +117,10 @@ interface ChartSurfaceProps<
   readonly definition: DomChartDefinition<TDatum, TXValue, TYValue>
   readonly exactValues: ExactValueModel
   readonly legend?: readonly SemanticLegendItem[]
+  /** Sentences appended to the accessible description, such as highlights and selection state. */
+  readonly descriptionDetails?: readonly (string | undefined)[]
+  /** Marks are selectable with pointer and keyboard activation. */
+  readonly selectable?: boolean
 }
 
 export function ChartSurface<
@@ -136,6 +140,8 @@ export function ChartSurface<
   formatters,
   exactValues,
   legend = [],
+  descriptionDetails = [],
+  selectable = false,
   tooltip,
   dataTableControl = 'hidden',
   defaultTableVisible = false,
@@ -150,7 +156,8 @@ export function ChartSurface<
   positiveHeight(height, messages.errors.invalidHeight)
   if (width !== undefined) positiveWidth(width, messages.errors.invalidWidth)
   positiveWidth(initialWidth, messages.errors.invalidWidth)
-  const chartProps = { definition, ariaLabel, ariaDescription,
+  const description = [ariaDescription, ...descriptionDetails].filter((part): part is string => part !== undefined && part !== '').join(' ')
+  const chartProps = { definition, ariaLabel, ariaDescription: description,
     height: fullscreen.size?.height ?? height,
     width: fullscreen.size?.width ?? width, initialWidth }
   const motionRenderer = useMotionRenderer<TDatum, TXValue, TYValue>(rendering)
@@ -164,7 +171,7 @@ export function ChartSurface<
     <div
       data-aperture-root={widget === null ? undefined : ''}
       data-aperture-renderer={rendering.kind}
-      className={['aperture-chart', className].filter(Boolean).join(' ')}
+      className={['aperture-chart', selectable ? 'aperture-selectable' : undefined, className].filter(Boolean).join(' ')}
       style={widget === null ? undefined : { ...style, ...(width === undefined ? {} : { width }) }}
     >
       <div ref={fullscreen.ref} className="aperture-canvas" style={{ height }}>

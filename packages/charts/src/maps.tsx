@@ -1,14 +1,14 @@
 import { defineChart } from '@tanstack/charts'
 import { geoShape } from '@tanstack/charts/geo'
 import { geoIdentity, geoMercator } from 'd3-geo'
-import { scaleLinear } from 'd3-scale'
 import { useChartConfiguration } from './provider.js'
-import { exactRow, exactValues, seriesLegend } from './exact-values.js'
+import { continuousLegend, continuousPaint, validContinuousScale } from './annotations.js'
+import { exactRow, exactValues, seriesLegend, solidLineSymbol } from './exact-values.js'
 import { localizedTooltip, useChartFormatters } from './formatting.js'
 import { chartColors } from './palette.js'
 import { ChartStateBoundary, ChartSurface } from './surface.js'
-import type { ChartDataState, CommonChartProps, NumericPoint } from './types.js'
-import { increasingDomain, numericPoint } from './validation.js'
+import type { ChartDataState, CommonChartProps, ContinuousColorScale, NumericPoint } from './types.js'
+import { numericPoint } from './validation.js'
 
 export type MapProjection = 'mercator' | 'identity'
 
@@ -45,17 +45,19 @@ interface ValidChoroplethDatum {
 export interface ChoroplethChartProps extends CommonChartProps {
   readonly state: ChartDataState<ChoroplethDatum>
   readonly projection?: MapProjection
-  readonly colorDomain: readonly [number, number]
+  readonly colorScale: ContinuousColorScale
+  /** Legend name for the color scale, including the unit. */
+  readonly valueLabel?: string
 }
 
 function projectionType(projection: MapProjection) {
   return projection === 'mercator' ? geoMercator : geoIdentity
 }
 
-export function ChoroplethChart({ state, projection = 'mercator', colorDomain, ...common }: ChoroplethChartProps) {
+export function ChoroplethChart({ state, projection = 'mercator', colorScale, valueLabel, ...common }: ChoroplethChartProps) {
   const { messages } = useChartConfiguration()
   const formatters = useChartFormatters(common.formatters)
-  increasingDomain(colorDomain, 'Choropleth color')
+  validContinuousScale(colorScale, 'Choropleth')
   return (
     <ChartStateBoundary state={state} rootProps={common}>
       {(data) => {
@@ -67,18 +69,22 @@ export function ChoroplethChart({ state, projection = 'mercator', colorDomain, .
           marks: [geoShape(rows, {
             key: (feature) => feature.properties.id,
             projection: { type: projectionType(projection), fit: { type: 'FeatureCollection', features: rows } },
-            color: (feature) => feature.properties.value,
-            fill: (feature) => feature.properties.value === null ? 'var(--aperture-chart-missing)' : 'currentColor',
+            fill: (feature) => feature.properties.value === null
+              ? 'var(--aperture-chart-missing)'
+              : continuousPaint(colorScale, feature.properties.value).fill,
             stroke: 'var(--aperture-color-background)',
             strokeWidth: 0.75,
           })],
           margin: 8,
-          color: { scale: () => scaleLinear<string>().domain(colorDomain).range(['var(--aperture-color-accent-soft)', 'var(--aperture-chart-1)']) },
+          scales: { x: null, y: null },
           tooltip: localizedTooltip(common.tooltip, formatters),
         })
-        const legend = data.some((datum) => datum.properties.value.kind === 'missing')
-          ? [{ kind: 'missing' as const, label: messages.legend.missing }]
-          : []
+        const legend = [
+          continuousLegend(colorScale, valueLabel ?? 'Value', formatters.number),
+          ...(data.some((datum) => datum.properties.value.kind === 'missing')
+            ? [{ label: messages.legend.missing, symbol: { kind: 'missing' } } as const]
+            : []),
+        ]
         return <ChartSurface {...common} definition={definition} legend={legend} exactValues={exactValues(
           ['Region', 'Value'], data.map((datum) => exactRow(datum.properties.id, datum.properties.label, datum.properties.value)),
         )} />
@@ -123,10 +129,11 @@ export function RouteMapChart({ state, projection = 'mercator', ...common }: Rou
             strokeWidth: 2.5,
           })],
           margin: 8,
+          scales: { x: null, y: null },
           color: { range: chartColors },
           tooltip: localizedTooltip(common.tooltip, formatters),
         })
-        return <ChartSurface {...common} definition={definition} legend={seriesLegend(rows.map((row) => row.properties.series ?? 'Route'))} exactValues={exactValues(
+        return <ChartSurface {...common} definition={definition} legend={seriesLegend(rows.map((row) => row.properties.series ?? 'Route'), solidLineSymbol)} exactValues={exactValues(
           ['Route', 'Series'], rows.map((row) => exactRow(row.properties.id, row.properties.label, row.properties.series ?? 'Route')),
         )} />
       }}

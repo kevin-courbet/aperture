@@ -27,6 +27,19 @@ because it is new or unusual.
 - Use SVG when server output must contain a visible chart. Canvas paints after
   browser hydration.
 
+## Order Emphasis
+
+Give full strength only to data marks, direct value labels, headline numbers,
+and titles. Axis titles, tick labels, legends, notes, and sources use the muted
+token. Grid and axis lines stay faint. Context series use the context token.
+
+## Explain With Highlights
+
+Use labeled highlights for time ranges, events, categories, or cells that the
+reader must connect to the data. The host selects highlights by a documented
+rule. Aperture draws them behind the data and adds them to the legend and the
+accessible description.
+
 ## Compose The Widget
 
 Add only controls that help the user answer the stated question. A control
@@ -36,6 +49,13 @@ many feature flags.
 The application manages data access, business aggregation, and controlled state.
 Aperture controls chart presentation, keyboard and pointer behavior, focus, and
 accessible defaults.
+
+For cross-filtering, Aperture owns mark selection, selection emphasis, filter
+controls, and the filter state hook. The application filters and aggregates
+the data for each chart.
+
+Keep the exact-value button hidden unless the product requires a visible data
+control. The exact-value table stays in the accessibility tree.
 
 ## Match The Host
 

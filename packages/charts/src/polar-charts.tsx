@@ -14,7 +14,7 @@ import {
 } from '@tanstack/charts/polar'
 import { scaleLinear } from '@tanstack/charts/scales/linear'
 import { scalePoint } from '@tanstack/charts/scales/point'
-import { exactRow, exactValues, seriesLegend } from './exact-values.js'
+import { exactRow, exactValues, lineSeriesDasharrays, lineSymbol, seriesLegend } from './exact-values.js'
 import { localizedTooltip, useChartFormatters } from './formatting.js'
 import { chartColors } from './palette.js'
 import { useChartConfiguration } from './provider.js'
@@ -22,7 +22,6 @@ import { ChartStateBoundary, ChartSurface, SingletonChartStateBoundary } from '.
 import type { ChartDataState, CommonChartProps, SingletonChartDataState } from './types.js'
 import { bounded, finite, increasingDomain, validDonutValues } from './validation.js'
 
-const seriesDasharrays = ['', '8 3', '2 3', '10 3 2 3', '1 3', '12 4', '4 2 1 2', '2 2 8 2'] as const
 
 export interface DonutDatum {
   readonly id: string
@@ -103,13 +102,14 @@ export function DonutChart({ state, innerRadiusRatio = 0.58, labelPlacement = 'l
               ...slice,
               detail: `${formatters.number(slice.value)} (${formatters.percentage(slice.fraction)})`,
             }))
+            const arcs = radialArc(slices, {
+              innerRadius: ({ radius: outerRadius }) => outerRadius * innerRadiusRatio,
+              cornerRadius: 3,
+              color: 'id',
+              key: 'id',
+            })
             const polarMarks = [
-              radialArc(slices, {
-                innerRadius: ({ radius: outerRadius }) => outerRadius * innerRadiusRatio,
-                cornerRadius: 3,
-                color: 'id',
-                key: 'id',
-              }),
+              arcs,
               ...(labelPlacement === 'inline'
                 ? [
                     radialRule(visibleSlices, {
@@ -134,17 +134,18 @@ export function DonutChart({ state, innerRadiusRatio = 0.58, labelPlacement = 'l
                 : []),
             ] as const
             return {
-              marks: [polar({
-                inset,
-                radiusRatio,
-                marks: polarMarks,
-                ...(labelPlacement === 'inline'
-                  ? {
+              marks: [labelPlacement === 'inline'
+                ? polar({
+                    inset,
+                    radiusRatio,
+                    marks: polarMarks,
+                    scales: {
                       angle: { scale: scaleLinear().domain([0, Math.PI * 2]) },
                       radius: { scale: scaleLinear().domain([0, 1]) },
-                    }
-                  : {}),
-              })],
+                    },
+                  })
+                : polar({ inset, radiusRatio, marks: [arcs], scales: { angle: null, radius: null } })],
+              scales: { x: null, y: null },
               color: { domain: rows.map((row) => row.id), range: chartColors },
             }
           },
@@ -192,18 +193,21 @@ export function GaugeChart({ state, ...common }: GaugeChartProps) {
         const definition = defineChart({
           marks: [polar({
             radiusRatio: 0.84,
-            angle: { scale: scaleLinear().domain([0, 1]) },
-            radius: { scale: scaleLinear().domain([0, 1]) },
+            scales: {
+              angle: { scale: scaleLinear().domain([0, 1]) },
+              radius: { scale: scaleLinear().domain([0, 1]) },
+            },
             marks: [
               radialArc(slices, { innerRadius: ({ radius }) => radius * 0.72, cornerRadius: 999, color: 'id', key: 'id' }),
               radialText(reading, { angle: 0, radius: 0, text: 'text', key: 'id', fill: 'currentColor', fontSize: 20, fontWeight: 700 }),
             ],
           })],
+          scales: { x: null, y: null },
           color: { domain: ['value', 'remaining'], range: ['var(--aperture-chart-1)', 'var(--aperture-color-border)'] },
           tooltip: localizedTooltip(common.tooltip, formatters, `${source.label ?? 'Value'}: ${formatters.number(value)}`),
         })
         const label = source.label ?? 'Value'
-        return <ChartSurface {...common} definition={definition} legend={[{ label, detail: formatters.number(value) }]} exactValues={exactValues(
+        return <ChartSurface {...common} definition={definition} legend={[{ label, detail: formatters.number(value), symbol: { kind: 'swatch', paint: 'var(--aperture-chart-1)' } }]} exactValues={exactValues(
           ['Label', 'Value', 'Minimum', 'Maximum'], [exactRow('gauge', label, value, minimum, maximum)],
         )} />
       }}
@@ -237,22 +241,25 @@ export function RadarChart({ state, dimensions, domain = [0, 1], ...common }: Ra
         const definition = defineChart({
           marks: [polar({
             radiusRatio: 0.72,
-            angle: { scale: scalePoint<string>().domain(dimensions), wrap: true },
-            radius: { scale: scaleLinear().domain(domain) },
+            scales: {
+              angle: { scale: scalePoint<string>().domain(dimensions), wrap: true },
+              radius: { scale: scaleLinear().domain(domain) },
+            },
             guides: [radialGrid({ ticks: 4, shape: 'polygon' }), angleGrid({ labels: true })],
             marks: [
               radialArea(rows, { angle: 'dimension', radius: 'value', z: 'series', color: 'series', key: 'id', fillOpacity: 0.18 }),
               ...series.map((name, index) => radialLine(rows.filter((row) => row.series === name), {
                 angle: 'dimension', radius: 'value', color: 'series', key: 'id',
-                strokeWidth: 2, strokeDasharray: seriesDasharrays[index],
+                strokeWidth: 2, strokeDasharray: lineSeriesDasharrays[index],
               })),
               radialDot(rows, { angle: 'dimension', radius: 'value', color: 'series', key: 'id', r: 3.5 }),
             ],
           })],
+          scales: { x: null, y: null },
           color: { domain: series, range: chartColors },
           tooltip: localizedTooltip(common.tooltip, formatters),
         })
-        return <ChartSurface {...common} definition={definition} legend={seriesLegend(rows.map((row) => row.series))} exactValues={exactValues(
+        return <ChartSurface {...common} definition={definition} legend={seriesLegend(rows.map((row) => row.series), lineSymbol)} exactValues={exactValues(
           ['Dimension', 'Series', 'Value'], rows.map((row) => exactRow(row.id, row.dimension, row.series, row.value)),
         )} />
       }}
@@ -283,6 +290,7 @@ export function SunburstChart({ state, rootId, visibleDepth, ...common }: Sunbur
         const definition = defineChart({
           marks: [polar({
             radiusRatio: 0.86,
+            scales: { angle: null, radius: null },
             marks: [sunburst(rows, {
               nodeId: 'id', parentId: 'parentId', value: 'value',
               ...(rootId === undefined ? {} : { rootId }),
@@ -290,6 +298,7 @@ export function SunburstChart({ state, rootId, visibleDepth, ...common }: Sunbur
               color: 'branchId', stroke: 'var(--aperture-color-background)', strokeWidth: 1, ringPadding: 1,
             })],
           })],
+          scales: { x: null, y: null },
           color: { range: chartColors },
           tooltip: localizedTooltip(common.tooltip, formatters),
         })

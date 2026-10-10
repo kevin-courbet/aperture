@@ -11,6 +11,7 @@ export {
   ScatterChart,
   StackedAreaChart,
   BrushableStackedAreaChart,
+  DumbbellChart,
   WaterfallChart,
 } from './cartesian.js'
 export type {
@@ -44,6 +45,8 @@ export type {
   CartesianInterpolation,
   DateBrush,
   DateRange,
+  DumbbellChartProps,
+  DumbbellDatum,
   StackedAreaDatum,
   TimeSeriesDatum,
   VerticalBarDatum,
@@ -113,6 +116,21 @@ export type { ChartProviderProps } from './provider.js'
 export { ChartStateBoundary, SingletonChartStateBoundary } from './surface.js'
 export type { ChartStateBoundaryProps, SingletonChartStateBoundaryProps } from './surface.js'
 export { ChartWidget, useChartWidget } from './widget.js'
+export { Sparkline, StatTile } from './stat.js'
+export type { SparklineDatum, SparklineProps, StatTileDatum, StatTileProps } from './stat.js'
+export { ActiveFilters, FilterBar, SelectControl, createCrossFilter, useCrossFilter } from './filters.js'
+export type {
+  ActiveCrossFilter,
+  ActiveFiltersProps,
+  CrossFilter,
+  CrossFilterContext,
+  CrossFilterOptions,
+  CrossFilterProviderProps,
+  CrossFilterValues,
+  FilterBarProps,
+  SelectControlProps,
+  SelectOption,
+} from './filters.js'
 export type { ChartWidgetRootProps } from './widget.js'
 export {
   ChartToolbar,
@@ -142,7 +160,13 @@ export type {
   ApertureChartColorIndex,
   ApertureChartStyle,
   ApertureMessages,
+  CategoryHighlight,
+  CategorySelection,
+  CellHighlight,
+  CellKey,
+  CellSelection,
   ChartDataState,
+  ContinuousColorScale,
   ChartFormatters,
   ChartMotionOptions,
   ChartMotionTransition,
@@ -164,4 +188,5 @@ export type {
   NumericPoint,
   SingletonChartDataState,
   PartialApertureMessages,
+  TimeHighlight,
 } from './types.js'

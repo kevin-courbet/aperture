@@ -6,8 +6,7 @@ export default meta
 export const KeyboardAndPointer: StoryObj<typeof meta> = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement)
-    const disclosure = canvas.getByRole('button', { name: 'Show exact values' })
-    await expect(disclosure).toBeVisible()
+    await expect(canvas.queryByRole('button', { name: 'Show exact values' })).toBeNull()
     const legend = canvas.getByRole('list', { name: 'Chart legend' })
     await expect(within(legend).getByText(/Goal/)).toHaveTextContent('Goal: 55')
     const chart = canvas.getByRole('img', { name: 'Completed work focus example' })
@@ -29,8 +28,7 @@ export const KeyboardAndPointer: StoryObj<typeof meta> = {
     const tooltip = canvas.getByRole('status')
     await expect(tooltip).toBeVisible()
     await expect(tooltip).toHaveTextContent('1 Jan 2025, 00:00 UTC: 42')
-    await userEvent.click(disclosure)
-    await expect(canvas.getByRole('table', { name: 'Exact chart values' })).toBeVisible()
-    await expect(canvas.getByRole('cell', { name: '57' })).toBeVisible()
+    const table = canvas.getByRole('table', { name: 'Exact chart values' })
+    await expect(within(table).getByRole('cell', { name: '57' })).toBeInTheDocument()
   },
 }
