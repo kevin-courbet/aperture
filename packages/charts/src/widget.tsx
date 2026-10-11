@@ -2,8 +2,12 @@ import {
   createContext,
   use,
   useId,
+  useImperativeHandle,
+  useRef,
   useState,
   type Ref,
+  type RefObject,
+  type ReactNode,
 } from 'react'
 import type {
   ChartSlot,
@@ -12,6 +16,7 @@ import type {
 } from './types.js'
 
 interface InternalWidgetContextValue {
+  readonly targetRef: RefObject<HTMLElement | null>
   readonly tableId: string
   readonly tableAvailable: boolean
   readonly tableVisible: boolean
@@ -39,6 +44,7 @@ export function useOptionalChartWidget(): InternalWidgetContextValue | null {
 
 interface ChartWidgetRootBaseProps extends ChartWidgetSlotProps {
   readonly ref?: Ref<HTMLElement>
+  readonly ariaLabel?: string
   readonly slotClassNames?: ChartSlotClassNames
 }
 
@@ -71,6 +77,7 @@ function slotClass(
 
 function Root({
   ref,
+  ariaLabel,
   children,
   className,
   style,
@@ -96,6 +103,8 @@ function Root({
     throw new RangeError('Controlled table visibility requires onTableVisibleChange.')
   }
   const tableId = useId()
+  const targetRef = useRef<HTMLElement>(null)
+  useImperativeHandle(ref, () => targetRef.current!, [])
   const [uncontrolledVisible, setUncontrolledVisible] = useState(defaultTableVisible ?? false)
   const visible = tableVisible ?? uncontrolledVisible
 
@@ -106,10 +115,11 @@ function Root({
 
   return (
     <WidgetContext
-      value={{ tableId, tableAvailable: exactValues === 'available', tableVisible: visible, setTableVisible: setVisible, slotClassNames }}
+      value={{ targetRef, tableId, tableAvailable: exactValues === 'available', tableVisible: visible, setTableVisible: setVisible, slotClassNames }}
     >
       <section
-        ref={ref}
+        ref={targetRef}
+        aria-label={ariaLabel}
         data-aperture-root=""
         data-aperture-slot="root"
         className={slotClass('root', className, slotClassNames)}
@@ -151,6 +161,59 @@ function Controls(props: ChartWidgetSlotProps) {
   return <Slot {...props} slot="controls" element="div" />
 }
 
+function Actions(props: ChartWidgetSlotProps) {
+  return <Slot {...props} slot="actions" element="div" />
+}
+
+function Summary(props: ChartWidgetSlotProps) {
+  return <Slot {...props} slot="summary" element="div" />
+}
+
+function Title({ children, className, style }: ChartWidgetSlotProps) {
+  return <h2 className={['aperture-widget-title', className].filter(Boolean).join(' ')} style={style}>{children}</h2>
+}
+
+function Description({ children, className, style }: ChartWidgetSlotProps) {
+  return <p className={['aperture-widget-description', className].filter(Boolean).join(' ')} style={style}>{children}</p>
+}
+
+function Period({ children, className, style }: ChartWidgetSlotProps) {
+  return <p className={['aperture-widget-period', className].filter(Boolean).join(' ')} style={style}>{children}</p>
+}
+
+export interface ChartWidgetMetricProps {
+  /** The host supplies the formatted value and its unit. */
+  readonly value: ReactNode
+  /** The host supplies the comparison or other explanation of the value. */
+  readonly description?: ReactNode
+}
+
+function Metric({ value, description }: ChartWidgetMetricProps) {
+  return (
+    <div className="aperture-widget-metric">
+      <p className="aperture-widget-value">{value}</p>
+      {description === undefined ? null : <Description>{description}</Description>}
+    </div>
+  )
+}
+
+export interface ChartWidgetDetail {
+  readonly label: string
+  readonly value: ReactNode
+}
+
+export interface ChartWidgetDetailsProps {
+  readonly items: readonly ChartWidgetDetail[]
+}
+
+function Details({ items }: ChartWidgetDetailsProps) {
+  return (
+    <dl className="aperture-widget-details">
+      {items.map(({ label, value }) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}
+    </dl>
+  )
+}
+
 function Plot(props: ChartWidgetSlotProps) {
   return <Slot {...props} slot="plot" element="div" />
 }
@@ -159,4 +222,4 @@ function Footer(props: ChartWidgetSlotProps) {
   return <Slot {...props} slot="footer" element="footer" />
 }
 
-export const ChartWidget = { Root, Header, Controls, Plot, Footer }
+export const ChartWidget = { Root, Header, Title, Description, Period, Actions, Controls, Summary, Metric, Details, Plot, Footer }

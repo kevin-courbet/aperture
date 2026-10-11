@@ -147,7 +147,6 @@ export function ChartSurface<
   defaultTableVisible = false,
 }: ChartSurfaceProps<TDatum, TXValue, TYValue>) {
   const widget = useOptionalChartWidget()
-  const standaloneRef = useRef<HTMLElement>(null)
   const fullscreen = useFullscreenSize()
   if (typeof defaultTableVisible !== 'boolean') {
     throw new TypeError('Chart defaultTableVisible must be a boolean.')
@@ -188,13 +187,13 @@ export function ChartSurface<
   if (widget !== null) return content
   return (
     <ChartWidget.Root
-      ref={standaloneRef}
+      ariaLabel={ariaLabel}
       exactValues="available"
       defaultTableVisible={defaultTableVisible}
       className="aperture-standalone"
       style={{ ...style, ...(width === undefined ? {} : { width }) }}
     >
-      <ChartToolbar targetRef={standaloneRef} dataTableControl={dataTableControl} />
+      <ChartToolbar dataTableControl={dataTableControl} />
       {content}
     </ChartWidget.Root>
   )

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type RefObject } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   Button,
   Label,
@@ -11,20 +11,19 @@ import type { ApertureIcon } from './types.js'
 import { ChartWidget, useChartWidget } from './widget.js'
 
 export interface ChartToolbarProps {
-  readonly targetRef: RefObject<HTMLElement | null>
   /** Show the exact-value toggle. This does not change table visibility. */
   readonly dataTableControl?: 'hidden' | 'visible'
 }
 
-export function ChartToolbar({ targetRef, dataTableControl = 'hidden' }: ChartToolbarProps) {
+export function ChartToolbar({ dataTableControl = 'hidden' }: ChartToolbarProps) {
   if (dataTableControl !== 'hidden' && dataTableControl !== 'visible') {
     throw new RangeError('ChartToolbar dataTableControl must be "hidden" or "visible".')
   }
   return (
-    <ChartWidget.Controls className="aperture-toolbar">
+    <ChartWidget.Actions className="aperture-toolbar">
       {dataTableControl === 'visible' ? <DataTableControl /> : null}
-      <FullscreenControl targetRef={targetRef} />
-    </ChartWidget.Controls>
+      <FullscreenControl />
+    </ChartWidget.Actions>
   )
 }
 
@@ -113,11 +112,8 @@ export function ToggleControl({ label, icon: Icon, isSelected, onChange }: Toggl
   )
 }
 
-export interface FullscreenControlProps {
-  readonly targetRef: RefObject<HTMLElement | null>
-}
-
-export function FullscreenControl({ targetRef }: FullscreenControlProps) {
+export function FullscreenControl() {
+  const { targetRef } = useChartWidget()
   const { messages, icons } = useChartConfiguration()
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [failure, setFailure] = useState<string | null>(null)

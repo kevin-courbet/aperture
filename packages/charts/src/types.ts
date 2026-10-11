@@ -234,7 +234,7 @@ export interface CrosshairChartProps {
   readonly crosshair?: boolean
 }
 
-export type ChartSlot = 'root' | 'header' | 'controls' | 'plot' | 'footer'
+export type ChartSlot = 'root' | 'header' | 'actions' | 'controls' | 'summary' | 'plot' | 'footer'
 export type ChartSlotClassNames = Partial<Record<ChartSlot, string>>
 
 export interface ChartWidgetSlotProps {

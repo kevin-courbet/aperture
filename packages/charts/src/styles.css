@@ -238,13 +238,11 @@
   border-radius: var(--aperture-radius-medium);
 }
 
-/* The header and controls share the first row when both fit. In a narrow
-   widget the controls wrap below the header. Other slots take a full row. */
+/* Widget actions keep their own column so a tall summary cannot displace them. */
 [data-aperture-root].aperture-root {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  align-content: flex-start;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
   gap: var(--aperture-space-3) var(--aperture-space-4);
   padding: var(--aperture-space-4);
   border: 1px solid var(--aperture-color-border);
@@ -252,17 +250,80 @@
 }
 
 [data-aperture-root].aperture-root > * {
-  flex: 1 1 100%;
+  grid-column: 1 / -1;
   min-width: 0;
 }
 
 [data-aperture-root].aperture-root > .aperture-header {
-  flex: 1 1 18rem;
+  grid-column: 1;
+  grid-row: 1;
 }
 
-[data-aperture-root].aperture-root > .aperture-controls {
-  flex: 0 1 auto;
-  margin-inline-start: auto;
+[data-aperture-root].aperture-root > .aperture-actions {
+  grid-column: 2;
+  grid-row: 1;
+  justify-self: end;
+  max-width: 100%;
+}
+
+[data-aperture-root] .aperture-summary {
+  display: grid;
+  gap: var(--aperture-space-4);
+}
+
+[data-aperture-root] .aperture-widget-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: var(--aperture-font-weight-strong);
+  overflow-wrap: anywhere;
+}
+
+[data-aperture-root] .aperture-widget-description,
+[data-aperture-root] .aperture-widget-period {
+  margin: 0;
+  color: var(--aperture-color-muted);
+  font-size: var(--aperture-font-size);
+  overflow-wrap: anywhere;
+}
+
+[data-aperture-root] .aperture-header > .aperture-widget-description {
+  flex-basis: 100%;
+}
+
+[data-aperture-root] .aperture-widget-metric {
+  display: grid;
+  gap: var(--aperture-space-2);
+}
+
+[data-aperture-root] .aperture-widget-value {
+  margin: 0;
+  font-size: clamp(1.75rem, 5vw, 2.25rem);
+  font-weight: var(--aperture-font-weight-strong);
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+[data-aperture-root] .aperture-widget-details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--aperture-space-2) var(--aperture-space-4);
+  margin: 0;
+}
+
+[data-aperture-root] .aperture-widget-details > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--aperture-space-2);
+}
+
+[data-aperture-root] .aperture-widget-details dt {
+  color: var(--aperture-color-muted);
+}
+
+[data-aperture-root] .aperture-widget-details dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
 }
 
 [data-aperture-root].aperture-standalone {
@@ -273,7 +334,7 @@
   border-radius: 0;
 }
 
-[data-aperture-root].aperture-standalone > .aperture-controls {
+[data-aperture-root].aperture-standalone > .aperture-actions {
   justify-content: flex-end;
 }
 
@@ -290,6 +351,7 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-areas: 'header actions' 'plot plot' 'footer footer';
   align-items: start;
   width: 100% !important;
   height: 100%;
@@ -297,22 +359,38 @@
   border-radius: 0;
   overflow: auto;
 }
-:is(.aperture-root:fullscreen, :fullscreen > .aperture-root) > .aperture-header {
-  grid-area: 1 / 1;
+:is(.aperture-root:fullscreen, :fullscreen > .aperture-root):has(> .aperture-summary) {
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  grid-template-areas: 'header actions' 'summary summary' 'plot plot' 'footer footer';
 }
-:is(.aperture-root:fullscreen, :fullscreen > .aperture-root) > .aperture-controls {
-  grid-area: 1 / 2;
+:is(.aperture-root:fullscreen, :fullscreen > .aperture-root):has(> .aperture-controls) {
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  grid-template-areas: 'header actions' 'controls controls' 'plot plot' 'footer footer';
+}
+:is(.aperture-root:fullscreen, :fullscreen > .aperture-root):has(> .aperture-summary):has(> .aperture-controls) {
+  grid-template-rows: auto auto auto minmax(0, 1fr) auto;
+  grid-template-areas: 'header actions' 'summary summary' 'controls controls' 'plot plot' 'footer footer';
+}
+:is(.aperture-root:fullscreen, :fullscreen > .aperture-root) > .aperture-header {
+  grid-area: header;
+}
+:is(.aperture-root:fullscreen, :fullscreen > .aperture-root) > .aperture-actions {
+  grid-area: actions;
   margin: 0;
 }
-:is(.aperture-root:fullscreen, :fullscreen > .aperture-root) > :not(.aperture-header, .aperture-controls, .aperture-footer) {
-  grid-row: 2;
-  grid-column: 1 / -1;
+:is(.aperture-root:fullscreen, :fullscreen > .aperture-root) > .aperture-controls {
+  grid-area: controls;
+}
+:is(.aperture-root:fullscreen, :fullscreen > .aperture-root) > .aperture-summary {
+  grid-area: summary;
+}
+:is(.aperture-root:fullscreen, :fullscreen > .aperture-root) > :not(.aperture-header, .aperture-actions, .aperture-controls, .aperture-summary, .aperture-footer) {
+  grid-area: plot;
   align-self: stretch;
   min-height: 0;
 }
 :is(.aperture-root:fullscreen, :fullscreen > .aperture-root) > .aperture-footer {
-  grid-row: 3;
-  grid-column: 1 / -1;
+  grid-area: footer;
 }
 :is(.aperture-root:fullscreen, :fullscreen > .aperture-root) .aperture-plot,
 :is(.aperture-root:fullscreen, :fullscreen > .aperture-root) .aperture-chart {
@@ -338,6 +416,7 @@
 }
 
 [data-aperture-root] .aperture-header,
+[data-aperture-root] .aperture-actions,
 [data-aperture-root] .aperture-controls,
 [data-aperture-root] .aperture-footer {
   display: flex;
@@ -357,7 +436,7 @@
   transition: left 120ms ease-out, top 120ms ease-out;
 }
 
-[data-aperture-root] .aperture-controls.aperture-toolbar {
+[data-aperture-root] .aperture-actions.aperture-toolbar {
   justify-content: flex-end;
   gap: var(--aperture-space-2);
 }

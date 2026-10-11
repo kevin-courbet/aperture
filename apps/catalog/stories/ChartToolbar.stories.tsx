@@ -1,4 +1,3 @@
-import { useRef } from 'react'
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { BarChart, ChartToolbar, ChartWidget, chartData } from '@kevin-courbet/aperture'
 
@@ -32,11 +31,14 @@ export const VisibleDataButton: StoryObj<typeof meta> = { args: { dataTableContr
 export const OpenTable: StoryObj<typeof meta> = { args: { dataTableControl: 'visible', defaultTableVisible: true } }
 
 function ComposedWidget() {
-  const targetRef = useRef<HTMLElement>(null)
   return (
-    <ChartWidget.Root ref={targetRef} exactValues="available">
-      <ChartWidget.Header>Monthly sales example</ChartWidget.Header>
-      <ChartToolbar targetRef={targetRef} dataTableControl="visible" />
+    <ChartWidget.Root ariaLabel="Monthly sales widget" exactValues="available">
+      <ChartWidget.Header><ChartWidget.Title>Monthly sales example</ChartWidget.Title></ChartWidget.Header>
+      <ChartToolbar dataTableControl="visible" />
+      <ChartWidget.Summary>
+        <ChartWidget.Metric value="€200k" description="€10k more than January." />
+        <ChartWidget.Details items={[{ label: 'Pipeline', value: '€105k' }, { label: 'Signed', value: '€95k' }]} />
+      </ChartWidget.Summary>
       <ChartWidget.Plot><BarChart {...chartProps} /></ChartWidget.Plot>
     </ChartWidget.Root>
   )

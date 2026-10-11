@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useState } from 'react'
 import {
   AreaChart,
   BarChart,
@@ -6,6 +6,7 @@ import {
   BoxPlotChart,
   CandlestickChart,
   ChartProvider,
+  ChartToolbar,
   ChartWidget,
   ChoroplethChart,
   DataTableControl,
@@ -15,7 +16,6 @@ import {
   EcdfChart,
   ErrorBarChart,
   FacetChart,
-  FullscreenControl,
   GaugeChart,
   HeatmapChart,
   HistogramChart,
@@ -459,18 +459,16 @@ const timeRangeOptions = [
 ] as const
 
 export function FullscreenTimeRangeExample() {
-  const targetRef = useRef<HTMLElement>(null)
   const [range, setRange] = useState<(typeof timeRangeOptions)[number]['value']>('6M')
   const count = range === 'All' ? throughputByMonth.length : Number.parseInt(range, 10)
   const visibleRows = queuedSeries.slice(-count)
   return (
     <ChartProvider locale="en-GB" timeZone="UTC">
-      <ChartWidget.Root ref={targetRef} exactValues="available" className="catalog-sheet catalog-interaction">
+      <ChartWidget.Root exactValues="available" className="catalog-sheet catalog-interaction">
         <ChartWidget.Header><p className="catalog-selection" role="status">Showing {visibleRows.length} monthly values</p></ChartWidget.Header>
+        <ChartToolbar dataTableControl="visible" />
         <ChartWidget.Controls className="catalog-toolbar">
           <TimeRangeControl value={range} options={timeRangeOptions} onChange={setRange} />
-          <DataTableControl />
-          <FullscreenControl targetRef={targetRef} />
         </ChartWidget.Controls>
         <ChartWidget.Plot className="catalog-plot">
           <AreaChart ariaLabel="Queued work by selected time range" ariaDescription={`${visibleRows.length} monthly queued-work values.`} state={chartData(visibleRows)} xLabel="Month" yLabel="Queued items" />

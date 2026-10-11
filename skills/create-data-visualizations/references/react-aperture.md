@@ -22,7 +22,9 @@ Compose the widget from explicit slots:
 ```tsx
 <ChartWidget.Root exactValues="available">
   <ChartWidget.Header>...</ChartWidget.Header>
+  <ChartToolbar />
   <ChartWidget.Controls>...</ChartWidget.Controls>
+  <ChartWidget.Summary>...</ChartWidget.Summary>
   <ChartWidget.Plot>...</ChartWidget.Plot>
   <ChartWidget.Footer>...</ChartWidget.Footer>
 </ChartWidget.Root>
@@ -32,7 +34,7 @@ Remove an unused slot. Do not add feature flags to one all-purpose widget.
 
 Available controls include:
 
-- `ChartToolbar`: full screen and an optional exact-value button in one controls slot.
+- `ChartToolbar`: full screen and an optional exact-value button in one actions slot.
 - `DataTableControl`.
 - `FullscreenControl`.
 - `TimeRangeControl`.
@@ -54,9 +56,11 @@ Page-level filter components:
 - `useCrossFilter`: one value per filter dimension. `selection(dimension)`
   returns the `selection` props for a chart that sets that dimension.
 
-The header and the controls share the first widget row when both fit. Put the
-title and note in `ChartWidget.Header` and the time range and full-screen
-controls in the controls slot. Do not add a separate toolbar row.
+The header and actions share the first widget row. The full-screen button stays
+at the top-right corner. Use `ChartWidget.Title`, `ChartWidget.Period`, and
+`ChartWidget.Description` for header content. Put `ChartWidget.Metric` and
+`ChartWidget.Details` in `ChartWidget.Summary` for the KPI and its descriptions.
+Put time-range selectors and filters in the full-width `ChartWidget.Controls` row.
 
 The host owns selected ranges, toggles, filtering, data access, and business
 aggregation. Aperture owns presentation, accessible interaction, focus, and
@@ -74,9 +78,9 @@ hidden by default. Keep it hidden. Set `dataTableControl="visible"` or add
 table is independently collapsed by default; `defaultTableVisible` opens it.
 Exact values remain accessible when visually collapsed.
 
-In a widget, add `<ChartToolbar targetRef={targetRef} />` instead of a
-`ChartWidget.Controls` slot, or compose the individual controls in that slot.
-Pass the same ref to `ChartWidget.Root`. Widget table state takes precedence
+In a widget, add `<ChartToolbar />` instead of a
+`ChartWidget.Actions` slot, or compose the individual actions in that slot.
+`ChartWidget.Root` owns the full-screen target. Widget table state takes precedence
 over standalone chart props. Do not add both toolbar forms to the same widget.
 
 ## Highlights And Cross-Filtering

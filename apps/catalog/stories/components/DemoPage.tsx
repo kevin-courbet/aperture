@@ -1,11 +1,11 @@
-import { useRef, useState, type SVGProps } from 'react'
+import { useState, type SVGProps } from 'react'
 import {
   BarChart,
+  ChartToolbar,
   ChartProvider,
   ChartWidget,
   DonutChart,
   ErrorBarChart,
-  FullscreenControl,
   HeatmapChart,
   LineChart,
   ScatterChart,
@@ -111,11 +111,10 @@ function CodeSample() {
 function ProductWidget() {
   const [range, setRange] = useState<DemoRange>('6M')
   const [goalVisible, setGoalVisible] = useState(true)
-  const frameRef = useRef<HTMLElement>(null)
   const rows = range === 'All' ? teamSeries : teamSeries.slice(range === '3M' ? -3 : -6)
 
   return (
-    <ChartWidget.Root ref={frameRef} className="demo-widget demo-widget-frame" exactValues="available">
+    <ChartWidget.Root className="demo-widget demo-widget-frame" exactValues="available">
         <ChartWidget.Header className="demo-widget-header">
           <div>
             <p className="demo-eyebrow">React application example</p>
@@ -124,11 +123,11 @@ function ProductWidget() {
           </div>
           <span className="demo-source">Example data</span>
         </ChartWidget.Header>
+        <ChartToolbar />
         <ChartWidget.Controls className="demo-widget-controls">
           <TimeRangeControl value={range} options={rangeOptions} onChange={setRange} />
           <div className="demo-control-cluster">
             <ToggleControl label="Goal" icon={TargetIcon as ApertureIcon} isSelected={goalVisible} onChange={setGoalVisible} />
-            <FullscreenControl targetRef={frameRef} />
           </div>
         </ChartWidget.Controls>
         <ChartWidget.Plot className="demo-widget-plot">

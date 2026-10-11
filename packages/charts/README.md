@@ -47,42 +47,58 @@ Collapsed tables remain in the accessibility tree. The hidden button is not in
 the tab order. Set `dataTableControl="visible"` when sighted readers need to open
 the table. Loading, empty, and error states do not create a table or toolbar.
 
-Inside a widget, the host owns the toolbar and table state. Chart-level
+Inside a widget, compose one toolbar and configure the table state on the root. Chart-level
 `dataTableControl` and `defaultTableVisible` do not override the widget.
 
 ```tsx
-const targetRef = useRef<HTMLElement>(null)
-
-<ChartWidget.Root ref={targetRef} exactValues="available">
-  <ChartWidget.Header>Monthly sales</ChartWidget.Header>
-  <ChartToolbar targetRef={targetRef} />
+<ChartWidget.Root ariaLabel="Monthly sales" exactValues="available">
+  <ChartWidget.Header>
+    <ChartWidget.Title>Monthly sales</ChartWidget.Title>
+    <ChartWidget.Period>September 2026</ChartWidget.Period>
+  </ChartWidget.Header>
+  <ChartToolbar />
+  <ChartWidget.Summary>
+    <ChartWidget.Metric value="€200k" description="€10k more than August." />
+    <ChartWidget.Details items={[
+      { label: 'Pipeline', value: '€105k' },
+      { label: 'Signed', value: '€95k' },
+    ]} />
+  </ChartWidget.Summary>
   <ChartWidget.Plot><BarChart {...props} /></ChartWidget.Plot>
 </ChartWidget.Root>
 ```
 
-`ChartToolbar` renders the `ChartWidget.Controls` slot. Do not put it inside
-another controls slot. Its `dataTableControl` default is `hidden`. For a custom
-toolbar, put `DataTableControl` and `FullscreenControl` in one
-`ChartWidget.Controls` slot. An explicit `DataTableControl` stays visible.
+`ChartToolbar` renders the `ChartWidget.Actions` slot. Do not put it inside
+another actions slot. Its `dataTableControl` default is `hidden`. For custom
+widget actions, put `DataTableControl` and `FullscreenControl` in one
+`ChartWidget.Actions` slot. An explicit `DataTableControl` stays visible.
 One widget contains one toolbar and one exact-value table.
 
 ### Place the toolbar
 
-The header and the controls share the first row of a widget when both fit.
-The controls align to the end of the row. In a narrow widget the controls wrap
-below the header. Put the title and its note in `ChartWidget.Header`, and the
-time range and full-screen controls in one controls slot.
+The header and actions share the first row. The full-screen control stays at
+the top-right corner, including on narrow screens. Put the title and period in
+`ChartWidget.Header`. Put headline values, changes, and component values in
+`ChartWidget.Summary`. `ChartWidget.Description` shows supporting text.
+
+Put time-range selectors, filters, and other secondary controls in
+`ChartWidget.Controls`. This full-width row stays separate from the corner
+actions, so long controls do not displace the title or full-screen button.
+
+The host supplies formatted values and descriptions. Aperture supplies their
+layout, type, spacing, and semantic markup. Optional slots are absent when their
+components are absent.
 
 ### Full-screen sizing
 
-Use `ChartWidget.Root` as the full-screen target. Keep the title, controls, plot,
-and footer in its slots. In full screen, the plot fills the remaining height
+`ChartWidget.Root` owns the full-screen target. `ChartToolbar` and
+`FullscreenControl` use it automatically. They do not accept `targetRef`.
+Keep the title, summary, controls, plot, and footer in their slots.
+In full screen, the plot fills the remaining height
 after these elements and the legend. It responds to window and content changes.
 On exit, the chart returns to its configured `height` and `width`.
 
-Standalone charts use the same layout. A wrapper target is supported when the
-widget is its direct child and the wrapper supplies a definite content height.
-For a custom layout, use the widget itself as the target. Small screens scroll
+Standalone charts use the same layout. Small screens scroll
 when the controls and the minimum plot height do not fit. The native full-screen
 API handles entry and Escape; exit returns focus to the full-screen button.
 

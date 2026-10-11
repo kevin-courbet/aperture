@@ -68,7 +68,7 @@ The review on 2026-10-10 asked for ten changes. Status:
 |---|---|
 | Fix the heatmap colors | Fixed. `HeatmapChart` and `ChoroplethChart` take a typed `colorScale`, sequential or diverging. Fills are `color-mix()` values of theme tokens. The legend shows a gradient. `valueLabels` prints cell values. |
 | Highlight cells, bars, and time ranges | Added `highlights` on `LineChart`, `AreaChart`, `StackedAreaChart` (ranges and events), `BarChart` and `DumbbellChart` (category bands), and `HeatmapChart` (cell outlines). Highlights appear in the legend and the description. |
-| Put the toolbar in the title row | Done. Widget header and controls share the first row and wrap when narrow. Full screen keeps the same row. |
+| Put the toolbar in the title row | Done. The header and corner actions share the first row. Secondary controls have a full-width row. Full screen preserves these regions. |
 | Cross-filtering | Added `selection` on `BarChart`, `DumbbellChart`, and `HeatmapChart` (click, Enter, Space), `useCrossFilter`, `FilterBar`, `SelectControl`, and `ActiveFilters`. Host filtering uses a pre-aggregated cube. |
 | Compare like with like | The Dashboard artifact heatmap no longer parses computed colors. All artifact paints fall back to literal colors when a host token is missing. Both pages were captured with the same headless browser at 1440 px. |
 | Darker page, lighter cards | Applied in the case study page. Guidance added to the skill. |

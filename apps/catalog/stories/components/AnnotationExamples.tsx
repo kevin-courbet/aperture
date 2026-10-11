@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react'
+import { useMemo, useState } from 'react'
 import {
   ActiveFilters,
   BarChart,
@@ -104,11 +104,10 @@ function totalsBy<TKey extends string>(keys: readonly TKey[], rows: typeof order
 }
 
 function OrdersWidget({ title, children }: { readonly title: string; readonly children: React.ReactNode }) {
-  const targetRef = useRef<HTMLElement>(null)
   return (
-    <ChartWidget.Root ref={targetRef} exactValues="available" className="catalog-cross-widget">
+    <ChartWidget.Root exactValues="available" className="catalog-cross-widget">
       <ChartWidget.Header><h2>{title}</h2></ChartWidget.Header>
-      <ChartToolbar targetRef={targetRef} />
+      <ChartToolbar />
       <ChartWidget.Plot>{children}</ChartWidget.Plot>
     </ChartWidget.Root>
   )

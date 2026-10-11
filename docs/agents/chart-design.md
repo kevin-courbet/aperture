@@ -42,6 +42,10 @@ accessible description.
 
 ## Compose The Widget
 
+The widget contains the title, period indicator, KPI summary, controls, chart
+area, and notes. Use `ChartWidget` presentation components for these parts.
+The full-screen button stays at the top-right corner of the complete widget.
+
 Add only controls that help the user answer the stated question. A control
 exists because its React component is present. Do not use one component with
 many feature flags.

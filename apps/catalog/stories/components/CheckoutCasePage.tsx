@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState, type ReactNode } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 import {
   ActiveFilters,
   BarChart,
@@ -7,7 +7,6 @@ import {
   ChartWidget,
   DumbbellChart,
   FilterBar,
-  FullscreenControl,
   HeatmapChart,
   LineChart,
   SelectControl,
@@ -148,19 +147,18 @@ function Widget({
   readonly footer?: ReactNode
   readonly children: ReactNode
 }) {
-  const targetRef = useRef<HTMLElement>(null)
   return (
-    <ChartWidget.Root ref={targetRef} className="case-widget" exactValues="available">
+    <ChartWidget.Root className="case-widget" exactValues="available">
       <ChartWidget.Header className="case-widget-header">
         <h2>{title}</h2>
         <p className="case-note">{note}</p>
       </ChartWidget.Header>
+      <ChartToolbar />
       {controls === undefined
-        ? <ChartToolbar targetRef={targetRef} />
+        ? null
         : (
           <ChartWidget.Controls className="case-widget-controls">
             {controls}
-            <FullscreenControl targetRef={targetRef} />
           </ChartWidget.Controls>
         )}
       <ChartWidget.Plot>{children}</ChartWidget.Plot>

@@ -131,7 +131,7 @@ export type {
   SelectControlProps,
   SelectOption,
 } from './filters.js'
-export type { ChartWidgetRootProps } from './widget.js'
+export type { ChartWidgetRootProps, ChartWidgetMetricProps, ChartWidgetDetail, ChartWidgetDetailsProps } from './widget.js'
 export {
   ChartToolbar,
   DataTableControl,
@@ -141,7 +141,6 @@ export {
 } from './controls.js'
 export type {
   ChartToolbarProps,
-  FullscreenControlProps,
   TimeRangeControlProps,
   TimeRangeOption,
   ToggleControlProps,
