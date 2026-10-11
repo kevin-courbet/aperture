@@ -348,6 +348,7 @@ function generateCalendarTicks(
   interval: CalendarTickInterval,
   locale: string,
   timeZone: string,
+  candidateLimit = maximumTickCandidates,
 ): readonly Date[] | null {
   const checkedInterval = validatedInterval(interval)
   const start = domain[0].getTime()
@@ -371,7 +372,7 @@ function generateCalendarTicks(
       if (timestamp > end) break
       if (timestamp <= previous) throw new RangeError('Time-axis calendar ticks must increase.')
       values.push(date)
-      if (values.length > maximumTickCandidates) return null
+      if (values.length > candidateLimit) return null
       previous = timestamp
       cursor = addDateInterval(cursor, checkedInterval)
     }
@@ -384,7 +385,7 @@ function generateCalendarTicks(
       const timestamp = date.getTime()
       if (timestamp <= previous) throw new RangeError('Time-axis calendar ticks must increase.')
       values.push(date)
-      if (values.length > maximumTickCandidates) return null
+      if (values.length > candidateLimit) return null
       previous = timestamp
       cursor = nextClockTick(cursor, checkedInterval)
     }
@@ -503,13 +504,18 @@ function chooseAutomaticTicks(
   timeZone: string,
 ): { readonly interval: CalendarTickInterval; readonly values: readonly Date[] } {
   let best: { readonly interval: CalendarTickInterval; readonly values: readonly Date[]; readonly score: number } | undefined
-  for (const interval of intervals) {
-    const values = generateCalendarTicks(domain, interval, locale, timeZone)
+  // Coarse intervals establish a score before fine intervals can enumerate hundreds of ticks.
+  for (const interval of [...intervals].reverse()) {
+    // Each tick beyond the target adds four to the score. Further ticks cannot improve it.
+    const candidateLimit = best === undefined
+      ? maximumTickCandidates
+      : Math.min(maximumTickCandidates, target + Math.floor(best.score / 4))
+    const values = generateCalendarTicks(domain, interval, locale, timeZone, candidateLimit)
     if (values === null || values.length < minimumAutomaticTicks) continue
     const overflow = Math.max(0, values.length - target)
     const score = Math.abs(values.length - target) + overflow * 3
-    if (best === undefined || score < best.score) best = { interval, values, score }
-    if (values.length === target) break
+    // Equal scores prefer the earlier interval in the fine-to-coarse policy order.
+    if (best === undefined || score <= best.score) best = { interval, values, score }
   }
   if (best === undefined) throw new RangeError('The time-axis domain does not support a calendar tick interval.')
   return best
