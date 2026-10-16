@@ -1,5 +1,12 @@
-import type { Meta, StoryObj } from '@storybook/react-vite'
+import type { Story, StoryDefault } from '@ladle/react'
+import { withCatalogCanvas } from '../src/story'
 import { StateGallery } from './components/ChartExamples'
-const meta = { title: 'States/Responsive', component: StateGallery, args: { mode: 'responsive' }, parameters: { controls: { disable: true }, docs: { description: { component: 'The chart keeps its controls and exact values at a compact mobile width.' } } } } satisfies Meta<typeof StateGallery>
-export default meta
-export const CompactMobile: StoryObj<typeof meta> = { globals: { viewport: { value: 'compactMobile', isRotated: false } } }
+
+export default {
+  title: 'States/Responsive',
+  decorators: [withCatalogCanvas],
+  meta: { description: 'The chart keeps its controls and exact values at a compact mobile width.' },
+} satisfies StoryDefault
+
+export const CompactMobile: Story = () => <StateGallery mode="responsive" />
+CompactMobile.meta = { width: 390 }

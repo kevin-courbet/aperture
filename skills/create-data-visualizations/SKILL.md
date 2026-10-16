@@ -28,7 +28,7 @@ direct. The CLI requires Bun. Run it with:
 bun "$SKILL_DIR/scripts/chart" capabilities --json
 ```
 
-Use `schema`, `validate-spec`, and `storybook` commands as
+Use `schema`, `validate-spec`, and `catalog` commands as
 documented in `references/cli.md`. Treat non-zero exit status as a failure.
 
 ## Non-Negotiables
@@ -41,5 +41,5 @@ documented in `references/cli.md`. Treat non-zero exit status as a failure.
 - Add only controls that change the reader's analysis.
 - Never use color as the only signal.
 - Never hide errors or unsupported states behind an empty chart.
-- Validate React charts through Storybook when the project exposes it.
+- Validate React charts with the Aperture catalog story tests and previews when they are available.
 - Redirect standalone report work to the Reports skill and renderer.

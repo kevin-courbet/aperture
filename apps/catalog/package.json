@@ -4,15 +4,11 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "prestorybook": "pnpm --filter @kevin-courbet/aperture build",
-    "storybook": "storybook dev -p 6006",
-    "prebuild": "pnpm --filter @kevin-courbet/aperture build",
-    "build": "storybook build --output-dir storybook-static",
-    "build-storybook": "pnpm run build",
-    "pretypecheck": "pnpm --filter @kevin-courbet/aperture build",
+    "ladle": "ladle serve",
+    "build": "ladle build",
+    "preview": "ladle preview",
     "typecheck": "tsc --noEmit",
-    "pretest": "pnpm --filter @kevin-courbet/aperture build",
-    "test": "vitest run --project=storybook"
+    "test": "vitest run"
   },
   "dependencies": {
     "@kevin-courbet/aperture": "workspace:*",
@@ -20,18 +16,17 @@
     "react-dom": "^19.2.0"
   },
   "devDependencies": {
-    "@storybook/addon-a11y": "10.5.7",
-    "@storybook/addon-mcp": "0.7.0",
-    "@storybook/addon-vitest": "10.5.7",
-    "@storybook/react-vite": "10.5.7",
+    "@ladle/react": "5.1.1",
+    "@testing-library/dom": "10.4.2",
+    "@testing-library/jest-dom": "7.0.1",
+    "@testing-library/user-event": "14.6.8",
     "@types/node": "^24.3.0",
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
-    "@vitejs/plugin-react": "^5.0.4",
     "@vitest/browser": "4.1.10",
     "@vitest/browser-playwright": "4.1.10",
+    "axe-core": "4.14.0",
     "playwright": "1.62.1",
-    "storybook": "10.5.7",
     "typescript": "^5.9.3",
     "vite": "6.4.3",
     "vitest": "4.1.10"

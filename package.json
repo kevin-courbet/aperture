@@ -10,8 +10,8 @@
     "node": ">=22"
   },
   "scripts": {
-    "dev": "pnpm --filter @aperture/catalog storybook",
-    "storybook": "pnpm --filter @aperture/catalog storybook",
+    "dev": "pnpm --filter @aperture/catalog ladle",
+    "ladle": "pnpm --filter @aperture/catalog ladle",
     "typecheck": "pnpm -r --if-present typecheck",
     "build": "pnpm -r --if-present build",
     "test": "pnpm -r --if-present test",

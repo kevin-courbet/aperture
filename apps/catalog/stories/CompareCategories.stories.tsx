@@ -1,34 +1,25 @@
-import type { Meta, StoryObj } from '@storybook/react-vite'
-import { expect, userEvent, waitFor, within } from 'storybook/test'
-import { BarVariantExample, ChartExample, defaultControls, primitiveArgTypes } from './components/ChartExamples'
-const meta = { title: 'Charts/Compare categories', component: ChartExample, args: defaultControls, argTypes: primitiveArgTypes, parameters: { docs: { description: { component: 'Compare category values from a common baseline.' } } } } satisfies Meta<typeof ChartExample>
-export default meta
-type ChartStory = StoryObj<typeof meta>
-export const BarChart: ChartStory = { args: { name: 'BarChart' } }
-export const HorizontalBars: StoryObj<typeof BarVariantExample> = { render: () => <BarVariantExample layout="single" orientation="horizontal" /> }
-export const GroupedBars: StoryObj<typeof BarVariantExample> = {
-  render: () => <BarVariantExample layout="grouped" orientation="vertical" />,
-  play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement)
-    const chart = canvas.getByRole('img', { name: 'grouped vertical bars' })
-    chart.focus()
-    await userEvent.keyboard('{ArrowRight}')
-    await waitFor(() => expect(canvas.getByText(/Total:/)).toBeVisible())
-    const total = canvas.getByText(/Total:/)
-    await expect(total).toHaveTextContent('Total: 277 items')
-  },
-}
-export const HorizontalGroupedBars: StoryObj<typeof BarVariantExample> = {
-  render: () => <BarVariantExample layout="grouped" orientation="horizontal" />,
-  play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement)
-    const chart = canvas.getByRole('img', { name: 'grouped horizontal bars' })
-    chart.focus()
-    await userEvent.keyboard('{ArrowRight}')
-    await waitFor(() => expect(canvas.getByText(/Total:/)).toBeVisible())
-    const total = canvas.getByText(/Total:/)
-    await expect(total).toHaveTextContent('Total: 277 items')
-  },
-}
-export const Dumbbell: ChartStory = { args: { name: 'DumbbellChart' } }
-export const StackedBars: StoryObj<typeof BarVariantExample> = { render: () => <BarVariantExample layout="stacked" orientation="vertical" /> }
+import type { Story, StoryDefault } from '@ladle/react'
+import { withCatalogCanvas } from '../src/story'
+import { BarVariantExample, ChartExample, type ChartExampleProps, defaultControls, primitiveArgTypes } from './components/ChartExamples'
+
+export default {
+  title: 'Charts/Compare categories',
+  args: defaultControls,
+  argTypes: primitiveArgTypes,
+  decorators: [withCatalogCanvas],
+  meta: { description: 'Compare category values from a common baseline.' },
+} satisfies StoryDefault<ChartExampleProps>
+
+type ChartStory = Story<ChartExampleProps>
+
+export const BarChart: ChartStory = (args) => <ChartExample {...args} />
+BarChart.args = { name: 'BarChart' }
+
+export const HorizontalBars: Story = () => <BarVariantExample layout="single" orientation="horizontal" />
+export const GroupedBars: Story = () => <BarVariantExample layout="grouped" orientation="vertical" />
+export const HorizontalGroupedBars: Story = () => <BarVariantExample layout="grouped" orientation="horizontal" />
+
+export const Dumbbell: ChartStory = (args) => <ChartExample {...args} />
+Dumbbell.args = { name: 'DumbbellChart' }
+
+export const StackedBars: Story = () => <BarVariantExample layout="stacked" orientation="vertical" />

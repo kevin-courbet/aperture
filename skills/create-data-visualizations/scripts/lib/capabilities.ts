@@ -1,6 +1,6 @@
 export const capabilities = {
   name: 'create-data-visualizations',
-  version: '2.0.0',
+  version: '3.0.0',
   commands: [
     {
       name: 'capabilities',
@@ -53,28 +53,35 @@ export const capabilities = {
       requires: ['Bun runtime'],
     },
     {
-      name: 'storybook',
-      description: 'Use Aperture Storybook documentation, preview, and test tools.',
+      name: 'catalog',
+      description: 'List, preview, and test stories in the Aperture Ladle catalog.',
       input: {
         type: 'object',
+        additionalProperties: false,
         required: ['operation'],
         properties: {
-          operation: { enum: ['status', 'instructions', 'list', 'docs', 'preview', 'test'] },
-          ids: { type: 'array', items: { type: 'string' } },
-          withStoryIds: { type: 'boolean' },
-          url: { type: 'string', format: 'uri' },
+          operation: { enum: ['status', 'list', 'preview', 'test'] },
+          ids: { type: 'array', items: { type: 'string' }, description: 'Story IDs from catalog list' },
+          url: { type: 'string', format: 'uri', description: 'Ladle catalog URL for status, list, and preview' },
+          repo: { type: 'string', description: 'Aperture checkout for test' },
         },
       },
       output: {
         envelopeSchema: 'command-result',
         dataSchema: {
           type: 'object',
-          additionalProperties: false,
-          required: ['url', 'result'],
-          properties: { url: { type: 'string' }, result: {} },
+          properties: {
+            url: { type: 'string' },
+            storyCount: { type: 'integer' },
+            stories: { type: 'array', items: { type: 'object' } },
+            repo: { type: 'string' },
+            passed: { type: 'array', items: { type: 'string' } },
+            skipped: { type: 'array', items: { type: 'string' } },
+            failed: { type: 'array', items: { type: 'object' } },
+          },
         },
       },
-      requires: ['Bun runtime', 'Running Storybook MCP endpoint for the target project'],
+      requires: ['Bun runtime', 'Running Ladle catalog for status, list, and preview', 'Aperture checkout and pnpm for test'],
     },
   ],
   schemas: ['chart-spec', 'command-result', 'capabilities', 'diagnostic'],
@@ -82,7 +89,7 @@ export const capabilities = {
     'Read the skill references before implementation.',
     'Validate a chart specification for non-trivial work.',
     'Use Aperture for React when available.',
-    'Use Storybook tools after React visual changes.',
+    'Use catalog previews and story tests after React visual changes.',
     'Redirect standalone report work to create-data-reports.',
   ],
 } as const

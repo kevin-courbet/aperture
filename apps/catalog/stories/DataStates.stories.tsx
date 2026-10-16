@@ -1,5 +1,11 @@
-import type { Meta, StoryObj } from '@storybook/react-vite'
+import type { Story, StoryDefault } from '@ladle/react'
+import { withCatalogCanvas } from '../src/story'
 import { StateGallery } from './components/ChartExamples'
-const meta = { title: 'States/Data states', component: StateGallery, args: { mode: 'data' }, parameters: { controls: { disable: true }, docs: { description: { component: 'Loading, empty, error, and ready are distinct chart states.' } } } } satisfies Meta<typeof StateGallery>
-export default meta
-export const CompleteStateSet: StoryObj<typeof meta> = {}
+
+export default {
+  title: 'States/Data states',
+  decorators: [withCatalogCanvas],
+  meta: { description: 'Loading, empty, error, and ready are distinct chart states.' },
+} satisfies StoryDefault
+
+export const CompleteStateSet: Story = () => <StateGallery mode="data" />

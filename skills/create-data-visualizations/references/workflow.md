@@ -25,7 +25,7 @@ For React projects:
 
 1. Check for `@kevin-courbet/aperture`.
 2. Check for a local Aperture checkout or workspace dependency.
-3. Check whether Storybook exposes the Aperture MCP endpoint.
+3. Check whether the Aperture Ladle catalog runs (`chart catalog status`).
 4. Use the common Aperture API before `@kevin-courbet/aperture/tanstack`.
 
 Do not silently add another chart library when Aperture is unavailable. Report
@@ -83,7 +83,7 @@ report specification, composition, provenance, SSR, hydration, and artifact.
 
 - Run type checks and project tests.
 - Validate the chart specification.
-- Use Storybook story tests and previews for React visual changes. Do not commit
+- Use catalog story tests and previews for React visual changes. Do not commit
   new tests unless the user explicitly requires coverage; committed tests must
   prove accessible semantics or user interaction, not visual presentation.
 - Redirect report validation to the Reports workflow.

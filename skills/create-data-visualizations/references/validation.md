@@ -51,5 +51,5 @@ Report:
 - Chart question and chosen family.
 - Data and accessibility constraints.
 - Validation commands and results.
-- Storybook preview URLs for React work.
+- Catalog preview URLs for React work.
 - Remaining chart limits.

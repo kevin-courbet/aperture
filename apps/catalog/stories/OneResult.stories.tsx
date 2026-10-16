@@ -1,5 +1,11 @@
-import type { Meta, StoryObj } from '@storybook/react-vite'
+import type { Story, StoryDefault } from '@ladle/react'
+import { withCatalogCanvas } from '../src/story'
 import { StateGallery } from './components/ChartExamples'
-const meta = { title: 'States/One result', component: StateGallery, args: { mode: 'one' }, parameters: { controls: { disable: true }, docs: { description: { component: 'One observation renders as one value, not as a trend.' } } } } satisfies Meta<typeof StateGallery>
-export default meta
-export const ObservationNotTrend: StoryObj<typeof meta> = {}
+
+export default {
+  title: 'States/One result',
+  decorators: [withCatalogCanvas],
+  meta: { description: 'One observation renders as one value, not as a trend.' },
+} satisfies StoryDefault
+
+export const ObservationNotTrend: Story = () => <StateGallery mode="one" />

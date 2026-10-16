@@ -3,7 +3,9 @@ packages:
   - packages/*
 
 allowBuilds:
+  '@swc/core': false
   esbuild: true
+  msw: false
 
 minimumReleaseAgeExclude:
   - '@tanstack/charts@1.1.0'

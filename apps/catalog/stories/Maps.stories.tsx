@@ -1,7 +1,19 @@
-import type { Meta, StoryObj } from '@storybook/react-vite'
-import { ChartExample, defaultControls, primitiveArgTypes } from './components/ChartExamples'
-const meta = { title: 'Charts/Maps', component: ChartExample, args: defaultControls, argTypes: primitiveArgTypes, parameters: { docs: { description: { component: 'Use geography only when location is part of the question.' } } } } satisfies Meta<typeof ChartExample>
-export default meta
-type ChartStory = StoryObj<typeof meta>
-export const ChoroplethChart: ChartStory = { args: { name: 'ChoroplethChart' } }
-export const RouteMapChart: ChartStory = { args: { name: 'RouteMapChart' } }
+import type { Story, StoryDefault } from '@ladle/react'
+import { withCatalogCanvas } from '../src/story'
+import { ChartExample, type ChartExampleProps, defaultControls, primitiveArgTypes } from './components/ChartExamples'
+
+export default {
+  title: 'Charts/Maps',
+  args: defaultControls,
+  argTypes: primitiveArgTypes,
+  decorators: [withCatalogCanvas],
+  meta: { description: 'Use geography only when location is part of the question.' },
+} satisfies StoryDefault<ChartExampleProps>
+
+type ChartStory = Story<ChartExampleProps>
+
+export const ChoroplethChart: ChartStory = (args) => <ChartExample {...args} />
+ChoroplethChart.args = { name: 'ChoroplethChart' }
+
+export const RouteMapChart: ChartStory = (args) => <ChartExample {...args} />
+RouteMapChart.args = { name: 'RouteMapChart' }

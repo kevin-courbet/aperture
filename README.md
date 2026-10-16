@@ -37,7 +37,7 @@ requires Bun. Use the separate `create-data-reports` skill for reports.
 Aperture remains its development source. The central skills catalog publishes
 updates after they land on `main`.
 
-The Storybook catalog demonstrates:
+The Ladle catalog demonstrates:
 
 - Composable widgets and controls.
 - Strict TypeScript contracts.
@@ -58,6 +58,12 @@ pnpm install
 pnpm dev
 ```
 
+`pnpm dev` serves the catalog at `http://127.0.0.1:6006`. Each story file in
+`apps/catalog/stories` has an optional `.play.ts` file with its interaction
+test. `pnpm --filter @aperture/catalog test` renders every story in Chromium,
+checks WCAG 2.2 AA rules with axe, and runs the plays. Set
+`parameters.test` to `false` to omit one story.
+
 Validate changes:
 
 ```sh
@@ -71,7 +77,7 @@ publishes the package only from the clean landed `origin/main` commit. See
 The repository contains:
 
 - `packages/charts`: the `@kevin-courbet/aperture` React package.
-- `apps/catalog`: the Storybook design and behavior catalog.
+- `apps/catalog`: the Ladle design and behavior catalog.
 - `skills/create-data-visualizations`: the public agent workflow and validation tools.
 
 TanStack Charts is pinned to `1.1.0`. Common Aperture

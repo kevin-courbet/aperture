@@ -1,50 +1,47 @@
-import type { Meta, StoryObj } from '@storybook/react-vite'
-import { expect, within } from 'storybook/test'
-import { calendarContextSeries, ChartExample, defaultControls, LinePresentationExample, lineGoalArgType, midMonthObservationSeries, primitiveArgTypes } from './components/ChartExamples'
-const meta = { title: 'Charts/Change over time', component: ChartExample, args: defaultControls, argTypes: primitiveArgTypes, parameters: { docs: { description: { component: 'Use these charts for ordered change. Do not draw a trend for one result.' } } } } satisfies Meta<typeof ChartExample>
-export default meta
-type ChartStory = StoryObj<typeof meta>
-export const LineChart: ChartStory = { args: { name: 'LineChart', showGoal: true }, argTypes: lineGoalArgType }
-export const AreaChart: ChartStory = {
-  args: { name: 'AreaChart', showGoal: undefined },
-  argTypes: { showGoal: { control: false, table: { disable: true } } },
+import type { Story, StoryDefault } from '@ladle/react'
+import { type CatalogParameters, withCatalogCanvas } from '../src/story'
+import { calendarContextSeries, ChartExample, type ChartExampleProps, defaultControls, LinePresentationExample, lineGoalArgType, midMonthObservationSeries, primitiveArgTypes } from './components/ChartExamples'
+
+export default {
+  title: 'Charts/Change over time',
+  args: defaultControls,
+  argTypes: primitiveArgTypes,
+  decorators: [withCatalogCanvas],
+  meta: { description: 'Use these charts for ordered change. Do not draw a trend for one result.' },
+} satisfies StoryDefault<ChartExampleProps>
+
+type ChartStory = Story<ChartExampleProps>
+
+export const LineChart: ChartStory = (args) => <ChartExample {...args} />
+LineChart.args = { name: 'LineChart', showGoal: true }
+LineChart.argTypes = lineGoalArgType
+
+export const AreaChart: ChartStory = (args) => <ChartExample {...args} />
+AreaChart.args = { name: 'AreaChart' }
+
+export const CalendarContext: ChartStory = (args) => <ChartExample {...args} />
+CalendarContext.args = {
+  name: 'LineChart',
+  dataOverride: calendarContextSeries,
+  timeAxis: { position: 'elapsed', ticks: { kind: 'automatic' } },
 }
-export const CalendarContext: ChartStory = {
-  args: {
-    name: 'LineChart',
-    dataOverride: calendarContextSeries,
-    timeAxis: { position: 'elapsed', ticks: { kind: 'automatic' } },
-  },
-  parameters: { docs: { description: { story: 'Automatic calendar ticks adapt to width and show the year only when context changes.' } } },
+CalendarContext.meta = { description: 'Automatic calendar ticks adapt to width and show the year only when context changes.' }
+
+export const QuarterlyTicks: ChartStory = (args) => <ChartExample {...args} />
+QuarterlyTicks.args = {
+  name: 'LineChart',
+  dataOverride: calendarContextSeries,
+  timeAxis: { position: 'elapsed', ticks: { kind: 'calendar', interval: { unit: 'quarter', step: 1 } } },
 }
-export const QuarterlyTicks: ChartStory = {
-  args: {
-    name: 'LineChart',
-    dataOverride: calendarContextSeries,
-    timeAxis: { position: 'elapsed', ticks: { kind: 'calendar', interval: { unit: 'quarter', step: 1 } } },
-  },
-  parameters: { docs: { description: { story: 'A caller can require one tick for each calendar quarter.' } } },
-}
-export const ObservationDates: ChartStory = {
-  args: {
-    name: 'LineChart',
-    dataOverride: midMonthObservationSeries,
-    timeAxis: { position: 'observations' },
-  },
-  play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement)
-    const chart = within(canvas.getByRole('img', { name: 'Completed work by month' }))
-    await expect(chart.getByText('15 Jan 2025')).toBeVisible()
-    await expect(chart.getByText('15 Feb')).toBeVisible()
-    await expect(chart.getByText('15 Mar')).toBeVisible()
-  },
+QuarterlyTicks.meta = { description: 'A caller can require one tick for each calendar quarter.' }
+
+export const ObservationDates: ChartStory = (args) => <ChartExample {...args} />
+ObservationDates.args = {
+  name: 'LineChart',
+  dataOverride: midMonthObservationSeries,
+  timeAxis: { position: 'observations' },
 }
 
-export const LinePresentation: StoryObj = {
-  tags: ['!test'],
-  render: () => <LinePresentationExample />,
-  parameters: {
-    controls: { disable: true },
-    docs: { description: { story: 'Line appearance controls fill, curve, and point visibility for each series.' } },
-  },
-}
+export const LinePresentation: Story = () => <LinePresentationExample />
+LinePresentation.meta = { description: 'Line appearance controls fill, curve, and point visibility for each series.' }
+LinePresentation.parameters = { test: false } satisfies CatalogParameters

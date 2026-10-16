@@ -45,29 +45,36 @@ known diagnostics in one run. It does not render a chart.
 
 Example specifications are in `assets/examples/`.
 
-## Storybook Adapter
+## Catalog Adapter
+
+The Aperture catalog runs on Ladle. Start it in an Aperture checkout with
+`pnpm dev`.
 
 ```sh
-bun "$SKILL_DIR/scripts/chart" storybook status --json
-bun "$SKILL_DIR/scripts/chart" storybook instructions --json
-bun "$SKILL_DIR/scripts/chart" storybook list --with-story-ids --json
-bun "$SKILL_DIR/scripts/chart" storybook docs <component-id> --json
-bun "$SKILL_DIR/scripts/chart" storybook preview <story-id> [story-id ...] --json
-bun "$SKILL_DIR/scripts/chart" storybook test [story-id ...] --json
+bun "$SKILL_DIR/scripts/chart" catalog status --json
+bun "$SKILL_DIR/scripts/chart" catalog list --json
+bun "$SKILL_DIR/scripts/chart" catalog preview <story-id> [story-id ...] --json
+bun "$SKILL_DIR/scripts/chart" catalog test [story-id ...] --repo <aperture-checkout> --json
 ```
 
-The adapter uses Storybook's MCP endpoint. Configure it with:
+- `status` and `list` read the story index from the running catalog. `list`
+  returns each story ID, name, title, and description.
+- `preview` checks the story IDs and returns the catalog URL and an isolated
+  URL for each story.
+- `test` runs the story tests in the Aperture checkout. Each test renders the
+  story in Chromium, checks WCAG 2.2 AA rules with axe, and runs the story
+  play. Without story IDs, it runs every story. It does not need a running
+  catalog.
 
-```sh
-APERTURE_MCP_URL=http://localhost:6006/mcp
-```
+Set `APERTURE_CATALOG_URL` when the catalog does not run at
+`http://127.0.0.1:6006/`. Set `APERTURE_REPO` instead of `--repo`. A remote
+catalog URL requires `APERTURE_CATALOG_ALLOW_REMOTE=1`.
 
-The CLI keeps Storybook optional. It discovers the available MCP tools before
-each operation and reports an unavailable service when the required tool is not
-present. Chart selection and specification validation work without a server.
+The catalog commands are optional. Chart selection and specification
+validation work without a catalog. An unreachable catalog returns exit code 4.
 
 ## Future MCP Layer
 
 Implement a future MCP server as an adapter over the CLI TypeScript modules or
 the same stable JSON commands. Do not duplicate chart rules, validation, or
-Storybook protocol code in the MCP layer.
+catalog code in the MCP layer.

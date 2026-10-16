@@ -1,3 +1,4 @@
+import type { ArgTypes } from '@ladle/react'
 import { useState } from 'react'
 import {
   AreaChart,
@@ -73,16 +74,15 @@ export type ExampleControls = {
 }
 
 export const primitiveArgTypes = {
-  renderer: { control: 'inline-radio', options: ['svg', 'canvas', 'motion'] },
+  renderer: { control: { type: 'inline-radio' }, options: ['svg', 'canvas', 'motion'] },
   width: { control: { type: 'range', min: 320, max: 1200, step: 40 } },
-  theme: { control: 'inline-radio', options: ['paper', 'night'] },
-  state: { control: 'select', options: ['ready', 'loading', 'empty', 'error'] },
-  showGoal: { control: false, table: { disable: true } },
-} as const
+  theme: { control: { type: 'inline-radio' }, options: ['paper', 'night'] },
+  state: { control: { type: 'select' }, options: ['ready', 'loading', 'empty', 'error'] },
+} satisfies ArgTypes<ExampleControls>
 
 export const lineGoalArgType = {
-  showGoal: { control: 'boolean', name: 'Goal visibility' },
-} as const
+  showGoal: { control: { type: 'boolean' }, name: 'Goal visibility' },
+} satisfies ArgTypes<ExampleControls>
 
 export const defaultControls: ExampleControls = {
   renderer: 'svg',
@@ -333,16 +333,18 @@ export function BarVariantExample({ layout, orientation }: { layout: 'single' | 
   )
 }
 
+export type ChartExampleProps = {
+  name: ChartName
+  dataOverride?: readonly TimeSeriesDatum[]
+  timeAxis?: TimeAxisOptions
+} & ExampleControls
+
 export function ChartExample({
   name,
   dataOverride,
   timeAxis,
   ...controls
-}: {
-  name: ChartName
-  dataOverride?: readonly TimeSeriesDatum[]
-  timeAxis?: TimeAxisOptions
-} & ExampleControls) {
+}: ChartExampleProps) {
   const details = metadata[name]
   return (
     <ChartProvider locale="en-GB" timeZone="UTC">

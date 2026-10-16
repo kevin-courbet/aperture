@@ -22,5 +22,5 @@
       "@kevin-courbet/aperture/tanstack": ["../../packages/charts/src/tanstack.tsx"]
     }
   },
-  "include": [".storybook", "src", "stories", "vite.config.ts", "vitest.config.ts"]
+  "include": [".ladle", "src", "stories", "tests", "vite.config.ts", "vitest.config.ts"]
 }

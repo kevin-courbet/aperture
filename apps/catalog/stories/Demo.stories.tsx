@@ -1,19 +1,13 @@
-import type { Meta, StoryObj } from '@storybook/react-vite'
+import type { Story, StoryDefault } from '@ladle/react'
+import { type CatalogParameters, withCatalogCanvas } from '../src/story'
 import { DemoPage } from './components/DemoPage'
 import '../src/demo.css'
 
-const meta = {
+export default {
   title: 'Demo/Overview',
-  component: DemoPage,
-  parameters: {
-    controls: { disable: true },
-    layout: 'fullscreen',
-    pageStyle: 'demo',
-    docs: { description: { component: 'An adopter overview of the Aperture React chart experience.' } },
-  },
-} satisfies Meta<typeof DemoPage>
+  decorators: [withCatalogCanvas],
+  parameters: { pageStyle: 'demo' } satisfies CatalogParameters,
+  meta: { description: 'An adopter overview of the Aperture React chart experience.' },
+} satisfies StoryDefault
 
-export default meta
-type Story = StoryObj<typeof meta>
-
-export const AdopterOverview: Story = {}
+export const AdopterOverview: Story = () => <DemoPage />

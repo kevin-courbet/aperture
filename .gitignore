@@ -1,8 +1,9 @@
 node_modules/
 .pnpm-store/
 dist/
-storybook-static/
+ladle-static/
 coverage/
 .vitest-attachments/
 *.log
 .DS_Store
+__screenshots__/

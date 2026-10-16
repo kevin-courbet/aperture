@@ -1,19 +1,11 @@
-import type { Meta, StoryObj } from '@storybook/react-vite'
-import { expect, userEvent, within } from 'storybook/test'
+import type { Story, StoryDefault } from '@ladle/react'
+import { withCatalogCanvas } from '../src/story'
 import { InteractionExample } from './components/InteractionExamples'
-const meta = { title: 'Interactions/Brush', component: InteractionExample, args: { mode: 'brush' }, parameters: { controls: { disable: true }, docs: { description: { component: 'Brush interaction selects a bounded interval.' } } } } satisfies Meta<typeof InteractionExample>
-export default meta
-export const IntervalSelection: StoryObj<typeof meta> = {
-  play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement)
-    const start = canvas.getByRole('slider', { name: 'Range start' })
-    start.focus()
-    await userEvent.keyboard('{End}{ArrowLeft}{ArrowLeft}')
-    await expect(canvas.getByRole('status')).toHaveTextContent('Selected months: Feb 2025 to Apr 2025')
-    const reset = canvas.getByRole('button', { name: 'Reset range' })
-    await expect(reset).toBeEnabled()
-    await userEvent.click(reset)
-    await expect(canvas.getByRole('status')).toHaveTextContent('Selected months: Jan 2025 to Apr 2025')
-    await expect(reset).toBeDisabled()
-  },
-}
+
+export default {
+  title: 'Interactions/Brush',
+  decorators: [withCatalogCanvas],
+  meta: { description: 'Brush interaction selects a bounded interval.' },
+} satisfies StoryDefault
+
+export const IntervalSelection: Story = () => <InteractionExample mode="brush" />

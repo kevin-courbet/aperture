@@ -13,8 +13,8 @@ same analysis, so each gap can become library work.
 ## Deliverables
 
 - Dashboard artifact: https://claude.ai/artifact/2uyQDznBmJQk8mXmjKdYy8
-- Aperture page: Storybook `Demo/Checkout case study`, stories `Root Cause` and
-  `Eu Mobile Web Card`.
+- Aperture page: catalog `Demo/Checkout case study`, stories `Root cause` and
+  `Eu mobile web card`.
   - `apps/catalog/stories/CaseStudy.stories.tsx`
   - `apps/catalog/stories/components/CheckoutCasePage.tsx`
   - `apps/catalog/stories/components/checkout-analysis.ts` (host aggregation)

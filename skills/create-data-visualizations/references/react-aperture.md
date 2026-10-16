@@ -18,7 +18,8 @@ To theme charts, set `--aperture-*` variables through a chart or widget
 `className` or `style`. Unlayered host rules override Aperture without
 higher specificity.
 
-Do not invent props. Use Storybook documentation tools when available.
+Do not invent props. Read the package README and the installed type
+declarations. Use the catalog stories as working examples when available.
 
 ## Composition
 
@@ -161,17 +162,20 @@ Start with the common chart components. Use the advanced TanStack entry only
 when a verified requirement cannot be represented by the common API. Keep the
 same widget, provider, state, exact-value, and accessibility boundaries.
 
-## Storybook CLI
+## Catalog CLI
 
-When Aperture Storybook runs, use:
+When the Aperture Ladle catalog runs, use:
 
 ```sh
-bun "$SKILL_DIR/scripts/chart" storybook instructions --json
-bun "$SKILL_DIR/scripts/chart" storybook list --with-story-ids --json
-bun "$SKILL_DIR/scripts/chart" storybook docs <component-id> --json
-bun "$SKILL_DIR/scripts/chart" storybook preview <story-id> --json
-bun "$SKILL_DIR/scripts/chart" storybook test [story-id ...] --json
+bun "$SKILL_DIR/scripts/chart" catalog list --json
+bun "$SKILL_DIR/scripts/chart" catalog preview <story-id> --json
 ```
 
-Set `APERTURE_MCP_URL` when the endpoint is not
-`http://localhost:6006/mcp`. Include returned preview URLs in the handoff.
+Run the story tests in an Aperture checkout:
+
+```sh
+bun "$SKILL_DIR/scripts/chart" catalog test [story-id ...] --repo <aperture-checkout> --json
+```
+
+Set `APERTURE_CATALOG_URL` when the catalog does not run at
+`http://127.0.0.1:6006/`. Include returned preview URLs in the handoff.
