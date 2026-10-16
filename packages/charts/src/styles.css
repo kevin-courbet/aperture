@@ -1,855 +1,872 @@
-@import '@fontsource-variable/ibm-plex-sans/wght.css';
-
-[data-aperture-root] {
-  --aperture-font-family: 'IBM Plex Sans Variable', 'IBM Plex Sans', system-ui, sans-serif;
-  --aperture-font-size: 0.875rem;
-  --aperture-font-weight: 450;
-  --aperture-font-weight-strong: 650;
-  --aperture-line-height: 1.45;
-  --aperture-color-background: #ffffff;
-  --aperture-color-surface: #f6f8fb;
-  --aperture-color-text: #172033;
-  --aperture-color-muted: #667085;
-  --aperture-color-border: #d7deea;
-  --aperture-color-accent: #2457d6;
-  --aperture-color-accent-soft: #dce7ff;
-  --aperture-color-danger: #b42318;
-  --aperture-color-positive: #067647;
-  --aperture-color-focus: #185cd6;
-  --aperture-chart-1: #2457d6;
-  --aperture-chart-2: #00867a;
-  --aperture-chart-3: #b54708;
-  --aperture-chart-4: #7f56d9;
-  --aperture-chart-5: #c11574;
-  --aperture-chart-6: #087e8b;
-  --aperture-chart-7: #9a6700;
-  --aperture-chart-8: #475467;
-  --aperture-chart-missing: #98a2b3;
-  --aperture-chart-context: #7c8798;
-  --aperture-chart-diverging-low: #b42318;
-  --aperture-chart-diverging-high: #2457d6;
-  --aperture-color-on-strong-fill: #ffffff;
-  --aperture-color-annotation: #8a5a00;
-  --aperture-color-annotation-fill: color-mix(in srgb, #b7791f 13%, transparent);
-  --aperture-color-selection-fill: color-mix(in srgb, #2457d6 10%, transparent);
-  --aperture-radius-small: 0.375rem;
-  --aperture-radius-medium: 0.75rem;
-  --aperture-space-1: 0.25rem;
-  --aperture-space-2: 0.5rem;
-  --aperture-space-3: 0.75rem;
-  --aperture-space-4: 1rem;
-  --aperture-motion-duration: 160ms;
-  color: var(--aperture-color-text);
-  background: var(--aperture-color-background);
-  font-family: var(--aperture-font-family);
-  font-size: var(--aperture-font-size);
-  font-weight: var(--aperture-font-weight);
-  line-height: var(--aperture-line-height);
-  box-sizing: border-box;
-}
-
-[data-aperture-root][data-theme='dark'],
-[data-theme='dark'] [data-aperture-root] {
-  --aperture-color-background: #111827;
-  --aperture-color-surface: #1b2434;
-  --aperture-color-text: #f3f6fb;
-  --aperture-color-muted: #aeb9cb;
-  --aperture-color-border: #344258;
-  --aperture-color-accent: #8aafff;
-  --aperture-color-accent-soft: #243b6b;
-  --aperture-color-danger: #ff8d86;
-  --aperture-color-positive: #6ce9a6;
-  --aperture-color-focus: #9dbaff;
-  --aperture-chart-1: #8aafff;
-  --aperture-chart-2: #5dd6c7;
-  --aperture-chart-3: #f7b26a;
-  --aperture-chart-4: #c3a6ff;
-  --aperture-chart-5: #ff8fc8;
-  --aperture-chart-6: #61dbe7;
-  --aperture-chart-7: #ffd166;
-  --aperture-chart-8: #b7c3d7;
-  --aperture-chart-missing: #77849a;
-  --aperture-chart-context: #8b96a8;
-  --aperture-chart-diverging-low: #ff8d86;
-  --aperture-chart-diverging-high: #8aafff;
-  --aperture-color-on-strong-fill: #0b1220;
-  --aperture-color-annotation: #e3b341;
-  --aperture-color-annotation-fill: color-mix(in srgb, #e3b341 14%, transparent);
-  --aperture-color-selection-fill: color-mix(in srgb, #8aafff 14%, transparent);
-}
-
-[data-aperture-root] *,
-[data-aperture-root] *::before,
-[data-aperture-root] *::after {
-  box-sizing: inherit;
-}
-
-[data-aperture-root].aperture-chart {
-  width: 100%;
-  min-width: 0;
-}
-
-[data-aperture-root] .aperture-visually-hidden {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
-}
-
-[data-aperture-root] .aperture-exact-values {
-  margin-top: var(--aperture-space-2);
-}
-
-[data-aperture-root] .aperture-legend {
-  display: flex;
-  gap: var(--aperture-space-2) var(--aperture-space-4);
-  flex-wrap: wrap;
-  padding: 0;
-  margin: var(--aperture-space-2) 0 0;
-  list-style: none;
-}
-
-[data-aperture-root] .aperture-legend li {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--aperture-space-2);
-  min-width: 0;
-  color: var(--aperture-color-muted);
-}
-
-[data-aperture-root] .aperture-legend-swatch,
-[data-aperture-root] .aperture-legend-missing,
-[data-aperture-root] .aperture-legend-band,
-[data-aperture-root] .aperture-legend-outline {
-  width: 0.75rem;
-  height: 0.75rem;
-  flex: none;
-  border-radius: 2px;
-}
-
-[data-aperture-root] .aperture-legend-swatch {
-  background: currentColor;
-}
-
-[data-aperture-root] .aperture-legend-missing {
-  border: 1.5px dotted var(--aperture-chart-missing);
-}
-
-[data-aperture-root] .aperture-legend-band {
-  background: var(--aperture-color-annotation-fill);
-  border: 1px solid color-mix(in srgb, var(--aperture-color-annotation) 35%, transparent);
-}
-
-[data-aperture-root] .aperture-legend-outline {
-  border: 2px solid var(--aperture-color-annotation);
-}
-
-[data-aperture-root] .aperture-legend-line {
-  width: 1.5rem;
-  height: 0.5rem;
-  flex: none;
-  overflow: visible;
-}
-
-[data-aperture-root] .aperture-legend-line line {
-  stroke: currentColor;
-  stroke-width: 2.25;
-}
-
-[data-aperture-root] .aperture-legend-reference {
-  width: 1.5rem;
-  height: 0.5rem;
-  flex: none;
-  overflow: visible;
-}
-
-[data-aperture-root] .aperture-legend-reference line {
-  stroke: var(--aperture-color-text);
-  stroke-opacity: 0.72;
-  stroke-width: 1.25;
-  stroke-dasharray: 6 4;
-}
-
-[data-aperture-root] .aperture-legend-event {
-  width: 0.5rem;
-  height: 0.875rem;
-  flex: none;
-  overflow: visible;
-}
-
-[data-aperture-root] .aperture-legend-event line {
-  stroke: var(--aperture-color-annotation);
-  stroke-width: 1.5;
-  stroke-dasharray: 3 3;
-}
-
-[data-aperture-root] .aperture-legend-point {
-  width: 0.875rem;
-  height: 0.875rem;
-  flex: none;
-  overflow: visible;
-}
-
-[data-aperture-root] .aperture-legend-point circle {
-  fill: currentColor;
-}
-
-[data-aperture-root] .aperture-legend-point circle[data-hollow] {
-  fill: var(--aperture-color-background);
-  stroke: currentColor;
-  stroke-width: 2;
-}
-
-[data-aperture-root] .aperture-legend-ramp {
-  display: inline-grid;
-  gap: 2px;
-  min-width: 7rem;
-}
-
-[data-aperture-root] .aperture-legend-ramp-bar {
-  height: 0.625rem;
-  border-radius: 2px;
-}
-
-[data-aperture-root] .aperture-legend-ramp-ticks {
-  display: flex;
-  justify-content: space-between;
-  gap: var(--aperture-space-2);
-  font-size: 0.75rem;
-  font-variant-numeric: tabular-nums;
-}
-
-[data-aperture-root] .aperture-legend li[data-symbol='ramp'] {
-  align-items: flex-start;
-  flex-direction: row-reverse;
-}
-
-[data-aperture-root].aperture-state {
-  display: grid;
-  place-items: center;
-  padding: var(--aperture-space-4);
-  color: var(--aperture-color-muted);
-  border: 1px dashed var(--aperture-color-border);
-  border-radius: var(--aperture-radius-medium);
-}
-
-/* Widget actions keep their own column so a tall summary cannot displace them. */
-[data-aperture-root].aperture-root {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: start;
-  gap: var(--aperture-space-3) var(--aperture-space-4);
-  padding: var(--aperture-space-4);
-  border: 1px solid var(--aperture-color-border);
-  border-radius: var(--aperture-radius-medium);
-}
-
-[data-aperture-root].aperture-root > * {
-  grid-column: 1 / -1;
-  min-width: 0;
-}
-
-[data-aperture-root].aperture-root > .aperture-header {
-  grid-column: 1;
-  grid-row: 1;
-}
-
-[data-aperture-root].aperture-root > .aperture-actions {
-  grid-column: 2;
-  grid-row: 1;
-  justify-self: end;
-  max-width: 100%;
-}
-
-[data-aperture-root] .aperture-summary {
-  display: grid;
-  gap: var(--aperture-space-4);
-}
-
-[data-aperture-root] .aperture-widget-title {
-  margin: 0;
-  font-size: 1rem;
-  font-weight: var(--aperture-font-weight-strong);
-  overflow-wrap: anywhere;
-}
-
-[data-aperture-root] .aperture-widget-description,
-[data-aperture-root] .aperture-widget-period {
-  margin: 0;
-  color: var(--aperture-color-muted);
-  font-size: var(--aperture-font-size);
-  overflow-wrap: anywhere;
-}
-
-[data-aperture-root] .aperture-header > .aperture-widget-description {
-  flex-basis: 100%;
-}
-
-[data-aperture-root] .aperture-widget-metric {
-  display: grid;
-  gap: var(--aperture-space-2);
-}
-
-[data-aperture-root] .aperture-widget-value {
-  margin: 0;
-  font-size: clamp(1.75rem, 5vw, 2.25rem);
-  font-weight: var(--aperture-font-weight-strong);
-  line-height: 1.15;
-  font-variant-numeric: tabular-nums;
-  overflow-wrap: anywhere;
-}
-
-[data-aperture-root] .aperture-widget-details {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--aperture-space-2) var(--aperture-space-4);
-  margin: 0;
-}
-
-[data-aperture-root] .aperture-widget-details > div {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--aperture-space-2);
-}
-
-[data-aperture-root] .aperture-widget-details dt {
-  color: var(--aperture-color-muted);
-}
-
-[data-aperture-root] .aperture-widget-details dd {
-  margin: 0;
-  font-variant-numeric: tabular-nums;
-}
-
-[data-aperture-root].aperture-standalone {
-  width: 100%;
-  min-width: 0;
-  padding: 0;
-  border: 0;
-  border-radius: 0;
-}
-
-[data-aperture-root].aperture-standalone > .aperture-actions {
-  justify-content: flex-end;
-}
-
-[data-aperture-root].aperture-standalone:fullscreen {
-  padding: var(--aperture-space-4);
-  overflow: auto;
-}
-
-/* A fullscreen widget keeps the header and controls in the first row and
-   gives the remaining height to the plot. Keep the plot box independent from
-   the rendered SVG/canvas size for stable observation. */
-.aperture-root:fullscreen,
-:fullscreen > .aperture-root {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  grid-template-rows: auto minmax(0, 1fr) auto;
-  grid-template-areas: 'header actions' 'plot plot' 'footer footer';
-  align-items: start;
-  width: 100% !important;
-  height: 100%;
-  min-height: 0;
-  border-radius: 0;
-  overflow: auto;
-}
-:is(.aperture-root:fullscreen, :fullscreen > .aperture-root):has(> .aperture-summary) {
-  grid-template-rows: auto auto minmax(0, 1fr) auto;
-  grid-template-areas: 'header actions' 'summary summary' 'plot plot' 'footer footer';
-}
-:is(.aperture-root:fullscreen, :fullscreen > .aperture-root):has(> .aperture-controls) {
-  grid-template-rows: auto auto minmax(0, 1fr) auto;
-  grid-template-areas: 'header actions' 'controls controls' 'plot plot' 'footer footer';
-}
-:is(.aperture-root:fullscreen, :fullscreen > .aperture-root):has(> .aperture-summary):has(> .aperture-controls) {
-  grid-template-rows: auto auto auto minmax(0, 1fr) auto;
-  grid-template-areas: 'header actions' 'summary summary' 'controls controls' 'plot plot' 'footer footer';
-}
-:is(.aperture-root:fullscreen, :fullscreen > .aperture-root) > .aperture-header {
-  grid-area: header;
-}
-:is(.aperture-root:fullscreen, :fullscreen > .aperture-root) > .aperture-actions {
-  grid-area: actions;
-  margin: 0;
-}
-:is(.aperture-root:fullscreen, :fullscreen > .aperture-root) > .aperture-controls {
-  grid-area: controls;
-}
-:is(.aperture-root:fullscreen, :fullscreen > .aperture-root) > .aperture-summary {
-  grid-area: summary;
-}
-:is(.aperture-root:fullscreen, :fullscreen > .aperture-root) > :not(.aperture-header, .aperture-actions, .aperture-controls, .aperture-summary, .aperture-footer) {
-  grid-area: plot;
-  align-self: stretch;
-  min-height: 0;
-}
-:is(.aperture-root:fullscreen, :fullscreen > .aperture-root) > .aperture-footer {
-  grid-area: footer;
-}
-:is(.aperture-root:fullscreen, :fullscreen > .aperture-root) .aperture-plot,
-:is(.aperture-root:fullscreen, :fullscreen > .aperture-root) .aperture-chart {
-  display: flex;
-  flex-direction: column;
-  flex: 1 0 160px;
-  min-width: 0;
-  width: 100% !important;
-}
-:is(.aperture-root:fullscreen, :fullscreen > .aperture-root) .aperture-canvas {
-  flex: 1 0 160px;
-  min-height: 160px;
-  height: auto !important;
-  position: relative;
-}
-:is(.aperture-root:fullscreen, :fullscreen > .aperture-root) .aperture-canvas > * {
-  position: absolute;
-  inset: 0;
-}
-:is(.aperture-root:fullscreen, :fullscreen > .aperture-root) .aperture-legend,
-:is(.aperture-root:fullscreen, :fullscreen > .aperture-root) .aperture-exact-values {
-  flex: none;
-}
-
-[data-aperture-root] .aperture-header,
-[data-aperture-root] .aperture-actions,
-[data-aperture-root] .aperture-controls,
-[data-aperture-root] .aperture-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--aperture-space-3);
-  flex-wrap: wrap;
-}
-
-[data-aperture-root] .aperture-plot {
-  min-width: 0;
-}
-
-/* TanStack positions the tooltip with left/top. Short transitions smooth
-   pointer updates while keeping the displayed value immediate. */
-[data-aperture-root] .ts-chart-tooltip {
-  transition: left 120ms ease-out, top 120ms ease-out;
-}
-
-[data-aperture-root] .aperture-actions.aperture-toolbar {
-  justify-content: flex-end;
-  gap: var(--aperture-space-2);
-}
-
-.aperture-brush-low-emphasis .ts-chart__brush-x-fallback .selection,
-.aperture-brush-low-emphasis .ts-chart__brush-x-fallback .handle,
-.aperture-brush-low-emphasis svg[data-chart-brush] [data-chart-brush-selection],
-.aperture-brush-low-emphasis svg[data-chart-brush] [data-chart-brush-handle] {
-  opacity: 0;
-  transition: opacity var(--aperture-motion-duration);
-}
-
-.aperture-brush-low-emphasis .ts-chart__brush-x-fallback:hover .selection,
-.aperture-brush-low-emphasis .ts-chart__brush-x-fallback:focus-within .selection,
-.aperture-brush-low-emphasis svg[data-chart-brush]:hover [data-chart-brush-selection],
-.aperture-brush-low-emphasis svg[data-chart-brush]:focus-within [data-chart-brush-selection] {
-  opacity: 1;
-}
-
-.aperture-brush-low-emphasis .ts-chart__brush-x-fallback:hover .handle,
-.aperture-brush-low-emphasis .ts-chart__brush-x-fallback:focus-within .handle,
-.aperture-brush-low-emphasis svg[data-chart-brush] [data-chart-brush-selection]:hover ~ [data-chart-brush-handle],
-.aperture-brush-low-emphasis svg[data-chart-brush] [data-chart-brush-handle]:hover,
-.aperture-brush-low-emphasis svg[data-chart-brush] [data-chart-brush-handle]:focus {
-  opacity: 0.9;
-}
-
-[data-aperture-root] .aperture-control,
-[data-aperture-root] .aperture-toggle-option {
-  display: inline-flex;
-  min-height: 2.25rem;
-  align-items: center;
-  justify-content: center;
-  gap: var(--aperture-space-2);
-  padding: var(--aperture-space-2) var(--aperture-space-3);
-  color: var(--aperture-color-text);
-  background: var(--aperture-color-background);
-  border: 1px solid var(--aperture-color-border);
-  border-radius: var(--aperture-radius-small);
-  font: inherit;
-  cursor: pointer;
-  transition: background-color var(--aperture-motion-duration), border-color var(--aperture-motion-duration);
-}
-
-[data-aperture-root] .aperture-control svg,
-[data-aperture-root] .aperture-range-control svg {
-  width: 1rem;
-  height: 1rem;
-  flex: none;
-}
-
-[data-aperture-root] .aperture-icon-control {
-  width: 2.25rem;
-  padding: var(--aperture-space-2);
-}
-
-[data-aperture-root] .aperture-control[data-selected],
-[data-aperture-root] .aperture-toggle-option[data-selected] {
-  color: var(--aperture-color-accent);
-  background: var(--aperture-color-accent-soft);
-  border-color: var(--aperture-color-accent);
-}
-
-[data-aperture-root] .aperture-control[data-focus-visible],
-[data-aperture-root] .aperture-toggle-option[data-focus-visible] {
-  outline: 3px solid color-mix(in srgb, var(--aperture-color-focus) 45%, transparent);
-  outline-offset: 2px;
-}
-
-[data-aperture-root] .aperture-range-control {
-  display: flex;
-  align-items: center;
-  gap: var(--aperture-space-2);
-  flex-wrap: wrap;
-}
-
-[data-aperture-root] .aperture-range-control > label {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--aperture-space-1);
-  color: var(--aperture-color-muted);
-}
-
-[data-aperture-root] .aperture-toggle-group {
-  display: inline-flex;
-  gap: var(--aperture-space-1);
-}
-
-[data-aperture-root] .aperture-control-status {
-  position: relative;
-}
-
-[data-aperture-root] .aperture-control-error {
-  display: block;
-  margin-top: var(--aperture-space-1);
-  color: var(--aperture-color-danger);
-}
-
-[data-aperture-root].aperture-table-scroll,
-[data-aperture-root] .aperture-table-scroll {
-  max-width: 100%;
-  overflow-x: auto;
-}
-
-[data-aperture-root] .aperture-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-variant-numeric: tabular-nums;
-}
-
-[data-aperture-root] .aperture-table caption {
-  padding: var(--aperture-space-2);
-  color: var(--aperture-color-muted);
-  text-align: start;
-}
-
-[data-aperture-root] .aperture-table th,
-[data-aperture-root] .aperture-table td {
-  padding: var(--aperture-space-2) var(--aperture-space-3);
-  border-bottom: 1px solid var(--aperture-color-border);
-  text-align: start;
-}
-
-[data-aperture-root] .aperture-table th {
-  font-weight: var(--aperture-font-weight-strong);
-}
-
-[data-aperture-root] .aperture-selectable .ts-chart-surface {
-  cursor: pointer;
-}
-
-[data-aperture-root].aperture-filter-bar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  gap: var(--aperture-space-3) var(--aperture-space-4);
-  background: transparent;
-}
-
-[data-aperture-root] .aperture-select-host {
-  display: contents;
-}
-
-[data-aperture-root] .aperture-select {
-  display: inline-grid;
-  gap: var(--aperture-space-1);
-  min-width: 10rem;
-}
-
-[data-aperture-root] .aperture-select-label {
-  color: var(--aperture-color-muted);
-  font-size: 0.75rem;
-}
-
-[data-aperture-root] .aperture-select-trigger {
-  justify-content: space-between;
-  min-width: 10rem;
-  text-align: start;
-}
-
-[data-aperture-root] .aperture-select-trigger[data-pressed],
-[data-aperture-root] .aperture-select[data-open] .aperture-select-trigger {
-  border-color: var(--aperture-color-accent);
-}
-
-[data-aperture-root] .aperture-select-trigger[data-focus-visible] {
-  outline: 3px solid color-mix(in srgb, var(--aperture-color-focus) 45%, transparent);
-  outline-offset: 2px;
-}
-
-[data-aperture-root] .aperture-popover {
-  z-index: 20;
-  min-width: var(--trigger-width);
-  max-height: 20rem;
-  overflow: auto;
-  color: var(--aperture-color-text);
-  background: var(--aperture-color-background);
-  border: 1px solid var(--aperture-color-border);
-  border-radius: var(--aperture-radius-small);
-  box-shadow: 0 8px 24px color-mix(in srgb, var(--aperture-color-text) 14%, transparent);
-}
-
-[data-aperture-root] .aperture-listbox {
-  padding: var(--aperture-space-1);
-  outline: none;
-}
-
-[data-aperture-root] .aperture-listbox-item {
-  display: flex;
-  align-items: center;
-  min-height: 2rem;
-  padding: var(--aperture-space-1) var(--aperture-space-3);
-  border-radius: calc(var(--aperture-radius-small) - 2px);
-  cursor: default;
-  outline: none;
-}
-
-[data-aperture-root] .aperture-listbox-item[data-focused] {
-  background: var(--aperture-color-surface);
-}
-
-[data-aperture-root] .aperture-listbox-item[data-selected] {
-  color: var(--aperture-color-accent);
-  font-weight: var(--aperture-font-weight-strong);
-}
-
-[data-aperture-root] .aperture-listbox-item[data-focus-visible] {
-  outline: 2px solid var(--aperture-color-focus);
-  outline-offset: -2px;
-}
-
-[data-aperture-root] .aperture-active-filters {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--aperture-space-2);
-  min-height: 2.25rem;
-}
-
-[data-aperture-root] .aperture-active-filters-empty {
-  color: var(--aperture-color-muted);
-}
-
-[data-aperture-root] .aperture-filter-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--aperture-space-2);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-[data-aperture-root] .aperture-filter-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--aperture-space-1);
-  padding-inline: var(--aperture-space-3) var(--aperture-space-1);
-  min-height: 2rem;
-  color: var(--aperture-color-text);
-  background: var(--aperture-color-accent-soft);
-  border: 1px solid color-mix(in srgb, var(--aperture-color-accent) 40%, transparent);
-  border-radius: 999px;
-}
-
-[data-aperture-root] .aperture-filter-chip strong {
-  font-weight: var(--aperture-font-weight-strong);
-}
-
-[data-aperture-root] .aperture-chip-remove {
-  display: inline-grid;
-  place-items: center;
-  width: 1.5rem;
-  height: 1.5rem;
-  padding: 0;
-  color: inherit;
-  background: transparent;
-  border: 0;
-  border-radius: 999px;
-  cursor: pointer;
-}
-
-[data-aperture-root] .aperture-chip-remove svg {
-  width: 0.875rem;
-  height: 0.875rem;
-}
-
-[data-aperture-root] .aperture-chip-remove[data-hovered] {
-  background: color-mix(in srgb, var(--aperture-color-accent) 18%, transparent);
-}
-
-[data-aperture-root] .aperture-chip-remove[data-focus-visible] {
-  outline: 2px solid var(--aperture-color-focus);
-  outline-offset: 1px;
-}
-
-[data-aperture-root].aperture-sparkline {
-  display: block;
-  width: 100%;
-  min-width: 0;
-  background: transparent;
-}
-
-[data-aperture-root].aperture-sparkline-state {
-  min-height: 0 !important;
-  padding: var(--aperture-space-1);
-  font-size: 0.75rem;
-}
-
-/* A stat tile leads with one number. Proportional figures read better at
-   display size; the label, delta, and note stay muted. */
-[data-aperture-root].aperture-stat-tile {
-  display: grid;
-  align-content: start;
-  gap: var(--aperture-space-1);
-  min-width: 0;
-  padding: var(--aperture-space-4);
-  border: 1px solid var(--aperture-color-border);
-  border-radius: var(--aperture-radius-medium);
-}
-
-[data-aperture-root] .aperture-stat-label,
-[data-aperture-root] .aperture-stat-value,
-[data-aperture-root] .aperture-stat-delta,
-[data-aperture-root] .aperture-stat-note {
-  margin: 0;
-}
-
-[data-aperture-root] .aperture-stat-label {
-  color: var(--aperture-color-muted);
-  font-size: 0.8125rem;
-}
-
-[data-aperture-root] .aperture-stat-value {
-  font-size: 2rem;
-  font-weight: var(--aperture-font-weight-strong);
-  font-variant-numeric: proportional-nums;
-  letter-spacing: -0.02em;
-  line-height: 1.15;
-}
-
-[data-aperture-root] .aperture-stat-unit {
-  margin-inline-start: 0.1em;
-  color: var(--aperture-color-muted);
-  font-size: 1.25rem;
-  font-weight: 500;
-}
-
-[data-aperture-root] .aperture-stat-delta,
-[data-aperture-root] .aperture-stat-note {
-  color: var(--aperture-color-muted);
-  font-size: 0.8125rem;
-  font-variant-numeric: tabular-nums;
-}
-
-[data-aperture-root] .aperture-stat-change {
-  font-weight: 600;
-}
-
-[data-aperture-root] .aperture-stat-change[data-tone='good'] {
-  color: var(--aperture-color-positive);
-}
-
-[data-aperture-root] .aperture-stat-change[data-tone='bad'] {
-  color: var(--aperture-color-danger);
-}
-
-[data-aperture-root] .aperture-stat-change[data-tone='neutral'] {
-  color: var(--aperture-color-text);
-}
-
-[data-aperture-root] .aperture-stat-trend {
-  margin-block: var(--aperture-space-1);
-}
-
-@media (prefers-reduced-motion: reduce) {
+@import '@fontsource-variable/ibm-plex-sans/wght.css' layer(aperture);
+
+/*
+ * Every Aperture rule is in the aperture cascade layer. Unlayered host styles and
+ * later layers override Aperture without a specificity contest.
+ */
+@layer aperture {
   [data-aperture-root] {
-    --aperture-motion-duration: 0ms;
+    --aperture-font-family: 'IBM Plex Sans Variable', 'IBM Plex Sans', system-ui, sans-serif;
+    --aperture-font-size: 0.875rem;
+    --aperture-font-weight: 450;
+    --aperture-font-weight-strong: 650;
+    --aperture-line-height: 1.45;
+    --aperture-color-background: #ffffff;
+    --aperture-color-surface: #f6f8fb;
+    --aperture-color-text: #172033;
+    --aperture-color-muted: #667085;
+    --aperture-color-border: #d7deea;
+    --aperture-color-accent: #2457d6;
+    --aperture-color-accent-soft: #dce7ff;
+    --aperture-color-danger: #b42318;
+    --aperture-color-positive: #067647;
+    --aperture-color-focus: #185cd6;
+    --aperture-chart-1: #2457d6;
+    --aperture-chart-2: #00867a;
+    --aperture-chart-3: #b54708;
+    --aperture-chart-4: #7f56d9;
+    --aperture-chart-5: #c11574;
+    --aperture-chart-6: #087e8b;
+    --aperture-chart-7: #9a6700;
+    --aperture-chart-8: #475467;
+    --aperture-chart-missing: #98a2b3;
+    --aperture-chart-context: #7c8798;
+    --aperture-chart-diverging-low: #b42318;
+    --aperture-chart-diverging-high: #2457d6;
+    --aperture-color-on-strong-fill: #ffffff;
+    --aperture-color-annotation: #8a5a00;
+    --aperture-color-annotation-fill: color-mix(in srgb, #b7791f 13%, transparent);
+    --aperture-color-selection-fill: color-mix(in srgb, #2457d6 10%, transparent);
+    --aperture-radius-small: 0.375rem;
+    --aperture-radius-medium: 0.75rem;
+    --aperture-space-1: 0.25rem;
+    --aperture-space-2: 0.5rem;
+    --aperture-space-3: 0.75rem;
+    --aperture-space-4: 1rem;
+    --aperture-motion-duration: 160ms;
+    color: var(--aperture-color-text);
+    background: var(--aperture-color-background);
+    font-family: var(--aperture-font-family);
+    font-size: var(--aperture-font-size);
+    font-weight: var(--aperture-font-weight);
+    line-height: var(--aperture-line-height);
+    box-sizing: border-box;
   }
 
+  [data-aperture-root][data-theme='dark'],
+  [data-theme='dark'] [data-aperture-root] {
+    --aperture-color-background: #111827;
+    --aperture-color-surface: #1b2434;
+    --aperture-color-text: #f3f6fb;
+    --aperture-color-muted: #aeb9cb;
+    --aperture-color-border: #344258;
+    --aperture-color-accent: #8aafff;
+    --aperture-color-accent-soft: #243b6b;
+    --aperture-color-danger: #ff8d86;
+    --aperture-color-positive: #6ce9a6;
+    --aperture-color-focus: #9dbaff;
+    --aperture-chart-1: #8aafff;
+    --aperture-chart-2: #5dd6c7;
+    --aperture-chart-3: #f7b26a;
+    --aperture-chart-4: #c3a6ff;
+    --aperture-chart-5: #ff8fc8;
+    --aperture-chart-6: #61dbe7;
+    --aperture-chart-7: #ffd166;
+    --aperture-chart-8: #b7c3d7;
+    --aperture-chart-missing: #77849a;
+    --aperture-chart-context: #8b96a8;
+    --aperture-chart-diverging-low: #ff8d86;
+    --aperture-chart-diverging-high: #8aafff;
+    --aperture-color-on-strong-fill: #0b1220;
+    --aperture-color-annotation: #e3b341;
+    --aperture-color-annotation-fill: color-mix(in srgb, #e3b341 14%, transparent);
+    --aperture-color-selection-fill: color-mix(in srgb, #8aafff 14%, transparent);
+  }
+
+  [data-aperture-root] *,
+  [data-aperture-root] *::before,
+  [data-aperture-root] *::after {
+    box-sizing: inherit;
+  }
+
+  [data-aperture-root].aperture-chart {
+    width: 100%;
+    min-width: 0;
+  }
+
+  [data-aperture-root] .aperture-visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  [data-aperture-root] .aperture-exact-values {
+    margin-top: var(--aperture-space-2);
+  }
+
+  [data-aperture-root] .aperture-legend {
+    display: flex;
+    gap: var(--aperture-space-2) var(--aperture-space-4);
+    flex-wrap: wrap;
+    padding: 0;
+    margin: var(--aperture-space-2) 0 0;
+    list-style: none;
+  }
+
+  [data-aperture-root] .aperture-legend li {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--aperture-space-2);
+    min-width: 0;
+    color: var(--aperture-color-muted);
+  }
+
+  [data-aperture-root] .aperture-legend-swatch,
+  [data-aperture-root] .aperture-legend-missing,
+  [data-aperture-root] .aperture-legend-band,
+  [data-aperture-root] .aperture-legend-outline {
+    width: 0.75rem;
+    height: 0.75rem;
+    flex: none;
+    border-radius: 2px;
+  }
+
+  [data-aperture-root] .aperture-legend-swatch {
+    background: currentColor;
+  }
+
+  [data-aperture-root] .aperture-legend-missing {
+    border: 1.5px dotted var(--aperture-chart-missing);
+  }
+
+  [data-aperture-root] .aperture-legend-band {
+    background: var(--aperture-color-annotation-fill);
+    border: 1px solid color-mix(in srgb, var(--aperture-color-annotation) 35%, transparent);
+  }
+
+  [data-aperture-root] .aperture-legend-outline {
+    border: 2px solid var(--aperture-color-annotation);
+  }
+
+  [data-aperture-root] .aperture-legend-line {
+    width: 1.5rem;
+    height: 0.5rem;
+    flex: none;
+    overflow: visible;
+  }
+
+  [data-aperture-root] .aperture-legend-line line {
+    stroke: currentColor;
+    stroke-width: 2.25;
+  }
+
+  [data-aperture-root] .aperture-legend-reference {
+    width: 1.5rem;
+    height: 0.5rem;
+    flex: none;
+    overflow: visible;
+  }
+
+  [data-aperture-root] .aperture-legend-reference line {
+    stroke: var(--aperture-color-text);
+    stroke-opacity: 0.72;
+    stroke-width: 1.25;
+    stroke-dasharray: 6 4;
+  }
+
+  [data-aperture-root] .aperture-legend-event {
+    width: 0.5rem;
+    height: 0.875rem;
+    flex: none;
+    overflow: visible;
+  }
+
+  [data-aperture-root] .aperture-legend-event line {
+    stroke: var(--aperture-color-annotation);
+    stroke-width: 1.5;
+    stroke-dasharray: 3 3;
+  }
+
+  [data-aperture-root] .aperture-legend-point {
+    width: 0.875rem;
+    height: 0.875rem;
+    flex: none;
+    overflow: visible;
+  }
+
+  [data-aperture-root] .aperture-legend-point circle {
+    fill: currentColor;
+  }
+
+  [data-aperture-root] .aperture-legend-point circle[data-hollow] {
+    fill: var(--aperture-color-background);
+    stroke: currentColor;
+    stroke-width: 2;
+  }
+
+  [data-aperture-root] .aperture-legend-ramp {
+    display: inline-grid;
+    gap: 2px;
+    min-width: 7rem;
+  }
+
+  [data-aperture-root] .aperture-legend-ramp-bar {
+    height: 0.625rem;
+    border-radius: 2px;
+  }
+
+  [data-aperture-root] .aperture-legend-ramp-ticks {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--aperture-space-2);
+    font-size: 0.75rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  [data-aperture-root] .aperture-legend li[data-symbol='ramp'] {
+    align-items: flex-start;
+    flex-direction: row-reverse;
+  }
+
+  [data-aperture-root].aperture-state {
+    display: grid;
+    place-items: center;
+    padding: var(--aperture-space-4);
+    color: var(--aperture-color-muted);
+    border: 1px dashed var(--aperture-color-border);
+    border-radius: var(--aperture-radius-medium);
+  }
+
+  /* Widget actions keep their own column so a tall summary cannot displace them. */
+  [data-aperture-root].aperture-root {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+    gap: var(--aperture-space-3) var(--aperture-space-4);
+    padding: var(--aperture-space-4);
+    border: 1px solid var(--aperture-color-border);
+    border-radius: var(--aperture-radius-medium);
+  }
+
+  [data-aperture-root].aperture-root > * {
+    grid-column: 1 / -1;
+    min-width: 0;
+  }
+
+  [data-aperture-root].aperture-root > .aperture-header {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  [data-aperture-root].aperture-root > .aperture-actions {
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: end;
+    max-width: 100%;
+  }
+
+  [data-aperture-root] .aperture-summary {
+    display: grid;
+    gap: var(--aperture-space-4);
+  }
+
+  [data-aperture-root] .aperture-widget-title {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: var(--aperture-font-weight-strong);
+    overflow-wrap: anywhere;
+  }
+
+  [data-aperture-root] .aperture-widget-description,
+  [data-aperture-root] .aperture-widget-period {
+    margin: 0;
+    color: var(--aperture-color-muted);
+    font-size: var(--aperture-font-size);
+    overflow-wrap: anywhere;
+  }
+
+  [data-aperture-root] .aperture-header > .aperture-widget-description {
+    flex-basis: 100%;
+  }
+
+  [data-aperture-root] .aperture-widget-metric {
+    display: grid;
+    gap: var(--aperture-space-2);
+  }
+
+  [data-aperture-root] .aperture-widget-value {
+    margin: 0;
+    font-size: clamp(1.75rem, 5vw, 2.25rem);
+    font-weight: var(--aperture-font-weight-strong);
+    line-height: 1.15;
+    font-variant-numeric: tabular-nums;
+    overflow-wrap: anywhere;
+  }
+
+  [data-aperture-root] .aperture-widget-details {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--aperture-space-2) var(--aperture-space-4);
+    margin: 0;
+  }
+
+  [data-aperture-root] .aperture-widget-details > div {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--aperture-space-2);
+  }
+
+  [data-aperture-root] .aperture-widget-details dt {
+    color: var(--aperture-color-muted);
+  }
+
+  [data-aperture-root] .aperture-widget-details dd {
+    margin: 0;
+    font-variant-numeric: tabular-nums;
+  }
+
+  [data-aperture-root].aperture-standalone {
+    width: 100%;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+  }
+
+  [data-aperture-root].aperture-standalone > .aperture-actions {
+    justify-content: flex-end;
+  }
+
+  [data-aperture-root].aperture-standalone:fullscreen {
+    padding: var(--aperture-space-4);
+    overflow: auto;
+  }
+
+  /* A fullscreen widget keeps the header and controls in the first row and
+     gives the remaining height to the plot. Keep the plot box independent from
+     the rendered SVG/canvas size for stable observation. */
+  .aperture-root:fullscreen,
+  :fullscreen > .aperture-root {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    grid-template-areas: 'header actions' 'plot plot' 'footer footer';
+    align-items: start;
+    width: 100% !important;
+    height: 100%;
+    min-height: 0;
+    border-radius: 0;
+    overflow: auto;
+  }
+  :is(.aperture-root:fullscreen, :fullscreen > .aperture-root):has(> .aperture-summary) {
+    grid-template-rows: auto auto minmax(0, 1fr) auto;
+    grid-template-areas: 'header actions' 'summary summary' 'plot plot' 'footer footer';
+  }
+  :is(.aperture-root:fullscreen, :fullscreen > .aperture-root):has(> .aperture-controls) {
+    grid-template-rows: auto auto minmax(0, 1fr) auto;
+    grid-template-areas: 'header actions' 'controls controls' 'plot plot' 'footer footer';
+  }
+  :is(.aperture-root:fullscreen, :fullscreen > .aperture-root):has(> .aperture-summary):has(> .aperture-controls) {
+    grid-template-rows: auto auto auto minmax(0, 1fr) auto;
+    grid-template-areas: 'header actions' 'summary summary' 'controls controls' 'plot plot' 'footer footer';
+  }
+  :is(.aperture-root:fullscreen, :fullscreen > .aperture-root) > .aperture-header {
+    grid-area: header;
+  }
+  :is(.aperture-root:fullscreen, :fullscreen > .aperture-root) > .aperture-actions {
+    grid-area: actions;
+    margin: 0;
+  }
+  :is(.aperture-root:fullscreen, :fullscreen > .aperture-root) > .aperture-controls {
+    grid-area: controls;
+  }
+  :is(.aperture-root:fullscreen, :fullscreen > .aperture-root) > .aperture-summary {
+    grid-area: summary;
+  }
+  :is(.aperture-root:fullscreen, :fullscreen > .aperture-root) > :not(.aperture-header, .aperture-actions, .aperture-controls, .aperture-summary, .aperture-footer) {
+    grid-area: plot;
+    align-self: stretch;
+    min-height: 0;
+  }
+  :is(.aperture-root:fullscreen, :fullscreen > .aperture-root) > .aperture-footer {
+    grid-area: footer;
+  }
+  :is(.aperture-root:fullscreen, :fullscreen > .aperture-root) .aperture-plot,
+  :is(.aperture-root:fullscreen, :fullscreen > .aperture-root) .aperture-chart {
+    display: flex;
+    flex-direction: column;
+    flex: 1 0 160px;
+    min-width: 0;
+    width: 100% !important;
+  }
+  :is(.aperture-root:fullscreen, :fullscreen > .aperture-root) .aperture-canvas {
+    flex: 1 0 160px;
+    min-height: 160px;
+    height: auto !important;
+    position: relative;
+  }
+  :is(.aperture-root:fullscreen, :fullscreen > .aperture-root) .aperture-canvas > * {
+    position: absolute;
+    inset: 0;
+  }
+  :is(.aperture-root:fullscreen, :fullscreen > .aperture-root) .aperture-legend,
+  :is(.aperture-root:fullscreen, :fullscreen > .aperture-root) .aperture-exact-values {
+    flex: none;
+  }
+
+  [data-aperture-root] .aperture-header,
+  [data-aperture-root] .aperture-actions,
+  [data-aperture-root] .aperture-controls,
+  [data-aperture-root] .aperture-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--aperture-space-3);
+    flex-wrap: wrap;
+  }
+
+  [data-aperture-root] .aperture-plot {
+    min-width: 0;
+  }
+
+  /* TanStack positions the tooltip with left/top. Short transitions smooth
+     pointer updates while keeping the displayed value immediate. */
   [data-aperture-root] .ts-chart-tooltip {
-    transition: none;
+    transition: left 120ms ease-out, top 120ms ease-out;
   }
-}
 
-.aperture-selection-host {
-  display: contents;
-}
+  [data-aperture-root] .aperture-actions.aperture-toolbar {
+    justify-content: flex-end;
+    gap: var(--aperture-space-2);
+  }
 
-.aperture-brush-select .ts-chart__brush-x-fallback,
-.aperture-brush-select svg[data-chart-brush] [data-chart-brush-selection],
-.aperture-brush-select svg[data-chart-brush] [data-chart-brush-handle] {
-  opacity: 0;
-  pointer-events: none;
-}
+  .aperture-brush-low-emphasis .ts-chart__brush-x-fallback .selection,
+  .aperture-brush-low-emphasis .ts-chart__brush-x-fallback .handle,
+  .aperture-brush-low-emphasis svg[data-chart-brush] [data-chart-brush-selection],
+  .aperture-brush-low-emphasis svg[data-chart-brush] [data-chart-brush-handle] {
+    opacity: 0;
+    transition: opacity var(--aperture-motion-duration);
+  }
 
-.aperture-brush-select svg[data-chart-brush] .overlay {
-  cursor: crosshair;
-}
+  .aperture-brush-low-emphasis .ts-chart__brush-x-fallback:hover .selection,
+  .aperture-brush-low-emphasis .ts-chart__brush-x-fallback:focus-within .selection,
+  .aperture-brush-low-emphasis svg[data-chart-brush]:hover [data-chart-brush-selection],
+  .aperture-brush-low-emphasis svg[data-chart-brush]:focus-within [data-chart-brush-selection] {
+    opacity: 1;
+  }
 
-[data-aperture-selecting] .aperture-brush-select svg[data-chart-brush] [data-chart-brush-selection],
-.aperture-brush-select svg[data-chart-brush]:focus-within [data-chart-brush-selection],
-.aperture-brush-select svg[data-chart-brush] [data-chart-brush-handle]:focus-visible {
-  opacity: 1;
-}
+  .aperture-brush-low-emphasis .ts-chart__brush-x-fallback:hover .handle,
+  .aperture-brush-low-emphasis .ts-chart__brush-x-fallback:focus-within .handle,
+  .aperture-brush-low-emphasis svg[data-chart-brush] [data-chart-brush-selection]:hover ~ [data-chart-brush-handle],
+  .aperture-brush-low-emphasis svg[data-chart-brush] [data-chart-brush-handle]:hover,
+  .aperture-brush-low-emphasis svg[data-chart-brush] [data-chart-brush-handle]:focus {
+    opacity: 0.9;
+  }
 
-@media (forced-colors: active) {
-  [data-aperture-root] {
-    --aperture-color-background: Canvas;
-    --aperture-color-surface: Canvas;
-    --aperture-color-text: CanvasText;
-    --aperture-color-muted: CanvasText;
-    --aperture-color-border: CanvasText;
-    --aperture-color-accent: Highlight;
-    --aperture-color-accent-soft: Canvas;
-    --aperture-color-danger: Mark;
-    --aperture-color-positive: CanvasText;
-    --aperture-color-focus: Highlight;
-    --aperture-chart-1: Highlight;
-    --aperture-chart-2: LinkText;
-    --aperture-chart-3: Mark;
-    --aperture-chart-4: VisitedText;
-    --aperture-chart-5: ActiveText;
-    --aperture-chart-6: ButtonText;
-    --aperture-chart-7: HighlightText;
-    --aperture-chart-8: GrayText;
-    --aperture-chart-missing: GrayText;
-    --aperture-chart-context: GrayText;
-    --aperture-chart-diverging-low: Mark;
-    --aperture-chart-diverging-high: Highlight;
-    --aperture-color-on-strong-fill: CanvasText;
-    --aperture-color-annotation: Mark;
-    --aperture-color-annotation-fill: Canvas;
-    --aperture-color-selection-fill: Canvas;
-    forced-color-adjust: auto;
+  [data-aperture-root] .aperture-control,
+  [data-aperture-root] .aperture-toggle-option {
+    display: inline-flex;
+    min-height: 2.25rem;
+    align-items: center;
+    justify-content: center;
+    gap: var(--aperture-space-2);
+    padding: var(--aperture-space-2) var(--aperture-space-3);
+    color: var(--aperture-color-text);
+    background: var(--aperture-color-background);
+    border: 1px solid var(--aperture-color-border);
+    border-radius: var(--aperture-radius-small);
+    font: inherit;
+    cursor: pointer;
+    transition: background-color var(--aperture-motion-duration), border-color var(--aperture-motion-duration);
+  }
+
+  [data-aperture-root] .aperture-control svg,
+  [data-aperture-root] .aperture-range-control svg {
+    width: 1rem;
+    height: 1rem;
+    flex: none;
+  }
+
+  [data-aperture-root] .aperture-icon-control {
+    width: 2.25rem;
+    padding: var(--aperture-space-2);
+  }
+
+  [data-aperture-root] .aperture-control[data-selected],
+  [data-aperture-root] .aperture-toggle-option[data-selected] {
+    color: var(--aperture-color-accent);
+    background: var(--aperture-color-accent-soft);
+    border-color: var(--aperture-color-accent);
+  }
+
+  [data-aperture-root] .aperture-control[data-focus-visible],
+  [data-aperture-root] .aperture-toggle-option[data-focus-visible] {
+    outline: 3px solid color-mix(in srgb, var(--aperture-color-focus) 45%, transparent);
+    outline-offset: 2px;
+  }
+
+  [data-aperture-root] .aperture-range-control {
+    display: flex;
+    align-items: center;
+    gap: var(--aperture-space-2);
+    flex-wrap: wrap;
+  }
+
+  [data-aperture-root] .aperture-range-control > label {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--aperture-space-1);
+    color: var(--aperture-color-muted);
+  }
+
+  [data-aperture-root] .aperture-toggle-group {
+    display: inline-flex;
+    gap: var(--aperture-space-1);
+  }
+
+  [data-aperture-root] .aperture-control-status {
+    position: relative;
+  }
+
+  [data-aperture-root] .aperture-control-error {
+    display: block;
+    margin-top: var(--aperture-space-1);
+    color: var(--aperture-color-danger);
+  }
+
+  [data-aperture-root].aperture-table-scroll,
+  [data-aperture-root] .aperture-table-scroll {
+    max-width: 100%;
+    overflow-x: auto;
+  }
+
+  [data-aperture-root] .aperture-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-variant-numeric: tabular-nums;
+  }
+
+  [data-aperture-root] .aperture-table caption {
+    padding: var(--aperture-space-2);
+    color: var(--aperture-color-muted);
+    text-align: start;
+  }
+
+  [data-aperture-root] .aperture-table th,
+  [data-aperture-root] .aperture-table td {
+    padding: var(--aperture-space-2) var(--aperture-space-3);
+    border-bottom: 1px solid var(--aperture-color-border);
+    text-align: start;
+  }
+
+  [data-aperture-root] .aperture-table th {
+    font-weight: var(--aperture-font-weight-strong);
+  }
+
+  [data-aperture-root] .aperture-selectable .ts-chart-surface {
+    cursor: pointer;
+  }
+
+  [data-aperture-root].aperture-filter-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: var(--aperture-space-3) var(--aperture-space-4);
+    background: transparent;
+  }
+
+  [data-aperture-root] .aperture-select-host {
+    display: contents;
+  }
+
+  [data-aperture-root] .aperture-select {
+    display: inline-grid;
+    gap: var(--aperture-space-1);
+    min-width: 10rem;
+  }
+
+  [data-aperture-root] .aperture-select-label {
+    color: var(--aperture-color-muted);
+    font-size: 0.75rem;
+  }
+
+  [data-aperture-root] .aperture-select-trigger {
+    justify-content: space-between;
+    min-width: 10rem;
+    text-align: start;
+  }
+
+  [data-aperture-root] .aperture-select-trigger[data-pressed],
+  [data-aperture-root] .aperture-select[data-open] .aperture-select-trigger {
+    border-color: var(--aperture-color-accent);
+  }
+
+  [data-aperture-root] .aperture-select-trigger[data-focus-visible] {
+    outline: 3px solid color-mix(in srgb, var(--aperture-color-focus) 45%, transparent);
+    outline-offset: 2px;
+  }
+
+  [data-aperture-root] .aperture-popover {
+    z-index: 20;
+    min-width: var(--trigger-width);
+    max-height: 20rem;
+    overflow: auto;
+    color: var(--aperture-color-text);
+    background: var(--aperture-color-background);
+    border: 1px solid var(--aperture-color-border);
+    border-radius: var(--aperture-radius-small);
+    box-shadow: 0 8px 24px color-mix(in srgb, var(--aperture-color-text) 14%, transparent);
+  }
+
+  [data-aperture-root] .aperture-listbox {
+    padding: var(--aperture-space-1);
+    outline: none;
+  }
+
+  [data-aperture-root] .aperture-listbox-item {
+    display: flex;
+    align-items: center;
+    min-height: 2rem;
+    padding: var(--aperture-space-1) var(--aperture-space-3);
+    border-radius: calc(var(--aperture-radius-small) - 2px);
+    cursor: default;
+    outline: none;
+  }
+
+  [data-aperture-root] .aperture-listbox-item[data-focused] {
+    background: var(--aperture-color-surface);
+  }
+
+  [data-aperture-root] .aperture-listbox-item[data-selected] {
+    color: var(--aperture-color-accent);
+    font-weight: var(--aperture-font-weight-strong);
+  }
+
+  [data-aperture-root] .aperture-listbox-item[data-focus-visible] {
+    outline: 2px solid var(--aperture-color-focus);
+    outline-offset: -2px;
+  }
+
+  [data-aperture-root] .aperture-active-filters {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--aperture-space-2);
+    min-height: 2.25rem;
+  }
+
+  [data-aperture-root] .aperture-active-filters-empty {
+    color: var(--aperture-color-muted);
+  }
+
+  [data-aperture-root] .aperture-filter-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--aperture-space-2);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  [data-aperture-root] .aperture-filter-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--aperture-space-1);
+    padding-inline: var(--aperture-space-3) var(--aperture-space-1);
+    min-height: 2rem;
+    color: var(--aperture-color-text);
+    background: var(--aperture-color-accent-soft);
+    border: 1px solid color-mix(in srgb, var(--aperture-color-accent) 40%, transparent);
+    border-radius: 999px;
+  }
+
+  [data-aperture-root] .aperture-filter-chip strong {
+    font-weight: var(--aperture-font-weight-strong);
+  }
+
+  [data-aperture-root] .aperture-chip-remove {
+    display: inline-grid;
+    place-items: center;
+    width: 1.5rem;
+    height: 1.5rem;
+    padding: 0;
+    color: inherit;
+    background: transparent;
+    border: 0;
+    border-radius: 999px;
+    cursor: pointer;
+  }
+
+  [data-aperture-root] .aperture-chip-remove svg {
+    width: 0.875rem;
+    height: 0.875rem;
+  }
+
+  [data-aperture-root] .aperture-chip-remove[data-hovered] {
+    background: color-mix(in srgb, var(--aperture-color-accent) 18%, transparent);
+  }
+
+  [data-aperture-root] .aperture-chip-remove[data-focus-visible] {
+    outline: 2px solid var(--aperture-color-focus);
+    outline-offset: 1px;
+  }
+
+  [data-aperture-root].aperture-sparkline {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    background: transparent;
+  }
+
+  /* A compact chart sits on the surface of its host figure. The collapsed
+     exact-value table adds no space below the plot. */
+  [data-aperture-root].aperture-compact {
+    background: transparent;
+  }
+
+  [data-aperture-root] .aperture-compact > .aperture-exact-values,
+  [data-aperture-root].aperture-compact > .aperture-exact-values {
+    margin-top: 0;
+  }
+
+  [data-aperture-root].aperture-sparkline-state {
+    min-height: 0 !important;
+    padding: var(--aperture-space-1);
+    font-size: 0.75rem;
+  }
+
+  /* A stat tile leads with one number. Proportional figures read better at
+     display size; the label, delta, and note stay muted. */
+  [data-aperture-root].aperture-stat-tile {
+    display: grid;
+    align-content: start;
+    gap: var(--aperture-space-1);
+    min-width: 0;
+    padding: var(--aperture-space-4);
+    border: 1px solid var(--aperture-color-border);
+    border-radius: var(--aperture-radius-medium);
+  }
+
+  [data-aperture-root] .aperture-stat-label,
+  [data-aperture-root] .aperture-stat-value,
+  [data-aperture-root] .aperture-stat-delta,
+  [data-aperture-root] .aperture-stat-note {
+    margin: 0;
+  }
+
+  [data-aperture-root] .aperture-stat-label {
+    color: var(--aperture-color-muted);
+    font-size: 0.8125rem;
+  }
+
+  [data-aperture-root] .aperture-stat-value {
+    font-size: 2rem;
+    font-weight: var(--aperture-font-weight-strong);
+    font-variant-numeric: proportional-nums;
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+  }
+
+  [data-aperture-root] .aperture-stat-unit {
+    margin-inline-start: 0.1em;
+    color: var(--aperture-color-muted);
+    font-size: 1.25rem;
+    font-weight: 500;
+  }
+
+  [data-aperture-root] .aperture-stat-delta,
+  [data-aperture-root] .aperture-stat-note {
+    color: var(--aperture-color-muted);
+    font-size: 0.8125rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  [data-aperture-root] .aperture-stat-change {
+    font-weight: 600;
+  }
+
+  [data-aperture-root] .aperture-stat-change[data-tone='good'] {
+    color: var(--aperture-color-positive);
+  }
+
+  [data-aperture-root] .aperture-stat-change[data-tone='bad'] {
+    color: var(--aperture-color-danger);
+  }
+
+  [data-aperture-root] .aperture-stat-change[data-tone='neutral'] {
+    color: var(--aperture-color-text);
+  }
+
+  [data-aperture-root] .aperture-stat-trend {
+    margin-block: var(--aperture-space-1);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    [data-aperture-root] {
+      --aperture-motion-duration: 0ms;
+    }
+
+    [data-aperture-root] .ts-chart-tooltip {
+      transition: none;
+    }
+  }
+
+  .aperture-selection-host {
+    display: contents;
+  }
+
+  .aperture-brush-select .ts-chart__brush-x-fallback,
+  .aperture-brush-select svg[data-chart-brush] [data-chart-brush-selection],
+  .aperture-brush-select svg[data-chart-brush] [data-chart-brush-handle] {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .aperture-brush-select svg[data-chart-brush] .overlay {
+    cursor: crosshair;
+  }
+
+  [data-aperture-selecting] .aperture-brush-select svg[data-chart-brush] [data-chart-brush-selection],
+  .aperture-brush-select svg[data-chart-brush]:focus-within [data-chart-brush-selection],
+  .aperture-brush-select svg[data-chart-brush] [data-chart-brush-handle]:focus-visible {
+    opacity: 1;
+  }
+
+  @media (forced-colors: active) {
+    [data-aperture-root] {
+      --aperture-color-background: Canvas;
+      --aperture-color-surface: Canvas;
+      --aperture-color-text: CanvasText;
+      --aperture-color-muted: CanvasText;
+      --aperture-color-border: CanvasText;
+      --aperture-color-accent: Highlight;
+      --aperture-color-accent-soft: Canvas;
+      --aperture-color-danger: Mark;
+      --aperture-color-positive: CanvasText;
+      --aperture-color-focus: Highlight;
+      --aperture-chart-1: Highlight;
+      --aperture-chart-2: LinkText;
+      --aperture-chart-3: Mark;
+      --aperture-chart-4: VisitedText;
+      --aperture-chart-5: ActiveText;
+      --aperture-chart-6: ButtonText;
+      --aperture-chart-7: HighlightText;
+      --aperture-chart-8: GrayText;
+      --aperture-chart-missing: GrayText;
+      --aperture-chart-context: GrayText;
+      --aperture-chart-diverging-low: Mark;
+      --aperture-chart-diverging-high: Highlight;
+      --aperture-color-on-strong-fill: CanvasText;
+      --aperture-color-annotation: Mark;
+      --aperture-color-annotation-fill: Canvas;
+      --aperture-color-selection-fill: Canvas;
+      forced-color-adjust: auto;
+    }
   }
 }

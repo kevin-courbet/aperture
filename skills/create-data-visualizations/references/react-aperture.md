@@ -11,7 +11,12 @@ Package entry points:
 - `@kevin-courbet/aperture`: common charts, provider, widget, controls, states,
   and types.
 - `@kevin-courbet/aperture/styles.css`: default styles and semantic tokens.
+  Every rule is in the `aperture` cascade layer.
 - `@kevin-courbet/aperture/tanstack`: advanced TanStack Charts primitives.
+
+To theme charts, set `--aperture-*` variables through a chart or widget
+`className` or `style`. Unlayered host rules override Aperture without
+higher specificity.
 
 Do not invent props. Use Storybook documentation tools when available.
 
@@ -47,6 +52,10 @@ Headline figures:
   KPI rows instead of host markup. Set `goodDirection`.
 - `Sparkline`: a trend without axes for a tile or table row. Do not use it as
   the only view of a trend that the reader must analyze.
+- `AreaChart` or `LineChart` with `compact`: one series without axes, grid
+  lines, legend, or standalone controls. It keeps the tooltip and the
+  exact-value table. Use it in a `StatTile` `trend` slot when the reader needs
+  the values on hover.
 
 Page-level filter components:
 

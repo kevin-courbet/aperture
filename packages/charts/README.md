@@ -20,7 +20,28 @@ import { ChartProvider, LineChart } from '@kevin-courbet/aperture'
 ```
 
 Import `@kevin-courbet/aperture/styles.css` when the build does not use package
-browser exports.
+browser exports, or when server HTML must include the styles.
+
+## Theme The Host
+
+Every Aperture rule is in the `aperture` cascade layer. Unlayered host rules
+override Aperture without higher specificity. This includes element rules,
+such as `button` or `table` rules. If the host uses cascade layers, declare
+`aperture` first, for example `@layer aperture, base, components;`. A layer
+that the host declares before `aperture` loses to Aperture.
+
+Set the semantic `--aperture-*` variables to match the host theme. A chart's
+`className` and `style` apply to its `[data-aperture-root]` element, where
+Aperture declares the variables. Apply them to each chart and to
+`ChartWidget.Root`.
+
+```css
+.app-chart {
+  --aperture-font-family: var(--app-font);
+  --aperture-color-background: var(--app-surface);
+  --aperture-color-text: var(--app-text);
+}
+```
 
 Use `@kevin-courbet/aperture/tanstack` only when the common API does not meet
 an advanced chart requirement. Aperture pins TanStack Charts to `1.1.0`.
@@ -249,6 +270,33 @@ first, last, lowest, and highest values, and a hidden table holds every value.
   goodDirection="increase"
   formatDelta={(delta) => `${delta.toFixed(1)} pp`}
   trend={<Sparkline state={chartData(dailyConversion)} ariaLabel="Daily checkout conversion" accentFrom={incidentStart} />}
+/>
+```
+
+### Compact charts
+
+Set `compact` on `AreaChart` or `LineChart` for a trend in a stat tile that
+needs a tooltip. A compact chart draws no axes, grid lines, legend, or
+standalone controls. Line points are off unless `appearance` sets them. The
+tooltip, keyboard focus, and the collapsed exact-value table stay available.
+
+A compact chart shows one series. It rejects `xLabel`, `yLabel`, `highlights`,
+`reference`, `dataTableControl`, and `defaultTableVisible`, because it cannot
+show them. Set `height` and `initialWidth` to the tile size.
+
+```tsx
+<StatTile
+  {...tileProps}
+  trend={(
+    <AreaChart
+      compact
+      ariaLabel="Daily checkout conversion"
+      ariaDescription="Conversion for each day from 8 to 21 September."
+      state={chartData(dailyConversion)}
+      height={56}
+      initialWidth={240}
+    />
+  )}
 />
 ```
 

@@ -191,7 +191,7 @@ export interface LineAppearance extends LineSeriesAppearance {
   readonly series?: Readonly<Record<string, LineSeriesAppearance>>
 }
 
-export interface LineChartProps extends CommonChartProps, CrosshairChartProps {
+interface LineChartOptions extends CommonChartProps, CrosshairChartProps {
   readonly state: ChartDataState<TimeSeriesDatum>
   readonly xLabel?: string
   readonly yLabel?: string
@@ -200,6 +200,39 @@ export interface LineChartProps extends CommonChartProps, CrosshairChartProps {
   readonly timeAxis?: TimeAxisOptions
   /** Labeled time ranges and events drawn behind the lines. */
   readonly highlights?: readonly TimeHighlight[]
+}
+
+interface FullChartOptions {
+  readonly compact?: false
+}
+
+/**
+ * A compact chart sits in a host figure, such as a stat tile, that names the
+ * measure. It draws no axes, grid lines, legend, or standalone controls. The
+ * tooltip and the exact-value table stay available.
+ */
+interface CompactChartOptions {
+  readonly compact: true
+  readonly xLabel?: never
+  readonly yLabel?: never
+  readonly highlights?: never
+  readonly dataTableControl?: never
+  readonly defaultTableVisible?: never
+}
+
+export type LineChartProps = LineChartOptions & (FullChartOptions | (CompactChartOptions & {
+  readonly reference?: never
+}))
+
+const compactChartSpec = { guides: false, margin: 4 } as const
+
+/** Returns true for a compact chart. Rejects options that a compact chart cannot show. */
+function compactChart(compact: unknown, hiddenOptions: Readonly<Record<string, unknown>>): boolean {
+  if (compact === undefined || compact === false) return false
+  if (compact !== true) throw new TypeError('Chart compact must be a boolean.')
+  const present = Object.keys(hiddenOptions).filter((name) => hiddenOptions[name] !== undefined)
+  if (present.length > 0) throw new RangeError(`Compact charts do not accept ${present.join(', ')}.`)
+  return true
 }
 
 function timeRows(
@@ -328,7 +361,11 @@ function annotatedTimeLayer<TMark>(
   }
 }
 
-export function LineChart({ state, xLabel, yLabel, appearance, reference, timeAxis, highlights, ...common }: LineChartProps) {
+export function LineChart({ state, xLabel, yLabel, appearance, reference, timeAxis, highlights, compact: compactOption, ...common }: LineChartProps) {
+  const compact = compactChart(compactOption, {
+    xLabel, yLabel, reference, highlights,
+    dataTableControl: common.dataTableControl, defaultTableVisible: common.defaultTableVisible,
+  })
   const { messages, locale, timeZone } = useChartConfiguration()
   const formatters = useChartFormatters(common.formatters)
   const formatDay = useDayFormatter()
@@ -341,6 +378,9 @@ export function LineChart({ state, xLabel, yLabel, appearance, reference, timeAx
         const rows = timeRows(data, messages.errors.invalidDate, messages.errors.invalidNumber)
         const series = [...new Set(rows.map((row) => row.series))]
         seriesLegend(series)
+        if (compact && series.length > 1) {
+          throw new RangeError('A compact line chart shows one series. More series need a legend.')
+        }
         for (const configuredSeries of Object.keys(appearance?.series ?? {})) {
           if (!series.includes(configuredSeries)) {
             throw new RangeError(`Line appearance references an unknown series: ${configuredSeries}`)
@@ -374,7 +414,7 @@ export function LineChart({ state, xLabel, yLabel, appearance, reference, timeAx
               }))]),
               lineY(seriesRows, {
                 x: 'date', y: 'value', color: 'series', key: 'id',
-                points: seriesAppearance?.points ?? appearance?.points ?? true,
+                points: seriesAppearance?.points ?? appearance?.points ?? !compact,
                 curve, strokeWidth: area?.strokeWidth === 0 ? 2.25 : (area?.strokeWidth ?? 2.25),
                 strokeDasharray: lineSeriesDasharrays[index],
               }),
@@ -414,6 +454,7 @@ export function LineChart({ state, xLabel, yLabel, appearance, reference, timeAx
                 gradients,
                 scales: { x, y: { scale: scaleLinear, nice: true, grid: true, axis: numberAxis(yLabel, formatters) } },
                 color,
+                ...(compact ? compactChartSpec : {}),
               }
             }
             const annotated = annotatedTimeLayer(prepared, dates, width, yValues, false, marks)
@@ -435,7 +476,7 @@ export function LineChart({ state, xLabel, yLabel, appearance, reference, timeAx
         if (reference !== undefined && referenceValue !== undefined) legend.push({ label: reference.label, detail: formatters.number(referenceValue), symbol: { kind: 'reference' } })
         if (data.some((datum) => datum.value.kind === 'missing')) legend.push({ label: messages.legend.missing, symbol: { kind: 'missing' } })
         legend.push(...prepared.legend)
-        return <ChartSurface {...common} definition={definition} legend={legend} descriptionDetails={[prepared.description]} exactValues={exactValues(
+        return <ChartSurface {...common} compact={compact} definition={definition} legend={legend} descriptionDetails={[prepared.description]} exactValues={exactValues(
           ['Date', 'Series', 'Value'],
           data.map((datum) => exactRow(datum.id, datum.date, datum.series ?? 'Value', datum.value)),
         )} />
@@ -450,7 +491,7 @@ export interface AreaDatum {
   readonly value: NumericPoint
 }
 
-export interface AreaChartProps extends CommonChartProps, CrosshairChartProps {
+interface AreaChartOptions extends CommonChartProps, CrosshairChartProps {
   readonly state: ChartDataState<AreaDatum>
   readonly xLabel?: string
   readonly yLabel?: string
@@ -460,7 +501,13 @@ export interface AreaChartProps extends CommonChartProps, CrosshairChartProps {
   readonly highlights?: readonly TimeHighlight[]
 }
 
-export function AreaChart({ state, xLabel, yLabel, timeAxis, appearance, highlights, ...common }: AreaChartProps) {
+export type AreaChartProps = AreaChartOptions & (FullChartOptions | CompactChartOptions)
+
+export function AreaChart({ state, xLabel, yLabel, timeAxis, appearance, highlights, compact: compactOption, ...common }: AreaChartProps) {
+  const compact = compactChart(compactOption, {
+    xLabel, yLabel, highlights,
+    dataTableControl: common.dataTableControl, defaultTableVisible: common.defaultTableVisible,
+  })
   const { messages, locale, timeZone } = useChartConfiguration()
   const formatters = useChartFormatters(common.formatters)
   const formatDay = useDayFormatter()
@@ -494,6 +541,7 @@ export function AreaChart({ state, xLabel, yLabel, timeAxis, appearance, highlig
                 marks,
                 gradients: paint.gradients,
                 scales: { x, y: { scale: scaleLinear, nice: true, grid: true, axis: numberAxis(yLabel, formatters) } },
+                ...(compact ? compactChartSpec : {}),
               }
             }
             const annotated = annotatedTimeLayer(prepared, dates, width, yValues, true, marks)
@@ -507,7 +555,7 @@ export function AreaChart({ state, xLabel, yLabel, timeAxis, appearance, highlig
         const legend: SemanticLegendItem[] = []
         if (data.some((datum) => datum.value.kind === 'missing')) legend.push({ label: messages.legend.missing, symbol: { kind: 'missing' } })
         legend.push(...prepared.legend)
-        return <ChartSurface {...common} definition={definition} legend={legend} descriptionDetails={[prepared.description]} exactValues={exactValues(
+        return <ChartSurface {...common} compact={compact} definition={definition} legend={legend} descriptionDetails={[prepared.description]} exactValues={exactValues(
           ['Date', 'Value'], data.map((datum) => exactRow(datum.id, datum.date, datum.value)),
         )} />
       }}

@@ -121,6 +121,8 @@ interface ChartSurfaceProps<
   readonly descriptionDetails?: readonly (string | undefined)[]
   /** Marks are selectable with pointer and keyboard activation. */
   readonly selectable?: boolean
+  /** Omits the legend and the standalone toolbar. The exact-value table stays in the accessibility tree. */
+  readonly compact?: boolean
 }
 
 export function ChartSurface<
@@ -142,6 +144,7 @@ export function ChartSurface<
   legend = [],
   descriptionDetails = [],
   selectable = false,
+  compact = false,
   tooltip,
   dataTableControl = 'hidden',
   defaultTableVisible = false,
@@ -166,11 +169,14 @@ export function ChartSurface<
     : (context: Parameters<NonNullable<ChartTooltipOptions['renderBody']>>[0] & { readonly defaultBody: ReactNode }) =>
         customTooltipBody(context)
 
+  const compactClassName = compact ? 'aperture-compact' : undefined
+  // The host className and style belong on the element that carries data-aperture-root,
+  // because Aperture declares its theme variables on that element.
   const content = (
     <div
       data-aperture-root={widget === null ? undefined : ''}
       data-aperture-renderer={rendering.kind}
-      className={['aperture-chart', selectable ? 'aperture-selectable' : undefined, className].filter(Boolean).join(' ')}
+      className={['aperture-chart', compactClassName, selectable ? 'aperture-selectable' : undefined, widget === null ? undefined : className].filter(Boolean).join(' ')}
       style={widget === null ? undefined : { ...style, ...(width === undefined ? {} : { width }) }}
     >
       <div ref={fullscreen.ref} className="aperture-canvas" style={{ height }}>
@@ -180,7 +186,7 @@ export function ChartSurface<
           ? <CanvasChart {...chartProps} renderTooltipBody={renderTooltipBody} />
           : <RendererChart {...chartProps} renderer={motionRenderer!} renderTooltipBody={renderTooltipBody} />}
       </div>
-      <SemanticLegend items={legend} />
+      {compact ? null : <SemanticLegend items={legend} />}
       <ExactValues model={exactValues} formatters={formatters} />
     </div>
   )
@@ -190,10 +196,10 @@ export function ChartSurface<
       ariaLabel={ariaLabel}
       exactValues="available"
       defaultTableVisible={defaultTableVisible}
-      className="aperture-standalone"
+      className={['aperture-standalone', compactClassName, className].filter(Boolean).join(' ')}
       style={{ ...style, ...(width === undefined ? {} : { width }) }}
     >
-      <ChartToolbar dataTableControl={dataTableControl} />
+      {compact ? null : <ChartToolbar dataTableControl={dataTableControl} />}
       {content}
     </ChartWidget.Root>
   )

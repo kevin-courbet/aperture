@@ -32,6 +32,29 @@ if (!/^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$/.test(manifest.version
   throw new Error(`Package version must be an explicit SemVer version: ${manifest.version}`)
 }
 
+/** Lists each top-level block prelude and statement. Comments and strings must not contain braces. */
+function topLevelCssPreludes(css) {
+  const preludes = []
+  let depth = 0
+  let prelude = ''
+  for (const character of css) {
+    if (character === '{') {
+      if (depth === 0) preludes.push(prelude.trim())
+      depth += 1
+      prelude = ''
+    } else if (character === '}') {
+      depth -= 1
+    } else if (depth === 0 && character === ';') {
+      preludes.push(prelude.trim())
+      prelude = ''
+    } else if (depth === 0) {
+      prelude += character
+    }
+  }
+  if (depth !== 0 || prelude.trim() !== '') throw new Error('dist/styles.css is not balanced CSS')
+  return preludes
+}
+
 const consumerDirectory = mkdtempSync(resolve(tmpdir(), 'aperture-consumer-'))
 const artifactDirectory = process.argv[2] ? resolve(process.argv[2]) : consumerDirectory
 const stagingDirectory = process.argv[2] ? mkdtempSync(resolve(tmpdir(), 'aperture-package-')) : undefined
@@ -74,6 +97,11 @@ try {
   }
 
   const tarball = resolve(artifactDirectory, packs[0].filename)
+  const stylesheet = execFileSync('tar', ['-xOf', tarball, 'package/dist/styles.css'], { encoding: 'utf8' })
+  const unlayered = topLevelCssPreludes(stylesheet).filter((prelude) => prelude !== '@layer aperture')
+  if (unlayered.length > 0) {
+    throw new Error(`dist/styles.css has rules outside @layer aperture: ${unlayered.slice(0, 3).join(' | ')}`)
+  }
   if (stagingDirectory) {
     const packedManifest = JSON.parse(
       execFileSync('tar', ['-xOf', tarball, 'package/package.json'], { encoding: 'utf8' }),
